@@ -340,9 +340,14 @@ function handleScan(event) {
     const code = event.target.value.trim();
     event.target.value = "";
 
-    let found = currentProducts.find(
-        p => p.sku === code || p.ean === code
-    );
+    function normalize(val) {
+    return val ? val.replace(/^0+/, "") : val;
+}
+
+let found = currentProducts.find(
+    p => normalize(p.sku) === normalize(code) ||
+         normalize(p.ean) === normalize(code)
+);
 
     if (!found) return flashError();
 
