@@ -10,7 +10,7 @@
         font-family: Arial, sans-serif;
         max-width: 900px;
         margin: 20px auto;
-        padding: 10px;
+        padding-bottom: 100px; /* spațiu pentru butonul fix */
     }
 
     h1 {
@@ -18,11 +18,6 @@
         font-size: 26px;
         text-align: center;
         margin-bottom: 25px;
-    }
-
-    h3 {
-        margin-top: 25px;
-        font-size: 20px;
     }
 
     select, button, input {
@@ -36,25 +31,17 @@
     }
 
     button {
-        background: #d81b60;
-        border: none;
-        color: white;
-        font-weight: bold;
         cursor: pointer;
         transition: 0.2s;
+        font-weight: bold;
     }
 
-    button:hover {
-        background: #b0144f;
-    }
-
-    /* TABEL – RESPONSIVE */
+    /* TABEL */
     table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
         table-layout: fixed;
-        background: white;
     }
 
     th, td {
@@ -63,8 +50,6 @@
         text-align: left;
         vertical-align: middle;
         word-wrap: break-word;
-        white-space: normal;
-        font-size: 15px;
     }
 
     .ok {
@@ -75,65 +60,31 @@
         background: #ffcccc !important;
     }
 
-    /* ======== OPTIMIZARE PENTRU MOBIL ======== */
-    @media (max-width: 600px) {
-
-        h1 {
-            font-size: 22px;
-        }
-
-        th {
-            font-size: 14px;
-        }
-
-        td {
-            font-size: 14px;
-            padding: 8px;
-        }
-
-        /* SKU */
-        th:nth-child(1),
-        td:nth-child(1) {
-            width: 70px;
-        }
-
-        /* NUME PRODUS – se poate rupe pe 2-3 rânduri */
-        td:nth-child(2) {
-            white-space: normal;
-            font-size: 15px;
-            line-height: 1.3;
-        }
-
-        /* RAFT */
-        th:nth-child(3),
-        td:nth-child(3) {
-            width: 85px;
-        }
-
-        /* Cantitate / Scanat / Rămas */
-        th:nth-child(4),
-        th:nth-child(5),
-        th:nth-child(6),
-        td:nth-child(4),
-        td:nth-child(5),
-        td:nth-child(6) {
-            width: 55px;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        button {
-            font-size: 18px;
-            padding: 16px;
-            border-radius: 10px;
-        }
-
-        input, select {
-            font-size: 16px;
-            padding: 12px;
-        }
+    /* === BUTON FIX JOS === */
+    #finishBtn {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        font-size: 20px;
+        text-align: center;
+        border: none;
+        border-radius: 0;
+        color: white;
+        background: #888;   /* gri dezactivat */
+        opacity: 0.8;
+        pointer-events: none; /* dezactivat */
+        transition: 0.3s;
+        display: none; /* se activează după loadOrder() */
     }
 
+    /* activ */
+    #finishBtn.active {
+        background: #28a745; /* verde */
+        opacity: 1;
+        pointer-events: auto;
+    }
 </style>
 </head>
 
@@ -152,9 +103,6 @@
 
 <h3 id="orderTitle"></h3>
 
-<button onclick="finalizeOrder()" id="finishBtn" style="display:none;">
-    Finalizează comanda
-</button>
 
 <!-- ================= PAS 2 ================= -->
 <h3>Pas 2: Scanează produsele</h3>
@@ -179,6 +127,10 @@
     <tbody></tbody>
 </table>
 
+<!-- BUTON FIX JOS -->
+<button id="finishBtn" onclick="finalizeOrder()">Finalizează comanda</button>
+
+
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
@@ -189,19 +141,17 @@ const ORDER_LIST_URL =
 const ORDER_GET_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/order-get";
 
-// ❗❗❗ ENDPOINT CORECT (cu minus la final)
 const DELETE_ORDER_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/delete-order-file-orderId-";
 
 const PRODUCT_LOCATION_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.";
 
-// variabile globale
 let currentProducts = [];
 let currentOrderId = null;
 
 
-// ===================== ÎNCARCĂ LISTA DE COMENZI ======================
+// ===================== LOAD ORDERS ======================
 async function loadOrders() {
     try {
         const res = await fetch(ORDER_LIST_URL);
@@ -209,7 +159,6 @@ async function loadOrders() {
         const select = document.getElementById("orderList");
 
         select.innerHTML = "";
-
         orders.forEach(o => {
             const opt = document.createElement("option");
             opt.value = o.orderId;
@@ -224,10 +173,9 @@ async function loadOrders() {
 }
 
 
-// ===================== ÎNCARCĂ COMANDA ======================
+// ===================== LOAD ORDER ======================
 async function loadOrder() {
     const orderId = document.getElementById("orderList").value;
-
     if (!orderId) return;
 
     currentOrderId = orderId;
@@ -240,20 +188,15 @@ async function loadOrder() {
             .filter(p => p.item_type === "product")
             .map(async p => {
                 let sku = p.product_sku;
-
                 let locRes = await fetch(PRODUCT_LOCATION_URL + sku);
                 let locData = await locRes.json();
-                let shelf =
-                    locData.length > 0 && locData[0].location && locData[0].location !== "EMPTY"
-                    ? locData[0].location
-                    : "Fără locație";
 
                 return {
                     sku,
                     ean: p.product_ean,
                     name: p.product_name,
                     qty: Number(p.quantity),
-                    shelf,
+                    shelf: locData[0]?.location || "Fără locație",
                     scanned: 0
                 };
             })
@@ -261,13 +204,17 @@ async function loadOrder() {
 
     document.getElementById("orderTitle").textContent = "Comanda #" + orderId;
     document.getElementById("scanInput").disabled = false;
-    document.getElementById("finishBtn").style.display = "block";
+
+    // arată butonul de jos, dezactivat
+    const btn = document.getElementById("finishBtn");
+    btn.style.display = "block";
+    btn.classList.remove("active");
 
     renderTable();
 }
 
 
-// ===================== TABEL ======================
+// ===================== TABLE ======================
 function renderTable() {
     const tbody = document.querySelector("#productsTable tbody");
     tbody.innerHTML = "";
@@ -286,10 +233,25 @@ function renderTable() {
         `;
         tbody.appendChild(tr);
     });
+
+    updateFinishButtonState();
 }
 
 
-// ===================== SCANARE ======================
+// ===================== CHECK IF ALL PRODUCTS ARE SCANNED ======================
+function updateFinishButtonState() {
+    const allScanned = currentProducts.every(p => p.scanned >= p.qty);
+    const btn = document.getElementById("finishBtn");
+
+    if (allScanned) {
+        btn.classList.add("active");    // devine verde
+    } else {
+        btn.classList.remove("active"); // rămâne gri
+    }
+}
+
+
+// ===================== SCAN ======================
 function handleScan(event) {
     if (event.key !== "Enter") return;
 
@@ -317,7 +279,7 @@ function flashError() {
 }
 
 
-// ===================== CAMERA ======================
+// ===================== CAMERA SCAN ======================
 function startCameraScan() {
     const div = document.getElementById("cameraScanner");
     div.style.display = "block";
@@ -339,59 +301,40 @@ function startCameraScan() {
 }
 
 
-// ===================== FINALIZARE COMANDĂ ======================
+// ===================== FINALIZE ORDER ======================
 async function finalizeOrder() {
-    if (!currentOrderId) return alert("Nu există comandă încărcată!");
+    const btn = document.getElementById("finishBtn");
 
-    // 🔍 Verifică dacă toate produsele sunt scanate 100%
-    const incomplete = currentProducts.filter(p => p.scanned < p.qty);
+    if (!btn.classList.contains("active"))
+        return alert("Trebuie să scanezi toate produsele!");
 
-    if (incomplete.length > 0) {
-        let msg = "Nu poți finaliza comanda.\nProdusele nescanate sunt:\n\n";
-
-        incomplete.forEach(p => {
-            msg += `- ${p.name} (scanat ${p.scanned} din ${p.qty})\n`;
-        });
-
-        alert(msg);
-        return;
-    }
-
-    // dacă totul e OK → mergem mai departe
-    if (!confirm("Toate produsele sunt scanate.\nFinalizezi comanda?")) return;
+    if (!confirm("Finalizezi comanda?")) return;
 
     try {
-        const response = await fetch(DELETE_ORDER_URL, {
+        const res = await fetch(DELETE_ORDER_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ orderId: currentOrderId }),
         });
 
-        const result = await response.json().catch(() => ({}));
+        const result = await res.json();
 
-        if (response.ok && result.deleted?.length > 0) {
-            alert("Comanda a fost finalizată și ștearsă!");
-        } else if (response.status === 404) {
-            alert("Comanda nu a fost găsită în Storage!");
+        if (res.ok && result.deleted?.length > 0) {
+            alert("Comanda a fost finalizată!");
         } else {
-            alert("Eroare la ștergerea comenzii!");
+            alert("Eroare la ștergerea fișierului!");
         }
 
-        // Reset UI
-        document.querySelector("#productsTable tbody").innerHTML = "";
-        document.getElementById("scanInput").value = "";
-        document.getElementById("scanInput").disabled = true;
-        document.getElementById("finishBtn").style.display = "none";
-        document.getElementById("orderTitle").textContent = "";
-        loadOrders();
+        location.reload();
 
     } catch (err) {
         console.error(err);
-        alert("Eroare la conectarea cu serverul!");
+        alert("Eroare la server!");
     }
 }
 
-// ===================== START APP ======================
+
+// ===================== INIT ======================
 loadOrders();
 
 </script>
