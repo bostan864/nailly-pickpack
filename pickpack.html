@@ -42,7 +42,7 @@
     }
 
     .ok {
-        background: #c8f7c5 !important;
+        background: #c8f7c5;
     }
     .errorInput {
         background: #ffcccc !important;
@@ -92,7 +92,6 @@
     <tbody></tbody>
 </table>
 
-<!-- Camera Barcode Scanner -->
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
@@ -113,6 +112,7 @@ const PRODUCT_LOCATION_URL =
 let currentProducts = [];
 let currentOrderId = null;
 
+
 // ===================== ÎNCARCĂ LISTA DE COMENZI ======================
 async function loadOrders() {
     try {
@@ -121,44 +121,46 @@ async function loadOrders() {
         const select = document.getElementById("orderList");
 
         select.innerHTML = "";
+
         orders.forEach(o => {
             const opt = document.createElement("option");
-            opt.value = o.orderId;
+            opt.value = o.orderId;   // *IMPORTANT* – valoare numerică pură
             opt.textContent = "Comanda #" + o.orderId;
             select.appendChild(opt);
         });
 
     } catch (err) {
-        alert("Eroare la încărcarea comenzilor.");
+        alert("Eroare la încărcarea comenzilor!");
         console.error(err);
     }
 }
 
+
 // ===================== ÎNCARCĂ COMANDA ======================
 async function loadOrder() {
     const orderId = document.getElementById("orderList").value;
+
     if (!orderId) return;
 
-    currentOrderId = orderId;
+    currentOrderId = orderId; // numeric pur
 
     const res = await fetch(`${ORDER_GET_URL}?orderId=${orderId}`);
     const data = await res.json();
 
-    // procesează produsele
     currentProducts = await Promise.all(
         data.line_items
             .filter(p => p.item_type === "product")
             .map(async p => {
                 let sku = p.product_sku;
 
-                // ia raftul din supabase simplu, fără headers
-                let locRes = await fetch(PRODUCT_LOCATION_URL + sku);
-                let locData = await locRes.json();
+                // ia raftul din supabase
+                let locRes = await fetch(PRODUCT_LOCATION_URL + sku, {
+                    headers: { "apikey": "", "Authorization": "" }
+                });
 
+                let locData = await locRes.json();
                 let shelf =
-                    locData.length > 0 &&
-                    locData[0].location &&
-                    locData[0].location !== "EMPTY"
+                    locData.length > 0 && locData[0].location && locData[0].location !== "EMPTY"
                     ? locData[0].location
                     : "Fără locație";
 
@@ -176,9 +178,9 @@ async function loadOrder() {
     document.getElementById("orderTitle").textContent = "Comanda #" + orderId;
     document.getElementById("scanInput").disabled = false;
     document.getElementById("finishBtn").style.display = "block";
-
     renderTable();
 }
+
 
 // ===================== TABEL ======================
 function renderTable() {
@@ -200,6 +202,7 @@ function renderTable() {
         tbody.appendChild(tr);
     });
 }
+
 
 // ===================== SCANARE ======================
 function handleScan(event) {
@@ -228,6 +231,7 @@ function flashError() {
     setTimeout(() => input.classList.remove("errorInput"), 300);
 }
 
+
 // ===================== CAMERA ======================
 function startCameraScan() {
     const div = document.getElementById("cameraScanner");
@@ -249,47 +253,48 @@ function startCameraScan() {
     );
 }
 
+
 // ===================== FINALIZARE COMANDĂ ======================
 async function finalizeOrder() {
-    if (!currentOrderId) return alert("Nu există comandă încărcată.");
+  if (!currentOrderId) return alert("Nu există comandă încărcată!");
 
-    if (!confirm("Sigur finalizezi comanda?")) return;
+  if (!confirm("Sigur finalizezi comanda?")) return;
 
-    try {
-        const response = await fetch(DELETE_ORDER_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: currentOrderId })
-        });
+  try {
+    const response = await fetch(DELETE_ORDER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: currentOrderId }),
+    });
 
-        const result = await response.json();
-        console.log(result);
+    const result = await response.json();
+    console.log(result);
 
-        if (result.deleted && result.deleted.length > 0) {
-            alert("Comanda a fost finalizată și ștearsă.");
-        } else {
-            alert("Comanda nu a fost găsită în Storage.");
-        }
-
-        // reset UI
-        currentProducts = [];
-        document.querySelector("#productsTable tbody").innerHTML = "";
-        document.getElementById("scanInput").value = "";
-        document.getElementById("scanInput").disabled = true;
-        document.getElementById("finishBtn").style.display = "none";
-        document.getElementById("orderTitle").textContent = "";
-
-        loadOrders();
-
-    } catch (err) {
-        alert("Eroare la ștergerea comenzii.");
-        console.error(err);
+    if (response.ok && result.deleted && result.deleted.length > 0) {
+      alert("Comanda a fost finalizată și ștearsă cu succes!");
+    } else if (response.status === 404) {
+      alert("Comanda nu a fost găsită în Storage!");
+    } else {
+      alert("Eroare la ștergerea comenzii!");
     }
+
+    // Reset UI
+    document.querySelector("#productsTable tbody").innerHTML = "";
+    document.getElementById("scanInput").value = "";
+    document.getElementById("scanInput").disabled = true;
+    document.getElementById("finishBtn").style.display = "none";
+    loadOrders();
+
+  } catch (err) {
+    console.error(err);
+    alert("Eroare la ștergerea comenzii!");
+  }
 }
 
 // ===================== START APP ======================
 loadOrders();
-</script>
 
+</script>
 </body>
 </html>
+
