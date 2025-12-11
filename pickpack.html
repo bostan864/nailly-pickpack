@@ -10,30 +10,47 @@
         font-family: Arial, sans-serif;
         max-width: 900px;
         margin: 20px auto;
-        padding-bottom: 100px; /* spațiu pentru butonul fix */
+        padding-bottom: 110px; /* pentru butonul fix */
     }
 
     h1 {
         color: #d81b60;
-        font-size: 26px;
+        font-size: 28px;
         text-align: center;
         margin-bottom: 25px;
     }
 
-    select, button, input {
-        padding: 14px;
-        font-size: 17px;
-        margin: 6px 0;
+    h3 {
+        margin-top: 25px;
+        font-size: 20px;
+    }
+
+    /* === ELEMENTE STANDARD (roz) === */
+    select, input {
+        padding: 16px;
+        font-size: 18px;
+        margin: 10px 0;
         width: 100%;
-        border-radius: 8px;
+        border-radius: 10px;
         border: 1px solid #ccc;
         box-sizing: border-box;
     }
 
     button {
-        cursor: pointer;
-        transition: 0.2s;
+        padding: 18px;
+        font-size: 20px;
+        width: 100%;
+        border-radius: 12px;
         font-weight: bold;
+        cursor: pointer;
+        border: none;
+        background: #d81b60;     /* roz default */
+        color: white;
+        transition: 0.25s;
+    }
+
+    button:hover {
+        background: #b0144f;
     }
 
     /* TABEL */
@@ -45,11 +62,11 @@
     }
 
     th, td {
-        padding: 10px;
+        padding: 12px;
         border: 1px solid #ccc;
-        text-align: left;
-        vertical-align: middle;
         word-wrap: break-word;
+        white-space: normal;
+        font-size: 16px;
     }
 
     .ok {
@@ -60,30 +77,85 @@
         background: #ffcccc !important;
     }
 
-    /* === BUTON FIX JOS === */
+    /* === BUTON FINAL FIX === */
     #finishBtn {
         position: fixed;
         bottom: 0;
         left: 0;
         width: 100%;
-        padding: 20px;
-        font-size: 20px;
+        padding: 22px;
+        font-size: 22px;
         text-align: center;
         border: none;
         border-radius: 0;
         color: white;
-        background: #888;   /* gri dezactivat */
-        opacity: 0.8;
-        pointer-events: none; /* dezactivat */
-        transition: 0.3s;
-        display: none; /* se activează după loadOrder() */
+        background: #888;       /* gri când e dezactivat */
+        opacity: 0.85;
+        pointer-events: none;
+        transition: 0.25s;
+        display: none; /* devine vizibil după loadOrder */
     }
 
-    /* activ */
     #finishBtn.active {
-        background: #28a745; /* verde */
+        background: #28a745;   /* verde când e complet */
         opacity: 1;
         pointer-events: auto;
+    }
+
+    /* ======== OPTIMIZARE PENTRU MOBIL ======== */
+    @media (max-width: 600px) {
+
+        h1 {
+            font-size: 24px;
+        }
+
+        th, td {
+            font-size: 15px;
+            padding: 10px;
+        }
+
+        /* SKU */
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 70px;
+        }
+
+        /* NUME PRODUS */
+        td:nth-child(2) {
+            white-space: normal;
+            font-size: 16px;
+            line-height: 1.3;
+        }
+
+        /* RAFT */
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 85px;
+        }
+
+        /* Cant / Scan / Rămas */
+        th:nth-child(4),
+        th:nth-child(5),
+        th:nth-child(6),
+        td:nth-child(4),
+        td:nth-child(5),
+        td:nth-child(6) {
+            width: 55px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        /* Butoane mari pe mobil */
+        button {
+            padding: 20px;
+            font-size: 22px;
+            border-radius: 14px;
+        }
+
+        select, input {
+            padding: 18px;
+            font-size: 18px;
+        }
     }
 </style>
 </head>
