@@ -8,57 +8,63 @@
 <style>
     body {
         font-family: Arial, sans-serif;
-        margin: 10px;
-        padding: 0;
-        color: #333;
+        max-width: 900px;
+        margin: 20px auto;
+        padding: 10px;
     }
 
     h1 {
         color: #d81b60;
         font-size: 26px;
-        margin-top: 10px;
+        text-align: center;
+        margin-bottom: 25px;
     }
 
     h3 {
-        margin-top: 20px;
+        margin-top: 25px;
         font-size: 20px;
     }
 
     select, button, input {
         padding: 14px;
-        font-size: 18px;
+        font-size: 17px;
+        margin: 6px 0;
         width: 100%;
-        margin: 8px 0;
         border-radius: 8px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
     }
 
     button {
         background: #d81b60;
-        color: white;
         border: none;
+        color: white;
         font-weight: bold;
         cursor: pointer;
+        transition: 0.2s;
     }
 
-    button:active {
-        opacity: 0.8;
+    button:hover {
+        background: #b0144f;
     }
 
-    /* TABEL RESPONSIVE */
+    /* TABEL – RESPONSIVE */
     table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 16px;
-        margin-top: 15px;
-        display: block;
-        overflow-x: auto;     /* scroll orizontal pe mobil */
-        white-space: nowrap;
+        margin-top: 20px;
+        table-layout: fixed;
+        background: white;
     }
 
     th, td {
         padding: 10px;
         border: 1px solid #ccc;
         text-align: left;
+        vertical-align: middle;
+        word-wrap: break-word;
+        white-space: normal;
+        font-size: 15px;
     }
 
     .ok {
@@ -69,31 +75,65 @@
         background: #ffcccc !important;
     }
 
-    /* ----------- OPTIMIZARE PENTRU MOBIL ----------- */
+    /* ======== OPTIMIZARE PENTRU MOBIL ======== */
     @media (max-width: 600px) {
+
         h1 {
             font-size: 22px;
-            text-align: center;
         }
 
-        h3 {
-            font-size: 18px;
+        th {
+            font-size: 14px;
         }
 
-        select, button, input {
-            padding: 16px;
-            font-size: 17px;
-        }
-
-        th, td {
-            font-size: 15px;
+        td {
+            font-size: 14px;
             padding: 8px;
+        }
+
+        /* SKU */
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 70px;
+        }
+
+        /* NUME PRODUS – se poate rupe pe 2-3 rânduri */
+        td:nth-child(2) {
+            white-space: normal;
+            font-size: 15px;
+            line-height: 1.3;
+        }
+
+        /* RAFT */
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 85px;
+        }
+
+        /* Cantitate / Scanat / Rămas */
+        th:nth-child(4),
+        th:nth-child(5),
+        th:nth-child(6),
+        td:nth-child(4),
+        td:nth-child(5),
+        td:nth-child(6) {
+            width: 55px;
+            text-align: center;
+            font-size: 14px;
         }
 
         button {
             font-size: 18px;
+            padding: 16px;
+            border-radius: 10px;
+        }
+
+        input, select {
+            font-size: 16px;
+            padding: 12px;
         }
     }
+
 </style>
 </head>
 
