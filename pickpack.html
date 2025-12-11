@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8" />
+<title>Nailly – Pick & Pack</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 20px auto;
+    }
+    h1 { color: #d81b60; }
+    select, button, input {
+        padding: 10px;
+        font-size: 16px;
+        margin: 5px 0;
+        width: 100%;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    table, td, th {
+        border: 1px solid #ccc;
+    }
+    th, td {
+        padding: 10px;
+        text-align: left;
+    }
+    .ok {
+        background: #c8f7c5;
+    }
+    .error {
+        background: #f7c5c5 !important;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Nailly – Pick & Pack</h1>
+
+<h3>Pas 1: Selectează comanda</h3>
+<select id="orderList">
+    <option>Se încarcă comenzile...</option>
+</select>
+<button onclick="loadOrder()">Încarcă comanda</button>
+
+<h3 id="orderTitle"></h3>
+
+<h3>Pas 2: Scanează produsele</h3>
+<input id="scanInput" placeholder="Scanează EAN / SKU..." 
+       onkeypress="handleScan(event)" disabled />
+
+<table id="productsTable">
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>Produs</th>
+            <th>Cantitate</th>
+            <th>Scanat</th>
+            <th>Rămas</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+
+// ================================
+//  URL-URI FUNCȚII SUPABASE
+// ================================
+const ORDER_LIST_URL =
+  "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/orders-list";
+
+const ORDER_GET_URL =
+  "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/order-get";
+
+let currentProducts = [];
+
+
+// ================================
+//  1. ÎNCARCĂ LISTA DE COMENZI
+// ================================
+async function loadOrders() {
+    try {
+        const res = await fetch(ORDER_LIST_URL);
+        const orders = await res.json();
+
+        const select = document.getElementById("orderList");
+        select.innerHTML = "";
+
+        orders.forEach(o => {
+            const opt = document.createElement("option");
+            opt.value = o.orderId;
+            opt.textContent = "Comanda #" + o.orderId;
+            select.appendChild(opt);
+        });
+
+    } catch (e) {
+        console.error("Load orders error:", e);
+        alert("Nu pot încărca comenzile!");
+    }
+}
+
+
+
+// ================================
+//  2. ÎNCARCĂ O COMANDĂ SELECTATĂ
+// ================================
+async function loadOrder() {
+    const orderId = document.getElementById("orderList").value;
+    if (!orderId) return;
+
+    const res = await fetch(`${ORDER_GET_URL}?orderId=${orderId}`);
+    const data = await res.json();
+
+    // Folosim line_items din JSON-ul comenzii
+    const items = data.line_items || [];
+
+    currentProducts = items.map(item => ({
+        sku: item.sku || item.product_sku || "",
+        name: item.product_name || "",
+        qty: Number(item.quantity) || 1,
+        scanned: 0
+    }));
+
+    renderTable();
+
+    document.getElementById("orderTitle").textContent = "Comanda #" + orderId;
+    document.getElementById("scanInput").disabled = false;
+    document.getElementById("scanInput").focus();
+}
+
+
+
+// ================================
+//  3. RANDĂRĂ MASA
+// ================================
+function renderTable() {
+    const tbody = document.querySelector("#productsTable tbody");
+    tbody.innerHTML = "";
+
+    currentProducts.forEach(p => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${p.sku}</td>
+            <td>${p.name}</td>
+            <td>${p.qty}</td>
+            <td>${p.scanned}</td>
+            <td>${p.qty - p.scanned}</td>
+        `;
+
+        if (p.scanned === p.qty) tr.classList.add("ok");
+
+        tbody.appendChild(tr);
+    });
+}
+
+
+
+// ================================
+//  4. SCANARE PRODUSE
+// ================================
+function handleScan(event) {
+    if (event.key !== "Enter") return;
+
+    const code = event.target.value.trim();
+    event.target.value = "";
+
+    let found = currentProducts.find(p => p.sku == code);
+
+    if (!found) {
+        flashError();
+        return;
+    }
+
+    if (found.scanned < found.qty) {
+        found.scanned++;
+        renderTable();
+    } else {
+        flashError();
+    }
+}
+
+
+
+// ================================
+//  HIGHLIGHT EROARE SCANARE
+// ================================
+function flashError() {
+    let input = document.getElementById("scanInput");
+    input.classList.add("error");
+    setTimeout(() => input.classList.remove("error"), 400);
+}
+
+
+// PORNEȘTE APLICATIA
+loadOrders();
+
+</script>
+</body>
+</html>
