@@ -260,7 +260,22 @@ function startCameraScan() {
 async function finalizeOrder() {
     if (!currentOrderId) return alert("Nu există comandă încărcată!");
 
-    if (!confirm("Sigur finalizezi comanda?")) return;
+    // 🔍 Verifică dacă toate produsele sunt scanate 100%
+    const incomplete = currentProducts.filter(p => p.scanned < p.qty);
+
+    if (incomplete.length > 0) {
+        let msg = "Nu poți finaliza comanda.\nProdusele nescanate sunt:\n\n";
+
+        incomplete.forEach(p => {
+            msg += `- ${p.name} (scanat ${p.scanned} din ${p.qty})\n`;
+        });
+
+        alert(msg);
+        return;
+    }
+
+    // dacă totul e OK → mergem mai departe
+    if (!confirm("Toate produsele sunt scanate.\nFinalizezi comanda?")) return;
 
     try {
         const response = await fetch(DELETE_ORDER_URL, {
@@ -270,8 +285,6 @@ async function finalizeOrder() {
         });
 
         const result = await response.json().catch(() => ({}));
-
-        console.log("Răspuns backend:", result);
 
         if (response.ok && result.deleted?.length > 0) {
             alert("Comanda a fost finalizată și ștearsă!");
@@ -294,7 +307,6 @@ async function finalizeOrder() {
         alert("Eroare la conectarea cu serverul!");
     }
 }
-
 
 // ===================== START APP ======================
 loadOrders();
