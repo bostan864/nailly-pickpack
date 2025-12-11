@@ -1,699 +1,736 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8" />
-  <title>Nailly – Pick & Pack</title>
+<meta charset="UTF-8" />
+<title>Nailly – Pick & Pack</title>
 
-  <style>
+<style>
     body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 10px 120px;
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 20px auto;
+        padding: 0 10px 110px;
     }
 
     h1 {
-      color: #d81b60;
-      font-size: 30px;
-      text-align: center;
-      margin-bottom: 20px;
+        color: #d81b60;
+        font-size: 28px;
+        text-align: center;
+        margin-bottom: 20px;
     }
 
     h3 {
-      margin-top: 25px;
-      font-size: 20px;
+        margin-top: 20px;
+        font-size: 20px;
     }
 
-    /* DASHBOARD SUS */
-    #dashboardBar {
-      margin-bottom: 15px;
+    /* ====== STATS BAR ====== */
+    #statsBar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .stats-card {
+        flex: 1 1 160px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        background: #f3f3f3;
+        box-sizing: border-box;
+    }
+    .stats-title {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+    .stats-number {
+        font-weight: 700;
+        font-size: 20px;
+        margin-right: 4px;
+    }
+    .stats-pending--some {
+        background: #e8f7e9;
+        color: #1e7e34;
+    }
+    .stats-pending--none {
+        background: #fde8e8;
+        color: #b10000;
+    }
+    .stats-done {
+        background: #e8f0ff;
+        color: #1a3d8f;
     }
 
-    .pending-banner {
-      padding: 14px 18px;
-      border-radius: 12px;
-      font-size: 19px;
-      font-weight: bold;
-      text-align: center;
-      margin-bottom: 6px;
+    /* === ELEMENTE STANDARD === */
+    input, select {
+        padding: 14px;
+        font-size: 17px;
+        margin: 8px 0;
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
     }
 
-    .pending-ok {
-      background: #e8f5e9;
-      color: #1b5e20;
-      border: 1px solid #66bb6a;
-    }
-
-    .pending-empty {
-      background: #ffebee;
-      color: #b71c1c;
-      border: 1px solid #ef5350;
-    }
-
-    #todayInfo {
-      text-align: center;
-      font-size: 15px;
-      margin-bottom: 8px;
-      color: #333;
-    }
-
-    #timerWrapper {
-      text-align: center;
-      margin-bottom: 10px;
-      font-size: 16px;
-    }
-
-    #timerDisplay {
-      font-weight: bold;
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* ELEMENTE STANDARD (input/select) */
-    select,
-    input {
-      padding: 20px;
-      font-size: 20px;
-      margin: 10px 0;
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-    }
-
-    /* BUTOANE – MĂRITE ~50% */
     button {
-      padding: 26px;
-      font-size: 24px;
-      width: 100%;
-      border-radius: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-      background: #d81b60;
-      color: white;
-      transition: 0.25s;
+        padding: 16px;
+        font-size: 18px;
+        width: 100%;
+        border-radius: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        background: #d81b60;
+        color: white;
+        transition: 0.2s;
+        box-sizing: border-box;
     }
 
     button:hover {
-      background: #b0144f;
+        background: #b0144f;
+    }
+
+    /* SEARCH INPUT */
+    #orderSearch {
+        margin-top: 5px;
     }
 
     /* TABEL PRODUSE */
     table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      table-layout: fixed;
-      background: white;
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        table-layout: fixed;
     }
 
-    th,
-    td {
-      padding: 12px;
-      border: 1px solid #ccc;
-      word-wrap: break-word;
-      white-space: normal;
-      font-size: 16px;
+    th, td {
+        padding: 10px;
+        border: 1px solid #ccc;
+        word-wrap: break-word;
+        white-space: normal;
+        font-size: 15px;
+    }
+
+    th {
+        background: #fafafa;
     }
 
     .ok {
-      background: #c8f7c5 !important;
+        background: #c8f7c5 !important;
+    }
+
+    .next-row {
+        box-shadow: inset 3px 0 0 #d81b60;
+        background: #fff9fc;
     }
 
     .errorInput {
-      background: #ffcccc !important;
+        background: #ffcccc !important;
     }
 
-    .highlight-row {
-      outline: 3px solid #ff9800;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.35);
-      transition: background-color 0.2s;
+    /* META COMANDĂ: TIMER + PROGRES */
+    #orderMeta {
+        display: none;
+        margin-top: 8px;
+        margin-bottom: 10px;
+    }
+    #orderInfoRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        color: #444;
+        margin-bottom: 6px;
+    }
+    #timerBox {
+        font-weight: 600;
+    }
+    #progressOuter {
+        width: 100%;
+        height: 10px;
+        background: #eee;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    #progressInner {
+        height: 100%;
+        width: 0;
+        background: #28a745;
+        transition: width 0.2s ease-out;
+    }
+    #progressText {
+        margin-top: 4px;
+        font-size: 13px;
+        color: #555;
     }
 
     /* BUTON FINAL FIX JOS */
     #finishBtn {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      padding: 26px;
-      font-size: 24px;
-      text-align: center;
-      border: none;
-      border-radius: 0;
-      color: white;
-      background: #888; /* gri default */
-      opacity: 0.9;
-      pointer-events: none;
-      transition: 0.25s;
-      display: none; /* apare după loadOrder */
-      z-index: 20;
-    }
-
-    #finishBtn.active {
-      background: #28a745; /* verde când e gata */
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    /* OPTIMIZARE MOBIL */
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 26px;
-      }
-
-      th,
-      td {
-        font-size: 15px;
-        padding: 9px;
-      }
-
-      th:nth-child(1),
-      td:nth-child(1) {
-        width: 70px; /* SKU */
-      }
-
-      td:nth-child(2) {
-        white-space: normal;
-        font-size: 16px;
-        line-height: 1.3; /* nume produs */
-      }
-
-      th:nth-child(3),
-      td:nth-child(3) {
-        width: 85px; /* raft */
-      }
-
-      th:nth-child(4),
-      th:nth-child(5),
-      th:nth-child(6),
-      td:nth-child(4),
-      td:nth-child(5),
-      td:nth-child(6) {
-        width: 55px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        font-size: 20px;
         text-align: center;
-        font-size: 15px;
-      }
+        border-radius: 0;
+        color: white;
+        background: #888;
+        opacity: 0.85;
+        pointer-events: none;
+        transition: 0.25s;
+        display: none;
+        z-index: 999;
     }
-  </style>
+    #finishBtn.active {
+        background: #28a745;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* CAMERA */
+    #cameraScanner {
+        width: 100%;
+        margin-top: 10px;
+        display: none;
+    }
+
+    /* ======== OPTIMIZARE PENTRU MOBIL ======== */
+    @media (max-width: 600px) {
+        h1 {
+            font-size: 24px;
+        }
+        th, td {
+            font-size: 14px;
+            padding: 8px;
+        }
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 70px;
+        }
+        td:nth-child(2) {
+            white-space: normal;
+            font-size: 15px;
+            line-height: 1.3;
+        }
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 85px;
+        }
+        th:nth-child(4),
+        th:nth-child(5),
+        th:nth-child(6),
+        td:nth-child(4),
+        td:nth-child(5),
+        td:nth-child(6) {
+            width: 55px;
+            text-align: center;
+        }
+        button {
+            padding: 18px;
+            font-size: 20px;
+        }
+        input, select {
+            padding: 16px;
+            font-size: 16px;
+        }
+    }
+</style>
 </head>
 
 <body>
-  <h1>Nailly – Pick & Pack</h1>
 
-  <!-- DASHBOARD SUS -->
-  <div id="dashboardBar">
-    <div id="pendingInfo" class="pending-banner pending-ok">
-      Mai ai 0 comenzi de pregătit
+<h1>Nailly – Pick & Pack</h1>
+
+<!-- STATS -->
+<div id="statsBar">
+    <div id="pendingBox" class="stats-card stats-pending--none">
+        <span class="stats-title">Status comenzi</span>
+        <span class="stats-number" id="pendingCount">0</span>
+        <span>comenzi de pregătit</span>
     </div>
-    <div id="todayInfo">Astăzi ai finalizat 0 comenzi</div>
-  </div>
+    <div id="doneBox" class="stats-card stats-done">
+        <span class="stats-title">Activitatea de astăzi</span>
+        <span class="stats-number" id="doneCount">0</span>
+        <span>comenzi finalizate</span>
+    </div>
+</div>
 
-  <div id="timerWrapper">
-    <strong>Timp pentru această comandă: <span id="timerDisplay">00:00</span></strong>
-  </div>
+<!-- ================= PAS 1 ================= -->
+<h3>Pas 1: Selectează comanda</h3>
 
-  <!-- ================= PAS 1 ================= -->
-  <h3>Pas 1: Selectează comanda</h3>
+<input id="orderSearch" placeholder="Caută comandă după număr..." oninput="filterOrders()" />
 
-  <input id="orderSearch" placeholder="Caută comanda după număr..." />
-
-  <select id="orderList" size="8">
+<select id="orderList">
     <option>Se încarcă comenzile...</option>
-  </select>
+</select>
 
-  <button onclick="loadOrder()">Încarcă comanda</button>
+<button onclick="loadOrder()">Încarcă comanda</button>
 
-  <h3 id="orderTitle"></h3>
+<h3 id="orderTitle"></h3>
 
-  <!-- ================= PAS 2 ================= -->
-  <h3>Pas 2: Scanează produsele</h3>
+<div id="orderMeta">
+    <div id="orderInfoRow">
+        <span id="orderCode"></span>
+        <span id="timerBox">Timp: <span id="timer">00:00</span></span>
+    </div>
+    <div id="progressOuter">
+        <div id="progressInner"></div>
+    </div>
+    <div id="progressText"></div>
+</div>
 
-  <input
-    id="scanInput"
-    placeholder="Scanează EAN / SKU..."
-    onkeypress="handleScan(event)"
-    disabled
-  />
+<!-- ================= PAS 2 ================= -->
+<h3>Pas 2: Scanează produsele</h3>
 
-  <button onclick="startCameraScan()">Scanează cu camera telefonului</button>
+<input id="scanInput"
+       placeholder="Scanează EAN / SKU..."
+       onkeypress="handleScan(event)"
+       disabled />
 
-  <div id="cameraScanner" style="width: 100%; margin-top: 10px; display: none;"></div>
+<button onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
-  <table id="productsTable">
+<div id="cameraScanner"></div>
+
+<table id="productsTable">
     <thead>
-      <tr>
-        <th>SKU</th>
-        <th>Produs</th>
-        <th>Raft</th>
-        <th>Cantitate</th>
-        <th>Scanat</th>
-        <th>Rămas</th>
-      </tr>
+        <tr>
+            <th>SKU</th>
+            <th>Produs</th>
+            <th>Raft</th>
+            <th>Cantitate</th>
+            <th>Scanat</th>
+            <th>Rămas</th>
+        </tr>
     </thead>
     <tbody></tbody>
-  </table>
+</table>
 
-  <!-- BUTON FIX JOS -->
-  <button id="finishBtn" onclick="finalizeOrder()">Finalizează comanda</button>
+<!-- BUTON FIX JOS -->
+<button id="finishBtn" onclick="finalizeOrder()">Finalizează comanda</button>
 
-  <!-- Sunet pentru eroare -->
-  <audio
-    id="errorSound"
-    src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
-    preload="auto"
-  ></audio>
+<!-- LIBRĂRIE CAMERA -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script>
+// ===================== CONFIG ======================
+const ORDER_LIST_URL =
+  "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/orders-list";
 
-  <script>
-    // ===================== CONFIG ======================
-    const SUPABASE_URL = "https://yvmqfsigxecmrygmbolg.supabase.co";
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFmc2lneGVjbXJ5Z21ib2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwNDQ0MzgsImV4cCI6MjA3NTYyMDQzOH0.b9MXrgxADVZGvdFaKFQggD-vMd0ayZ9hX4_PmYOzrfE";
+const ORDER_GET_URL =
+  "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/order-get";
 
-    const ORDER_LIST_URL =
-      SUPABASE_URL + "/functions/v1/orders-list";
+const DELETE_ORDER_URL =
+  "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/delete-order-file-orderId-";
 
-    const ORDER_GET_URL =
-      SUPABASE_URL + "/functions/v1/order-get";
+const PRODUCT_LOCATION_URL =
+  "https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.";
 
-    const DELETE_ORDER_URL =
-      SUPABASE_URL + "/functions/v1/delete-order-file-orderId-";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFmc2lneGVjbXJ5Z21ib2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwNDQ0MzgsImV4cCI6MjA3NTYyMDQzOH0.b9MXrgxADVZGvdFaKFQggD-vMd0ayZ9hX4_PmYOzrfE";
 
-    const PRODUCT_LOCATION_URL =
-      SUPABASE_URL + "/rest/v1/product_locations?sku=eq.";
+let currentProducts = [];
+let currentOrderId = null;
+let allOrders = [];
+let timerInterval = null;
+let orderStartTime = null;
 
-    const COMPLETED_ORDERS_URL =
-      SUPABASE_URL + "/rest/v1/completed_orders";
+// ===================== HELPER: DATE KEY ======================
+function getTodayKey() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `nailly_pnp_done_${y}${m}${day}`;
+}
 
-    let currentProducts = [];
-    let currentOrderId = null;
-    let allOrders = [];
-    let timerStart = null;
-    let timerInterval = null;
+// ===================== AUDIO + VIBRAȚIE ======================
+function playBeep(freq = 800, duration = 120, type = "sine") {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      ctx.currentTime + duration / 1000
+    );
+    osc.stop(ctx.currentTime + duration / 1000 + 0.02);
+  } catch (e) {
+    // ignorăm dacă nu e suportat
+  }
+}
 
-    // ===================== HELPERI GENERALI ======================
+function feedbackSuccess() {
+  playBeep(900, 100, "square");
+  if (navigator.vibrate) navigator.vibrate(40);
+}
 
-    function playErrorFeedback() {
-      try {
-        if ("vibrate" in navigator) {
-          navigator.vibrate(200);
-        }
-      } catch (e) {}
+function feedbackError() {
+  playBeep(220, 200, "sawtooth");
+  if (navigator.vibrate) navigator.vibrate([0, 80, 40, 80]);
+}
 
-      try {
-        const audio = document.getElementById("errorSound");
-        if (audio) {
-          audio.currentTime = 0;
-          audio.play().catch(() => {});
-        }
-      } catch (e) {}
-    }
+// ===================== TIMER ======================
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  orderStartTime = Date.now();
+  const timerEl = document.getElementById("timer");
+  timerEl.textContent = "00:00";
 
-    function updatePendingBanner(pendingCount) {
-      const el = document.getElementById("pendingInfo");
-      if (!el) return;
+  timerInterval = setInterval(() => {
+    const diff = Math.floor((Date.now() - orderStartTime) / 1000);
+    const m = String(Math.floor(diff / 60)).padStart(2, "0");
+    const s = String(diff % 60).padStart(2, "0");
+    timerEl.textContent = `${m}:${s}`;
+  }, 1000);
+}
 
-      if (pendingCount === 0) {
-        el.textContent = "Nu mai ai comenzi de pregătit 🎉";
-        el.classList.remove("pending-ok");
-        el.classList.add("pending-empty");
-      } else {
-        el.textContent = `Mai ai ${pendingCount} comenzi de pregătit`;
-        el.classList.remove("pending-empty");
-        el.classList.add("pending-ok");
-      }
-    }
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
 
-    async function refreshCompletedToday() {
-      const el = document.getElementById("todayInfo");
-      try {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const iso = todayStart.toISOString();
+// ===================== STATS UI ======================
+function updateStats() {
+  const pendingBox = document.getElementById("pendingBox");
+  const pendingCountEl = document.getElementById("pendingCount");
+  const doneCountEl = document.getElementById("doneCount");
+  const select = document.getElementById("orderList");
 
-        const url =
-          COMPLETED_ORDERS_URL +
-          "?completed_at=gte." +
-          encodeURIComponent(iso) +
-          "&select=order_id";
+  // comenzi în listă (excluzând cazul "Nu există comenzi...")
+  let pending = 0;
+  for (let i = 0; i < select.options.length; i++) {
+    if (select.options[i].value) pending++;
+  }
 
-        const res = await fetch(url, {
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: "Bearer " + SUPABASE_ANON_KEY,
-          },
-        });
+  pendingCountEl.textContent = pending;
+  pendingBox.classList.remove("stats-pending--some", "stats-pending--none");
+  if (pending > 0) {
+    pendingBox.classList.add("stats-pending--some");
+  } else {
+    pendingBox.classList.add("stats-pending--none");
+  }
 
-        const data = await res.json();
-        const count = Array.isArray(data) ? data.length : 0;
-        el.textContent = `Astăzi ai finalizat ${count} comenzi`;
-      } catch (err) {
-        console.error("Eroare la citirea completed_orders", err);
-        el.textContent = "Astăzi ai finalizat 0 comenzi";
-      }
-    }
+  const key = getTodayKey();
+  const done = Number(localStorage.getItem(key) || "0");
+  doneCountEl.textContent = done;
+}
 
-    function startTimer() {
-      timerStart = Date.now();
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(updateTimerDisplay, 1000);
-      updateTimerDisplay();
-    }
+// ===================== REBUILD ORDER LIST ======================
+function rebuildOrderList() {
+  const select = document.getElementById("orderList");
+  const searchInput = document.getElementById("orderSearch");
+  const term = (searchInput.value || "").trim();
 
-    function stopTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = null;
-    }
+  select.innerHTML = "";
 
-    function updateTimerDisplay() {
-      const span = document.getElementById("timerDisplay");
-      if (!timerStart || !span) {
-        span.textContent = "00:00";
-        return;
-      }
-      const elapsedSec = Math.floor((Date.now() - timerStart) / 1000);
-      const m = String(Math.floor(elapsedSec / 60)).padStart(2, "0");
-      const s = String(elapsedSec % 60).padStart(2, "0");
-      span.textContent = `${m}:${s}`;
-    }
+  let filtered = allOrders;
+  if (term) {
+    filtered = allOrders.filter(o =>
+      String(o.orderId).includes(term)
+    );
+  }
 
-    // ===================== LOAD ORDERS ======================
-    async function loadOrders() {
-      try {
-        const res = await fetch(ORDER_LIST_URL);
-        const orders = await res.json();
-        allOrders = orders || [];
+  if (filtered.length === 0) {
+    const opt = document.createElement("option");
+    opt.textContent = "Nu există comenzi de pregătit";
+    opt.value = "";
+    select.appendChild(opt);
+  } else {
+    filtered.forEach((o, index) => {
+      const opt = document.createElement("option");
+      opt.value = o.orderId;
+      opt.textContent = `${index + 1}. Comanda #${o.orderId}`;
+      select.appendChild(opt);
+    });
+  }
 
-        const select = document.getElementById("orderList");
-        select.innerHTML = "";
+  updateStats();
+}
 
-        allOrders.forEach((o, idx) => {
-          const opt = document.createElement("option");
-          opt.value = o.orderId;
-          opt.textContent = `${idx + 1}. Comanda #${o.orderId}`;
-          select.appendChild(opt);
-        });
+function filterOrders() {
+  rebuildOrderList();
+}
 
-        updatePendingBanner(allOrders.length);
-        refreshCompletedToday();
-        applyOrderFilter(); // ca să se aplice și filtrul curent, dacă există
-      } catch (err) {
-        alert("Eroare la încărcarea comenzilor!");
-        console.error(err);
-      }
-    }
+// ===================== LOAD ORDERS ======================
+async function loadOrders() {
+  try {
+    const res = await fetch(ORDER_LIST_URL);
+    const orders = await res.json();
 
-    // Filtru după număr de comandă
-    function applyOrderFilter() {
-      const search = document
-        .getElementById("orderSearch")
-        .value.trim()
-        .toLowerCase();
-      const select = document.getElementById("orderList");
-      select.innerHTML = "";
+    allOrders = Array.isArray(orders) ? orders : [];
+    rebuildOrderList();
 
-      const filtered = allOrders.filter((o) =>
-        String(o.orderId).toLowerCase().includes(search)
-      );
-
-      filtered.forEach((o, idx) => {
-        const opt = document.createElement("option");
-        opt.value = o.orderId;
-        opt.textContent = `${idx + 1}. Comanda #${o.orderId}`;
-        select.appendChild(opt);
-      });
-    }
-
-    document
-      .getElementById("orderSearch")
-      .addEventListener("input", applyOrderFilter);
-
-    // ===================== LOAD ORDER ======================
-    async function loadOrder() {
-      const select = document.getElementById("orderList");
-      const orderId = select.value;
-      if (!orderId) return;
-
-      currentOrderId = orderId;
-
-      const res = await fetch(`${ORDER_GET_URL}?orderId=${orderId}`);
-      const data = await res.json();
-
-      // sortăm produsele după locație ca să fie traseul logic
-      const products = data.line_items.filter(
-        (p) => p.item_type === "product"
-      );
-
-      // transformăm în structura noastră internă cu locații
-      currentProducts = await Promise.all(
-        products.map(async (p) => {
-          const originalSku = p.product_sku;
-          const lookupSku = originalSku.replace(/^0+/, "");
-
-          let locRes = await fetch(PRODUCT_LOCATION_URL + lookupSku, {
-            method: "GET",
-            headers: {
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: "Bearer " + SUPABASE_ANON_KEY,
-            },
-          });
-
-          let locData = await locRes.json();
-          let shelf =
-            locData.length > 0 &&
-            locData[0].location &&
-            locData[0].location !== "EMPTY"
-              ? locData[0].location
-              : "Fără locație";
-
-          return {
-            sku: originalSku,
-            ean: p.product_ean,
-            name: p.product_name,
-            qty: Number(p.quantity),
-            shelf,
-            scanned: 0,
-          };
-        })
-      );
-
-      // sortare după locație (raft/rand/poz/cutie) dacă există
-      currentProducts.sort((a, b) => {
-        const parseLoc = (loc) => {
-          if (!loc || loc === "Fără locație") return [999, 999, 999, 999];
-          // format tipic: R1-R01-P01-C01 etc.
-          const parts = loc.split("-");
-          const nums = parts.map((p) =>
-            parseInt(p.replace(/\D+/g, ""), 10) || 0
-          );
-          while (nums.length < 4) nums.push(0);
-          return nums;
-        };
-        const aa = parseLoc(a.shelf);
-        const bb = parseLoc(b.shelf);
-        for (let i = 0; i < 4; i++) {
-          if (aa[i] !== bb[i]) return aa[i] - bb[i];
-        }
-        return 0;
-      });
-
-      document.getElementById("orderTitle").textContent =
-        "Comanda #" + orderId;
-      document.getElementById("scanInput").disabled = false;
-
-      // arată butonul de jos, dezactivat
+    // dacă nu există comenzi → resetăm UI
+    if (!allOrders.length) {
+      currentOrderId = null;
+      currentProducts = [];
+      document.getElementById("orderTitle").textContent = "";
+      document.getElementById("orderMeta").style.display = "none";
+      document.querySelector("#productsTable tbody").innerHTML = "";
+      const scanInput = document.getElementById("scanInput");
+      scanInput.value = "";
+      scanInput.disabled = true;
       const btn = document.getElementById("finishBtn");
-      btn.style.display = "block";
+      btn.style.display = "none";
+      btn.classList.remove("active");
+    }
+
+  } catch (err) {
+    alert("Eroare la încărcarea comenzilor!");
+    console.error(err);
+  }
+}
+
+// ===================== LOAD ORDER ======================
+async function loadOrder() {
+  const select = document.getElementById("orderList");
+  const orderId = select.value;
+  if (!orderId) return;
+
+  currentOrderId = orderId;
+
+  const res = await fetch(`${ORDER_GET_URL}?orderId=${orderId}`);
+  const data = await res.json();
+
+  currentProducts = await Promise.all(
+    data.line_items
+      .filter(p => p.item_type === "product")
+      .map(async p => {
+        let originalSku = p.product_sku || "";
+        let lookupSku = originalSku.replace(/^0+/, "");
+
+        let locRes = await fetch(PRODUCT_LOCATION_URL + encodeURIComponent(lookupSku), {
+          method: "GET",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+
+        let locData = [];
+        try {
+          locData = await locRes.json();
+        } catch (_) {}
+
+        let shelf =
+          locData.length > 0 &&
+          locData[0].location &&
+          locData[0].location !== "EMPTY"
+            ? locData[0].location
+            : "Fără locație";
+
+        return {
+          sku: originalSku,
+          ean: p.product_ean,
+          name: p.product_name,
+          qty: Number(p.quantity),
+          shelf,
+          scanned: 0
+        };
+      })
+  );
+
+  // sortare după raft (o singură trecere optimă)
+  currentProducts.sort((a, b) => {
+    if (a.shelf === b.shelf) {
+      return String(a.sku).localeCompare(String(b.sku));
+    }
+    return String(a.shelf).localeCompare(String(b.shelf));
+  });
+
+  document.getElementById("orderTitle").textContent = "Comanda #" + orderId;
+  document.getElementById("orderCode").textContent = "ID comandă: " + orderId;
+  document.getElementById("orderMeta").style.display = "block";
+
+  const scanInput = document.getElementById("scanInput");
+  scanInput.disabled = false;
+  scanInput.focus();
+
+  const btn = document.getElementById("finishBtn");
+  btn.style.display = "block";
+  btn.classList.remove("active");
+
+  startTimer();
+  renderTable();
+}
+
+// ===================== TABLE ======================
+function renderTable() {
+  const tbody = document.querySelector("#productsTable tbody");
+  tbody.innerHTML = "";
+
+  const nextIndex = currentProducts.findIndex(p => p.scanned < p.qty);
+
+  currentProducts.forEach((p, index) => {
+    const tr = document.createElement("tr");
+    if (index === nextIndex) tr.classList.add("next-row");
+    if (p.scanned === p.qty) tr.classList.add("ok");
+
+    tr.innerHTML = `
+        <td>${p.sku}</td>
+        <td>${p.name}</td>
+        <td>${p.shelf}</td>
+        <td>${p.qty}</td>
+        <td>${p.scanned}</td>
+        <td>${p.qty - p.scanned}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // progres total
+  const totalQty = currentProducts.reduce((s, p) => s + p.qty, 0);
+  const totalScanned = currentProducts.reduce((s, p) => s + p.scanned, 0);
+  const pct = totalQty > 0 ? Math.round((totalScanned / totalQty) * 100) : 0;
+
+  const progressInner = document.getElementById("progressInner");
+  const progressText = document.getElementById("progressText");
+  progressInner.style.width = pct + "%";
+  progressText.textContent = `Progres: ${totalScanned}/${totalQty} (${pct}%)`;
+
+  updateFinishButtonState();
+}
+
+// ===================== CHECK IF ALL PRODUCTS ARE SCANNED ======================
+function updateFinishButtonState() {
+  const allScanned = currentProducts.length > 0 &&
+    currentProducts.every(p => p.scanned >= p.qty);
+
+  const btn = document.getElementById("finishBtn");
+  if (allScanned) {
+    btn.classList.add("active");
+  } else {
+    btn.classList.remove("active");
+  }
+}
+
+// ===================== SCAN ======================
+function handleScan(event) {
+  if (event.key !== "Enter") return;
+
+  const code = event.target.value.trim();
+  event.target.value = "";
+
+  let found = currentProducts.find(
+    p => p.sku === code || p.ean === code
+  );
+
+  if (!found) {
+    feedbackError();
+    flashError();
+    return;
+  }
+
+  if (found.scanned < found.qty) {
+    found.scanned++;
+    feedbackSuccess();
+    renderTable();
+  } else {
+    feedbackError();
+    flashError();
+  }
+}
+
+function flashError() {
+  let input = document.getElementById("scanInput");
+  input.classList.add("errorInput");
+  setTimeout(() => input.classList.remove("errorInput"), 300);
+}
+
+// ===================== CAMERA SCAN ======================
+function startCameraScan() {
+  const div = document.getElementById("cameraScanner");
+  div.style.display = "block";
+
+  const html5QrCode = new Html5Qrcode("cameraScanner");
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 150 } },
+    (decodedText) => {
+      document.getElementById("scanInput").value = decodedText;
+      handleScan({ key: "Enter", target: { value: decodedText } });
+
+      html5QrCode.stop().then(() => {
+        div.style.display = "none";
+      });
+    }
+  );
+}
+
+// ===================== FINALIZE ORDER ======================
+async function finalizeOrder() {
+  const btn = document.getElementById("finishBtn");
+
+  if (!btn.classList.contains("active")) {
+    alert("Trebuie să scanezi toate produsele!");
+    return;
+  }
+
+  if (!currentOrderId) {
+    alert("Nu există comandă încărcată!");
+    return;
+  }
+
+  if (!confirm("Finalizezi comanda?")) return;
+
+  try {
+    const res = await fetch(DELETE_ORDER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: currentOrderId }),
+    });
+
+    const result = await res.json().catch(() => ({}));
+
+    if (res.ok && result.deleted?.length > 0) {
+      alert("Comanda a fost finalizată!");
+
+      // incrementăm contorul din ziua curentă
+      const key = getTodayKey();
+      const prev = Number(localStorage.getItem(key) || "0");
+      localStorage.setItem(key, String(prev + 1));
+
+      // reset UI pentru comandă
+      stopTimer();
+      currentProducts = [];
+      currentOrderId = null;
+      document.getElementById("orderTitle").textContent = "";
+      document.getElementById("orderMeta").style.display = "none";
+      document.querySelector("#productsTable tbody").innerHTML = "";
+
+      const scanInput = document.getElementById("scanInput");
+      scanInput.value = "";
+      scanInput.disabled = true;
+
+      btn.style.display = "none";
       btn.classList.remove("active");
 
-      startTimer();
-      renderTable();
+      await loadOrders(); // reîncarcă lista și updatează stats
+
+    } else {
+      alert("Eroare la ștergerea fișierului!");
+      console.error(result);
     }
 
-    // ===================== TABLE ======================
-    function renderTable() {
-      const tbody = document.querySelector("#productsTable tbody");
-      tbody.innerHTML = "";
+  } catch (err) {
+    console.error(err);
+    alert("Eroare la server!");
+  }
+}
 
-      currentProducts.forEach((p) => {
-        const tr = document.createElement("tr");
-        if (p.scanned === p.qty) tr.classList.add("ok");
-
-        tr.innerHTML = `
-          <td>${p.sku}</td>
-          <td>${p.name}</td>
-          <td>${p.shelf}</td>
-          <td>${p.qty}</td>
-          <td>${p.scanned}</td>
-          <td>${p.qty - p.scanned}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      updateFinishButtonState();
-    }
-
-    function updateFinishButtonState() {
-      const allScanned = currentProducts.every((p) => p.scanned >= p.qty);
-      const btn = document.getElementById("finishBtn");
-
-      if (allScanned && currentProducts.length > 0) {
-        btn.classList.add("active");
-      } else {
-        btn.classList.remove("active");
-      }
-    }
-
-    function highlightRow(index) {
-      const tbody = document.querySelector("#productsTable tbody");
-      const rows = tbody.querySelectorAll("tr");
-      if (index < 0 || index >= rows.length) return;
-      const row = rows[index];
-      row.classList.add("highlight-row");
-      row.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => row.classList.remove("highlight-row"), 900);
-    }
-
-    function focusNextProduct(startIndex) {
-      if (!currentProducts.length) return;
-
-      let nextIndex = currentProducts.findIndex(
-        (p, i) => i >= startIndex && p.scanned < p.qty
-      );
-      if (nextIndex === -1) {
-        nextIndex = currentProducts.findIndex((p) => p.scanned < p.qty);
-      }
-      if (nextIndex !== -1) {
-        highlightRow(nextIndex);
-      }
-    }
-
-    // ===================== SCAN ======================
-    function handleScan(event) {
-      if (event.key !== "Enter") return;
-
-      const code = event.target.value.trim();
-      event.target.value = "";
-
-      if (!code) return;
-
-      let found = currentProducts.find(
-        (p) => p.sku === code || p.ean === code
-      );
-
-      if (!found) {
-        flashError();
-        return;
-      }
-
-      if (found.scanned < found.qty) {
-        const currentIndex = currentProducts.indexOf(found);
-        found.scanned++;
-        renderTable();
-        focusNextProduct(currentIndex);
-      } else {
-        flashError();
-      }
-    }
-
-    function flashError() {
-      let input = document.getElementById("scanInput");
-      input.classList.add("errorInput");
-      playErrorFeedback();
-      setTimeout(() => input.classList.remove("errorInput"), 300);
-    }
-
-    // ===================== CAMERA SCAN ======================
-    function startCameraScan() {
-      const div = document.getElementById("cameraScanner");
-      div.style.display = "block";
-
-      const html5QrCode = new Html5Qrcode("cameraScanner");
-
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
-        (decodedText) => {
-          document.getElementById("scanInput").value = decodedText;
-          handleScan({ key: "Enter", target: { value: decodedText } });
-
-          html5QrCode.stop().then(() => {
-            div.style.display = "none";
-          });
-        }
-      );
-    }
-
-    // ===================== LOG COMPLETED ORDER ======================
-    async function logCompletedOrder() {
-      try {
-        const payload = {
-          order_id: String(currentOrderId),
-          completed_at: new Date().toISOString(),
-          completed_by: "picker", // dacă vrei poți schimba numele
-        };
-
-        await fetch(COMPLETED_ORDERS_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: "Bearer " + SUPABASE_ANON_KEY,
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify(payload),
-        });
-      } catch (err) {
-        console.error("Eroare la logarea completed_orders", err);
-      }
-    }
-
-    // ===================== FINALIZE ORDER ======================
-    async function finalizeOrder() {
-      const btn = document.getElementById("finishBtn");
-
-      if (!btn.classList.contains("active")) {
-        alert("Trebuie să scanezi toate produsele înainte de finalizare!");
-        return;
-      }
-
-      if (!currentOrderId) {
-        alert("Nu există comandă încărcată!");
-        return;
-      }
-
-      if (!confirm("Finalizezi comanda?")) return;
-
-      try {
-        const res = await fetch(DELETE_ORDER_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId: currentOrderId }),
-        });
-
-        const result = await res.json();
-
-        if (res.ok && result.deleted?.length > 0) {
-          stopTimer();
-          await logCompletedOrder();
-          alert("Comanda a fost finalizată!");
-        } else {
-          alert("Eroare la ștergerea fișierului!");
-        }
-
-        // Reîncarcă UI-ul ca să actualizeze listele și contoarele
-        location.reload();
-      } catch (err) {
-        console.error(err);
-        alert("Eroare la server!");
-      }
-    }
-
-    // ===================== INIT ======================
-    loadOrders();
-  </script>
+// ===================== INIT ======================
+loadOrders();
+</script>
 </body>
 </html>
-
