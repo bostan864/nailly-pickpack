@@ -8,48 +8,91 @@
 <style>
     body {
         font-family: Arial, sans-serif;
-        max-width: 900px;
-        margin: 20px auto;
+        margin: 10px;
+        padding: 0;
+        color: #333;
     }
-    h1 { color: #d81b60; }
+
+    h1 {
+        color: #d81b60;
+        font-size: 26px;
+        margin-top: 10px;
+    }
+
+    h3 {
+        margin-top: 20px;
+        font-size: 20px;
+    }
 
     select, button, input {
-        padding: 12px;
-        font-size: 17px;
-        margin: 6px 0;
+        padding: 14px;
+        font-size: 18px;
         width: 100%;
-        border-radius: 6px;
+        margin: 8px 0;
+        border-radius: 8px;
     }
 
     button {
         background: #d81b60;
-        border: none;
         color: white;
+        border: none;
         font-weight: bold;
         cursor: pointer;
     }
 
+    button:active {
+        opacity: 0.8;
+    }
+
+    /* TABEL RESPONSIVE */
     table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 20px;
-    }
-
-    table, td, th {
-        border: 1px solid #ccc;
+        font-size: 16px;
+        margin-top: 15px;
+        display: block;
+        overflow-x: auto;     /* scroll orizontal pe mobil */
+        white-space: nowrap;
     }
 
     th, td {
         padding: 10px;
+        border: 1px solid #ccc;
         text-align: left;
     }
 
     .ok {
-        background: #c8f7c5;
+        background: #c8f7c5 !important;
     }
 
     .errorInput {
         background: #ffcccc !important;
+    }
+
+    /* ----------- OPTIMIZARE PENTRU MOBIL ----------- */
+    @media (max-width: 600px) {
+        h1 {
+            font-size: 22px;
+            text-align: center;
+        }
+
+        h3 {
+            font-size: 18px;
+        }
+
+        select, button, input {
+            padding: 16px;
+            font-size: 17px;
+        }
+
+        th, td {
+            font-size: 15px;
+            padding: 8px;
+        }
+
+        button {
+            font-size: 18px;
+        }
     }
 </style>
 </head>
