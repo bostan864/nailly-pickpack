@@ -29,12 +29,8 @@
         padding: 10px;
         text-align: left;
     }
-    .ok {
-        background: #c8f7c5;
-    }
-    .error {
-        background: #f7c5c5;
-    }
+    .ok { background: #c8f7c5; }
+    .error { background: #f7c5c5; }
 </style>
 </head>
 
@@ -49,6 +45,11 @@
 <button onclick="loadOrder()">Încarcă comanda</button>
 
 <h3 id="orderTitle"></h3>
+
+<!-- NEW – Buton Finalizare -->
+<button id="finishBtn" onclick="finalizeOrder()" style="display:none; background:#d81b60; color:white;">
+    Finalizează comanda
+</button>
 
 <h3>Pas 2: Scanează produsele</h3>
 
@@ -66,6 +67,7 @@
         <tr>
             <th>SKU</th>
             <th>Produs</th>
+            <th>Raft</th> <!-- NEW -->
             <th>Cantitate</th>
             <th>Scanat</th>
             <th>Rămas</th>
@@ -74,11 +76,9 @@
     <tbody></tbody>
 </table>
 
-<!-- Camera Barcode Scanner Library -->
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
-
 // ================================
 // URL-URI FUNCȚII SUPABASE
 // ================================
@@ -88,7 +88,18 @@ const ORDER_LIST_URL =
 const ORDER_GET_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/order-get";
 
+const DELETE_ORDER_URL =
+  "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/delete-order-file-orderId"; // NEW
+
+// 🔥 Conexiune Supabase (pentru locații)
+const SUPABASE_URL = "https://yvmqfsigxecmrygmbolg.supabase.co";
+const SUPABASE_KEY = "public-anon-key"; // pune cheia publică din Project Settings → API
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// =====================================================
+
 let currentProducts = [];
+let currentOrderId = null;
 
 // ================================
 // 1. ÎNCARCĂ LISTA DE COMENZI
@@ -98,12 +109,8 @@ async function loadOrders() {
         const res = await fetch(ORDER_LIST_URL);
         const orders = await res.json();
         const select = document.getElementById("orderList");
-        select.innerHTML = "";
 
-        if (!Array.isArray(orders)) {
-            alert("Eroare: Lista de comenzi nu este un array!");
-            return;
-        }
+        select.innerHTML = "";
 
         orders.forEach(o => {
             const opt = document.createElement("option");
@@ -113,35 +120,49 @@ async function loadOrders() {
         });
 
     } catch (e) {
-        console.error("Load orders error:", e);
         alert("Nu pot încărca comenzile!");
+        console.error(e);
     }
 }
 
 // ================================
-// 2. ÎNCARCĂ O COMANDĂ SELECTATĂ
+// 2. ÎNCARCĂ O COMANDĂ + LOCAȚII
 // ================================
 async function loadOrder() {
-    const orderId = document.getElementById("orderList").value;
-    if (!orderId) return;
+    currentOrderId = document.getElementById("orderList").value;
+    if (!currentOrderId) return;
 
-    const res = await fetch(`${ORDER_GET_URL}?orderId=${orderId}`);
+    const res = await fetch(`${ORDER_GET_URL}?orderId=${currentOrderId}`);
     const data = await res.json();
 
-    // PRELUCRĂM PRODUSELE DIN line_items !!!
-    currentProducts = data.line_items
-        .filter(p => p.item_type === "product")
-        .map(p => ({
-            sku: p.product_sku,
-            ean: p.product_ean,
-            name: p.product_name,
-            qty: Number(p.quantity),
-            scanned: 0
-        }));
+    // Produit + locații raft
+    currentProducts = await Promise.all(
+        data.line_items
+            .filter(p => p.item_type === "product")
+            .map(async p => {
+                // Căutăm locația în tabel
+                let loc = await supabase
+                    .from("product_locations")
+                    .select("location")
+                    .eq("sku", p.product_sku)
+                    .maybeSingle();
 
-    document.getElementById("orderTitle").textContent = "Comanda #" + orderId;
+                return {
+                    sku: p.product_sku,
+                    ean: p.product_ean,
+                    name: p.product_name,
+                    qty: Number(p.quantity),
+                    scanned: 0,
+                    location: loc.data?.location || "Fără locație"
+                };
+            })
+    );
+
+    document.getElementById("orderTitle").textContent = "Comanda #" + currentOrderId;
     document.getElementById("scanInput").disabled = false;
     document.getElementById("scanInput").focus();
+
+    document.getElementById("finishBtn").style.display = "block"; // NEW
 
     renderTable();
 }
@@ -159,6 +180,7 @@ function renderTable() {
         tr.innerHTML = `
             <td>${p.sku}</td>
             <td>${p.name}</td>
+            <td><b>${p.location}</b></td>
             <td>${p.qty}</td>
             <td>${p.scanned}</td>
             <td>${p.qty - p.scanned}</td>
@@ -170,7 +192,7 @@ function renderTable() {
 }
 
 // ================================
-// 4. LOGICĂ SCANARE (EAN + SKU)
+// 4. LOGICĂ SCANARE
 // ================================
 function handleScan(event) {
     if (event.key !== "Enter") return;
@@ -178,14 +200,9 @@ function handleScan(event) {
     const code = event.target.value.trim();
     event.target.value = "";
 
-    let found = currentProducts.find(p =>
-        p.sku === code || p.ean === code
-    );
+    let found = currentProducts.find(p => p.sku === code || p.ean === code);
 
-    if (!found) {
-        flashError();
-        return;
-    }
+    if (!found) return flashError();
 
     if (found.scanned < found.qty) {
         found.scanned++;
@@ -196,7 +213,34 @@ function handleScan(event) {
 }
 
 // ================================
-// 5. ERROR FLASH
+// FINALIZARE COMANDĂ – NEW
+// ================================
+async function finalizeOrder() {
+    if (!currentOrderId) return;
+
+    if (!confirm("Ești sigur că finalizezi comanda?")) return;
+
+    const res = await fetch(DELETE_ORDER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: currentOrderId })
+    });
+
+    const msg = await res.json();
+    console.log(msg);
+
+    alert("Comanda a fost finalizată!");
+
+    // Reset UI
+    currentOrderId = null;
+    currentProducts = [];
+    document.querySelector("#productsTable tbody").innerHTML = "";
+    document.getElementById("orderTitle").textContent = "";
+    document.getElementById("finishBtn").style.display = "none";
+
+    loadOrders();
+}
+
 // ================================
 function flashError() {
     let input = document.getElementById("scanInput");
@@ -205,35 +249,11 @@ function flashError() {
 }
 
 // ================================
-// 6. CAMERA BARCODE SCAN
-// ================================
-function startCameraScan() {
-    const div = document.getElementById("cameraScanner");
-    div.style.display = "block";
-
-    const html5QrCode = new Html5Qrcode("cameraScanner");
-
-    html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
-        (decodedText) => {
-            document.getElementById("scanInput").value = decodedText;
-
-            handleScan({ key: "Enter", target: { value: decodedText } });
-
-            html5QrCode.stop().then(() => {
-                div.style.display = "none";
-            });
-        },
-        () => {}
-    );
-}
-
-// ================================
-// PORNEȘTE APLICAȚIA
-// ================================
 loadOrders();
-
 </script>
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
 </body>
 </html>
