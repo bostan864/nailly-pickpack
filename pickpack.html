@@ -11,12 +11,23 @@
         margin: 20px auto;
     }
     h1 { color: #d81b60; }
+
     select, button, input {
-        padding: 10px;
-        font-size: 16px;
-        margin: 5px 0;
+        padding: 12px;
+        font-size: 17px;
+        margin: 6px 0;
         width: 100%;
+        border-radius: 6px;
     }
+
+    button {
+        background: #d81b60;
+        border: none;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
     table {
         width: 100%;
         border-collapse: collapse;
@@ -29,11 +40,12 @@
         padding: 10px;
         text-align: left;
     }
+
     .ok {
-        background: #c8f7c5;
+        background: #c8f7c5 !important;
     }
-    .error {
-        background: #f7c5c5;
+    .errorInput {
+        background: #ffcccc !important;
     }
 </style>
 </head>
@@ -42,28 +54,27 @@
 
 <h1>Nailly – Pick & Pack</h1>
 
+<!-- ================= PAS 1 ================= -->
 <h3>Pas 1: Selectează comanda</h3>
+
 <select id="orderList">
     <option>Se încarcă comenzile...</option>
 </select>
+
 <button onclick="loadOrder()">Încarcă comanda</button>
 
 <h3 id="orderTitle"></h3>
 
-<!-- Buton finalizare adăugat -->
-<button id="finishBtn" onclick="finalizeOrder()" 
-        style="display:none; background:#d81b60; color:white; margin-top:10px;">
+<button onclick="finalizeOrder()" id="finishBtn" style="display:none;">
     Finalizează comanda
 </button>
 
+<!-- ================= PAS 2 ================= -->
 <h3>Pas 2: Scanează produsele</h3>
 
-<input id="scanInput" placeholder="Scanează EAN / SKU..." 
-       onkeypress="handleScan(event)" disabled />
+<input id="scanInput" placeholder="Scanează EAN / SKU..." onkeypress="handleScan(event)" disabled />
 
-<button onclick="startCameraScan()" style="margin-top:10px;">
-    Scanează cu camera telefonului
-</button>
+<button onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
 <div id="cameraScanner" style="width:100%; margin-top:10px; display:none;"></div>
 
@@ -72,7 +83,7 @@
         <tr>
             <th>SKU</th>
             <th>Produs</th>
-            <th>Raft</th> <!-- ADĂUGAT -->
+            <th>Raft</th>
             <th>Cantitate</th>
             <th>Scanat</th>
             <th>Rămas</th>
@@ -81,14 +92,11 @@
     <tbody></tbody>
 </table>
 
-<!-- Camera Barcode Scanner Library -->
+<!-- Camera Barcode Scanner -->
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
-
-// ================================
-// URL-URI FUNCȚII SUPABASE
-// ================================
+// ===================== CONFIG ======================
 const ORDER_LIST_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/orders-list";
 
@@ -98,24 +106,21 @@ const ORDER_GET_URL =
 const DELETE_ORDER_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/delete-order-file-orderId";
 
+const PRODUCT_LOCATION_URL =
+  "https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.";
+
+// variabile globale
 let currentProducts = [];
 let currentOrderId = null;
 
-// ================================
-// 1. ÎNCARCĂ LISTA DE COMENZI
-// ================================
+// ===================== ÎNCARCĂ LISTA DE COMENZI ======================
 async function loadOrders() {
     try {
         const res = await fetch(ORDER_LIST_URL);
         const orders = await res.json();
         const select = document.getElementById("orderList");
+
         select.innerHTML = "";
-
-        if (!Array.isArray(orders)) {
-            alert("Eroare: Lista de comenzi nu este un array!");
-            return;
-        }
-
         orders.forEach(o => {
             const opt = document.createElement("option");
             opt.value = o.orderId;
@@ -123,87 +128,91 @@ async function loadOrders() {
             select.appendChild(opt);
         });
 
-    } catch (e) {
-        console.error("Load orders error:", e);
-        alert("Nu pot încărca comenzile!");
+    } catch (err) {
+        alert("Eroare la încărcarea comenzilor.");
+        console.error(err);
     }
 }
 
-// ================================
-// 2. ÎNCARCĂ O COMANDĂ SELECTATĂ
-// ================================
+// ===================== ÎNCARCĂ COMANDA ======================
 async function loadOrder() {
     const orderId = document.getElementById("orderList").value;
     if (!orderId) return;
 
+    currentOrderId = orderId;
+
     const res = await fetch(`${ORDER_GET_URL}?orderId=${orderId}`);
     const data = await res.json();
 
-    currentOrderId = orderId;
+    // procesează produsele
+    currentProducts = await Promise.all(
+        data.line_items
+            .filter(p => p.item_type === "product")
+            .map(async p => {
+                let sku = p.product_sku;
 
-    // Activează butonul de finalizare
-    document.getElementById("finishBtn").style.display = "block";
+                // ia raftul din supabase simplu, fără headers
+                let locRes = await fetch(PRODUCT_LOCATION_URL + sku);
+                let locData = await locRes.json();
 
-    // PRELUCRĂM PRODUSELE DIN line_items !!!
-    currentProducts = data.line_items
-        .filter(p => p.item_type === "product")
-        .map(p => ({
-            sku: p.product_sku,
-            ean: p.product_ean,
-            name: p.product_name,
-            qty: Number(p.quantity),
-            scanned: 0,
-            location: p.location || "Fără locație" // ADĂUGAT
-        }));
+                let shelf =
+                    locData.length > 0 &&
+                    locData[0].location &&
+                    locData[0].location !== "EMPTY"
+                    ? locData[0].location
+                    : "Fără locație";
+
+                return {
+                    sku,
+                    ean: p.product_ean,
+                    name: p.product_name,
+                    qty: Number(p.quantity),
+                    shelf,
+                    scanned: 0
+                };
+            })
+    );
 
     document.getElementById("orderTitle").textContent = "Comanda #" + orderId;
     document.getElementById("scanInput").disabled = false;
-    document.getElementById("scanInput").focus();
+    document.getElementById("finishBtn").style.display = "block";
 
     renderTable();
 }
 
-// ================================
-// 3. AFIȘARE TABEL
-// ================================
+// ===================== TABEL ======================
 function renderTable() {
     const tbody = document.querySelector("#productsTable tbody");
     tbody.innerHTML = "";
 
     currentProducts.forEach(p => {
         const tr = document.createElement("tr");
+        if (p.scanned === p.qty) tr.classList.add("ok");
 
         tr.innerHTML = `
             <td>${p.sku}</td>
             <td>${p.name}</td>
-            <td>${p.location}</td> <!-- ADĂUGAT -->
+            <td>${p.shelf}</td>
             <td>${p.qty}</td>
             <td>${p.scanned}</td>
             <td>${p.qty - p.scanned}</td>
         `;
-
-        if (p.scanned === p.qty) tr.classList.add("ok");
         tbody.appendChild(tr);
     });
 }
 
-// ================================
-// 4. LOGICĂ SCANARE (EAN + SKU)
-// ================================
+// ===================== SCANARE ======================
 function handleScan(event) {
     if (event.key !== "Enter") return;
 
     const code = event.target.value.trim();
     event.target.value = "";
 
-    let found = currentProducts.find(p =>
-        p.sku === code || p.ean === code
+    let found = currentProducts.find(
+        p => p.sku === code || p.ean === code
     );
 
-    if (!found) {
-        flashError();
-        return;
-    }
+    if (!found) return flashError();
 
     if (found.scanned < found.qty) {
         found.scanned++;
@@ -213,18 +222,13 @@ function handleScan(event) {
     }
 }
 
-// ================================
-// 5. ERROR FLASH
-// ================================
 function flashError() {
     let input = document.getElementById("scanInput");
-    input.classList.add("error");
-    setTimeout(() => input.classList.remove("error"), 400);
+    input.classList.add("errorInput");
+    setTimeout(() => input.classList.remove("errorInput"), 300);
 }
 
-// ================================
-// 6. CAMERA BARCODE SCAN
-// ================================
+// ===================== CAMERA ======================
 function startCameraScan() {
     const div = document.getElementById("cameraScanner");
     div.style.display = "block";
@@ -236,51 +240,56 @@ function startCameraScan() {
         { fps: 10, qrbox: { width: 250, height: 150 } },
         (decodedText) => {
             document.getElementById("scanInput").value = decodedText;
-
             handleScan({ key: "Enter", target: { value: decodedText } });
 
             html5QrCode.stop().then(() => {
                 div.style.display = "none";
             });
-        },
-        () => {}
+        }
     );
 }
 
-// ================================
-// 7. FINALIZARE COMANDĂ (ȘTERGERE DIN STORAGE)
-// ================================
+// ===================== FINALIZARE COMANDĂ ======================
 async function finalizeOrder() {
-    if (!currentOrderId) return;
+    if (!currentOrderId) return alert("Nu există comandă încărcată.");
 
     if (!confirm("Sigur finalizezi comanda?")) return;
 
-    const res = await fetch(DELETE_ORDER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: currentOrderId })
-    });
+    try {
+        const response = await fetch(DELETE_ORDER_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: currentOrderId })
+        });
 
-    const data = await res.json();
-    console.log("Finalizare:", data);
+        const result = await response.json();
+        console.log(result);
 
-    alert("Comanda a fost finalizată!");
+        if (result.deleted && result.deleted.length > 0) {
+            alert("Comanda a fost finalizată și ștearsă.");
+        } else {
+            alert("Comanda nu a fost găsită în Storage.");
+        }
 
-    // Reset UI
-    document.getElementById("orderTitle").textContent = "";
-    document.getElementById("finishBtn").style.display = "none";
-    document.querySelector("#productsTable tbody").innerHTML = "";
-    currentOrderId = null;
-    currentProducts = [];
+        // reset UI
+        currentProducts = [];
+        document.querySelector("#productsTable tbody").innerHTML = "";
+        document.getElementById("scanInput").value = "";
+        document.getElementById("scanInput").disabled = true;
+        document.getElementById("finishBtn").style.display = "none";
+        document.getElementById("orderTitle").textContent = "";
 
-    loadOrders();
+        loadOrders();
+
+    } catch (err) {
+        alert("Eroare la ștergerea comenzii.");
+        console.error(err);
+    }
 }
 
-// ================================
-// PORNEȘTE APLICAȚIA
-// ================================
+// ===================== START APP ======================
 loadOrders();
-
 </script>
+
 </body>
 </html>
