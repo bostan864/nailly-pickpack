@@ -10,44 +10,46 @@
         max-width: 900px;
         margin: 20px auto;
         padding: 0 10px 110px;
+        font-size: 18px; /* marire generala */
     }
 
     h1 {
         color: #d81b60;
-        font-size: 28px;
+        font-size: 32px;
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
 
     h3 {
-        margin-top: 20px;
-        font-size: 20px;
+        margin-top: 25px;
+        font-size: 22px;
+        font-weight: 600;
     }
 
     /* ====== STATS BAR ====== */
     #statsBar {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 15px;
+        gap: 12px;
+        margin-bottom: 20px;
     }
     .stats-card {
-        flex: 1 1 160px;
-        padding: 10px 12px;
-        border-radius: 10px;
-        font-size: 14px;
+        flex: 1 1 180px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        font-size: 17px;
         background: #f3f3f3;
         box-sizing: border-box;
     }
     .stats-title {
         display: block;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
         font-weight: 600;
     }
     .stats-number {
         font-weight: 700;
-        font-size: 20px;
-        margin-right: 4px;
+        font-size: 24px;
+        margin-right: 6px;
     }
     .stats-pending--some {
         background: #e8f7e9;
@@ -64,20 +66,20 @@
 
     /* === ELEMENTE STANDARD === */
     input, select {
-        padding: 14px;
-        font-size: 17px;
-        margin: 8px 0;
+        padding: 18px;
+        font-size: 18px;
+        margin: 10px 0;
         width: 100%;
-        border-radius: 10px;
+        border-radius: 12px;
         border: 1px solid #ccc;
         box-sizing: border-box;
     }
 
     button {
-        padding: 16px;
-        font-size: 18px;
+        padding: 20px;
+        font-size: 22px;
         width: 100%;
-        border-radius: 12px;
+        border-radius: 14px;
         font-weight: bold;
         cursor: pointer;
         border: none;
@@ -100,20 +102,21 @@
     table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 15px;
+        margin-top: 18px;
         table-layout: fixed;
     }
 
     th, td {
-        padding: 10px;
+        padding: 14px;
         border: 1px solid #ccc;
         word-wrap: break-word;
         white-space: normal;
-        font-size: 15px;
+        font-size: 18px;
     }
 
     th {
         background: #fafafa;
+        font-weight: 600;
     }
 
     .ok {
@@ -132,25 +135,26 @@
     /* META COMANDĂ: TIMER + PROGRES */
     #orderMeta {
         display: none;
-        margin-top: 8px;
-        margin-bottom: 10px;
+        margin-top: 10px;
+        margin-bottom: 15px;
     }
     #orderInfoRow {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 14px;
+        font-size: 16px;
         color: #444;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
     }
     #timerBox {
         font-weight: 600;
+        font-size: 18px;
     }
     #progressOuter {
         width: 100%;
-        height: 10px;
+        height: 12px;
         background: #eee;
-        border-radius: 10px;
+        border-radius: 12px;
         overflow: hidden;
     }
     #progressInner {
@@ -160,8 +164,8 @@
         transition: width 0.2s ease-out;
     }
     #progressText {
-        margin-top: 4px;
-        font-size: 13px;
+        margin-top: 6px;
+        font-size: 16px;
         color: #555;
     }
 
@@ -171,8 +175,8 @@
         bottom: 0;
         left: 0;
         width: 100%;
-        padding: 20px;
-        font-size: 20px;
+        padding: 22px;
+        font-size: 24px;
         text-align: center;
         border-radius: 0;
         color: white;
@@ -192,48 +196,29 @@
     /* CAMERA */
     #cameraScanner {
         width: 100%;
-        margin-top: 10px;
+        margin-top: 12px;
         display: none;
     }
 
     /* ======== OPTIMIZARE PENTRU MOBIL ======== */
     @media (max-width: 600px) {
         h1 {
+            font-size: 30px;
+        }
+
+        th, td {
+            font-size: 18px;
+            padding: 14px;
+        }
+
+        button {
+            padding: 22px;
             font-size: 24px;
         }
-        th, td {
-            font-size: 14px;
-            padding: 8px;
-        }
-        th:nth-child(1),
-        td:nth-child(1) {
-            width: 70px;
-        }
-        td:nth-child(2) {
-            white-space: normal;
-            font-size: 15px;
-            line-height: 1.3;
-        }
-        th:nth-child(3),
-        td:nth-child(3) {
-            width: 85px;
-        }
-        th:nth-child(4),
-        th:nth-child(5),
-        th:nth-child(6),
-        td:nth-child(4),
-        td:nth-child(5),
-        td:nth-child(6) {
-            width: 55px;
-            text-align: center;
-        }
-        button {
-            padding: 18px;
-            font-size: 20px;
-        }
+
         input, select {
-            padding: 16px;
-            font-size: 16px;
+            padding: 18px;
+            font-size: 18px;
         }
     }
 </style>
