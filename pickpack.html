@@ -33,7 +33,7 @@
         background: #c8f7c5;
     }
     .error {
-        background: #f7c5c5 !important;
+        background: #f7c5c5;
     }
 </style>
 </head>
@@ -51,8 +51,10 @@
 <h3 id="orderTitle"></h3>
 
 <h3>Pas 2: Scanează produsele</h3>
+
 <input id="scanInput" placeholder="Scanează EAN / SKU..." 
        onkeypress="handleScan(event)" disabled />
+
 <button onclick="startCameraScan()" style="margin-top:10px;">
     Scanează cu camera telefonului
 </button>
@@ -71,33 +73,37 @@
     </thead>
     <tbody></tbody>
 </table>
- 	
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
+<!-- Camera Barcode Scanner Library -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
 
 // ================================
-//  URL-URI FUNCȚII SUPABASE
+// URL-URI FUNCȚII SUPABASE
 // ================================
 const ORDER_LIST_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/orders-list";
 
 const ORDER_GET_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/order-get";
+
 let currentProducts = [];
 
-
 // ================================
-//  1. ÎNCARCĂ LISTA DE COMENZI
+// 1. ÎNCARCĂ LISTA DE COMENZI
 // ================================
 async function loadOrders() {
     try {
         const res = await fetch(ORDER_LIST_URL);
         const orders = await res.json();
-
         const select = document.getElementById("orderList");
         select.innerHTML = "";
+
+        if (!Array.isArray(orders)) {
+            alert("Eroare: Lista de comenzi nu este un array!");
+            return;
+        }
 
         orders.forEach(o => {
             const opt = document.createElement("option");
@@ -112,10 +118,8 @@ async function loadOrders() {
     }
 }
 
-
-
 // ================================
-//  2. ÎNCARCĂ O COMANDĂ SELECTATĂ
+// 2. ÎNCARCĂ O COMANDĂ SELECTATĂ
 // ================================
 async function loadOrder() {
     const orderId = document.getElementById("orderList").value;
@@ -124,27 +128,24 @@ async function loadOrder() {
     const res = await fetch(`${ORDER_GET_URL}?orderId=${orderId}`);
     const data = await res.json();
 
-    // Folosim line_items din JSON-ul comenzii
-    const items = data.line_items || [];
-
-    currentProducts = items.map(item => ({
-        sku: item.sku || item.product_sku || "",
-        name: item.product_name || "",
-        qty: Number(item.quantity) || 1,
+    // PRELUCRĂM PRODUSELE CU SKU + EAN
+    currentProducts = data.products.map(p => ({
+        sku: p.product_sku,
+        ean: p.product_ean,
+        name: p.product_name,
+        qty: Number(p.quantity),
         scanned: 0
     }));
-
-    renderTable();
 
     document.getElementById("orderTitle").textContent = "Comanda #" + orderId;
     document.getElementById("scanInput").disabled = false;
     document.getElementById("scanInput").focus();
+
+    renderTable();
 }
 
-
-
 // ================================
-//  3. RANDĂRĂ MASA
+// 3. AFIȘARE TABEL
 // ================================
 function renderTable() {
     const tbody = document.querySelector("#productsTable tbody");
@@ -162,15 +163,12 @@ function renderTable() {
         `;
 
         if (p.scanned === p.qty) tr.classList.add("ok");
-
         tbody.appendChild(tr);
     });
 }
 
-
-
 // ================================
-//  4. SCANARE PRODUSE
+// 4. LOGICĂ SCANARE (EAN + SKU)
 // ================================
 function handleScan(event) {
     if (event.key !== "Enter") return;
@@ -178,7 +176,9 @@ function handleScan(event) {
     const code = event.target.value.trim();
     event.target.value = "";
 
-    let found = currentProducts.find(p => p.sku == code);
+    let found = currentProducts.find(p =>
+        p.sku === code || p.ean === code
+    );
 
     if (!found) {
         flashError();
@@ -193,10 +193,8 @@ function handleScan(event) {
     }
 }
 
-
-
 // ================================
-//  HIGHLIGHT EROARE SCANARE
+// 5. ERROR FLASH
 // ================================
 function flashError() {
     let input = document.getElementById("scanInput");
@@ -204,6 +202,9 @@ function flashError() {
     setTimeout(() => input.classList.remove("error"), 400);
 }
 
+// ================================
+// 6. CAMERA BARCODE SCAN
+// ================================
 function startCameraScan() {
     const div = document.getElementById("cameraScanner");
     div.style.display = "block";
@@ -211,27 +212,24 @@ function startCameraScan() {
     const html5QrCode = new Html5Qrcode("cameraScanner");
 
     html5QrCode.start(
-        { facingMode: "environment" },  // camera din spate
+        { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 150 } },
         (decodedText) => {
-            // punem codul scanat in input
             document.getElementById("scanInput").value = decodedText;
 
-            // simulăm apăsarea Enter pentru handleScan()
             handleScan({ key: "Enter", target: { value: decodedText } });
 
-            // oprim camera după scan
             html5QrCode.stop().then(() => {
                 div.style.display = "none";
             });
         },
-        (errorMessage) => {
-            // ignoră erorile repetate
-        }
+        () => {}
     );
 }
 
-// PORNEȘTE APLICATIA
+// ================================
+// PORNEȘTE APLICAȚIA
+// ================================
 loadOrders();
 
 </script>
