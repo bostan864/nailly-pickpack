@@ -53,6 +53,11 @@
 <h3>Pas 2: Scanează produsele</h3>
 <input id="scanInput" placeholder="Scanează EAN / SKU..." 
        onkeypress="handleScan(event)" disabled />
+<button onclick="startCameraScan()" style="margin-top:10px;">
+    Scanează cu camera telefonului
+</button>
+
+<div id="cameraScanner" style="width:100%; margin-top:10px; display:none;"></div>
 
 <table id="productsTable">
     <thead>
@@ -66,6 +71,9 @@
     </thead>
     <tbody></tbody>
 </table>
+ 	
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
 
 <script>
 
@@ -77,7 +85,6 @@ const ORDER_LIST_URL =
 
 const ORDER_GET_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/order-get";
-
 let currentProducts = [];
 
 
@@ -197,6 +204,32 @@ function flashError() {
     setTimeout(() => input.classList.remove("error"), 400);
 }
 
+function startCameraScan() {
+    const div = document.getElementById("cameraScanner");
+    div.style.display = "block";
+
+    const html5QrCode = new Html5Qrcode("cameraScanner");
+
+    html5QrCode.start(
+        { facingMode: "environment" },  // camera din spate
+        { fps: 10, qrbox: { width: 250, height: 150 } },
+        (decodedText) => {
+            // punem codul scanat in input
+            document.getElementById("scanInput").value = decodedText;
+
+            // simulăm apăsarea Enter pentru handleScan()
+            handleScan({ key: "Enter", target: { value: decodedText } });
+
+            // oprim camera după scan
+            html5QrCode.stop().then(() => {
+                div.style.display = "none";
+            });
+        },
+        (errorMessage) => {
+            // ignoră erorile repetate
+        }
+    );
+}
 
 // PORNEȘTE APLICATIA
 loadOrders();
