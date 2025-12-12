@@ -515,6 +515,30 @@
   stroke: var(--brand) !important;
 }
 
+/* STATS BAR – PRO READABILITY */
+.stats-card{
+  padding: 14px 16px !important;
+}
+
+.stats-title{
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+
+.stats-number{
+  font-size: 32px !important;
+  font-weight: 900 !important;
+  line-height: 1;
+}
+
+.stats-card span:last-child{
+  font-size: 15px !important;
+  font-weight: 600;
+  opacity: .9;
+}
+
 </style>
 </head>
 
@@ -534,12 +558,12 @@
   <!-- STATS -->
   <div id="statsBar">
     <div id="pendingBox" class="stats-card stats-pending--none">
-      <span class="stats-title">Status comenzi</span>
+<span class="stats-title">⚠️ Status comenzi</span>
       <span class="stats-number" id="pendingCount">0</span>
       <span>comenzi de pregătit</span>
     </div>
     <div id="doneBox" class="stats-card stats-done">
-      <span class="stats-title">Activitatea de astăzi</span>
+<span class="stats-title">✔️ Activitatea de astăzi</span>
       <span class="stats-number" id="doneCount">0</span>
       <span>comenzi finalizate</span>
     </div>
