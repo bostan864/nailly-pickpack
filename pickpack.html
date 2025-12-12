@@ -387,46 +387,41 @@
 .order-row:hover {
     background:#f7f7f7;
 }
-/* ================= LUPA – FIX DEFINITIV PE MOBIL ================= */
+
+/* ===== LUPA FINALĂ – HIT AREA MARE PE MOBIL ===== */
 #quickSearchIcon {
     position: fixed;
     top: 12px;
     right: 14px;
-
     width: 48px;
     height: 48px;
-
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    border-radius: 14px;
     background: rgba(255,255,255,0.95);
     border: 1px solid rgba(0,0,0,0.15);
-
     box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     cursor: pointer;
     z-index: 4000;
 }
 
-/* ICON */
 #quickSearchIcon svg {
     width: 22px;
     height: 22px;
-    stroke: #111;
 }
 
-/* 🔴 PE MOBIL – HIT AREA MARE REAL */
+/* 📱 MOBIL – +200% REAL */
 @media (max-width: 768px) {
     #quickSearchIcon {
-        width: 96px;   /* +200% REAL */
-        height: 96px;  /* +200% REAL */
-        border-radius: 22px;
+        width: 96px;
+        height: 96px;
+        border-radius: 24px;
     }
 
     #quickSearchIcon svg {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
     }
 }
 
@@ -439,6 +434,7 @@
 <div class="logo-header">
     <img src="https://c.cdnmp.net/957918846/content/F%C4%83r%C4%83%20titlu%20%28192%20x%20192%20px%29%20%284%29.png" alt="Nailly Logo">
 </div>
+
 <!-- BUTON LISTA COMENZI -->
 <button id="openOrdersPanel" style="
     width:100%;
@@ -980,7 +976,8 @@ function renderOrdersPanel() {
             loadOrderById(o.orderId);
         };
         list.appendChild(div);
-    });
+});
+
 }
 
 // ===================== INIT ======================
