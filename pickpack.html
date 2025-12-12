@@ -538,6 +538,86 @@
   font-weight: 600;
   opacity: .9;
 }
+/********************************************
+ * UX PRO FINAL UPGRADE – NAILLY WMS PRO
+ ********************************************/
+
+/* ---- Bottom Nav: mărire icon + text, look iOS premium ---- */
+#bottomNav {
+  height: 110px !important; /* mai înalt, mai ergonomic */
+  background: linear-gradient(to top, #ffffff, #fafafa) !important;
+  border-top: 1px solid #ddd !important;
+  box-shadow: 0 -6px 18px rgba(0,0,0,0.12) !important;
+}
+
+.nav-btn {
+  padding-top: 10px !important;
+  padding-bottom: 12px !important;
+  gap: 10px !important;
+}
+
+.nav-btn svg {
+  width: 40px !important;       /* icon mare și clar */
+  height: 40px !important;
+  stroke-width: 2.6 !important; /* icon mai bold */
+  opacity: 0.85;
+  transition: 0.2s ease;
+}
+
+.nav-btn span {
+  font-size: 16px !important;   /* text mai lizibil */
+  font-weight: 800 !important;
+  margin-top: 2px !important;
+  color: #555 !important;
+  transition: 0.2s ease;
+}
+
+/* ---- Active State (stil aplicație nativă) ---- */
+.nav-btn.active svg {
+  stroke: var(--brand) !important;
+  opacity: 1 !important;
+  transform: scale(1.06); /* mic efect elegant */
+}
+
+.nav-btn.active span {
+  color: var(--brand) !important;
+}
+
+/* ---- Tap Feedback pentru UX profesional ---- */
+.nav-btn:active {
+  background: rgba(216, 27, 96, 0.08) !important;
+  transition: 0.05s;
+}
+
+/* ---- Compactare spații pentru un workspace mai eficient ---- */
+h3 {
+  margin-top: 14px !important;
+}
+
+#statsBar {
+  margin-bottom: 4px !important;
+}
+
+#orderMeta {
+  margin-top: 6px !important;
+}
+
+/* ---- Tabel mai compact + lizibil ---- */
+table th, table td {
+  padding: 10px 6px !important;
+}
+
+#productsTable td:nth-child(3) {
+  font-size: 19px !important;
+}
+
+/* ---- Finish Button mai modern ---- */
+#finishBtn {
+  font-size: 22px !important;
+  height: 62px !important;
+  font-weight: 900 !important;
+  border-radius: 14px 14px 0 0 !important;
+}
 
 </style>
 </head>
