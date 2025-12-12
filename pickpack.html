@@ -48,7 +48,7 @@
     }
     .stats-number {
         font-weight: 700;
-        font-size: 24px;
+        font-size: 31px;
         margin-right: 6px;
     }
     .stats-pending--some {
@@ -560,8 +560,25 @@ async function loadOrder() {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
-  scanInput.disabled = false;
-  scanInput.focus();
+scanInput.disabled = false;
+
+/* PREVENIM DESCHIDEREA TASTATURII PE TERMINAL */
+scanInput.setAttribute("inputmode", "none");
+scanInput.setAttribute("readonly", "readonly");
+
+setTimeout(() => {
+    scanInput.blur();
+}, 50);
+
+/* DEBLOCHEAZĂ TASTAREA MANUALĂ DOAR LA CLICK INTENȚIONAT */
+if (!scanInput.dataset.manualEnabled) {
+    scanInput.addEventListener("click", function () {
+        this.removeAttribute("readonly");
+        this.removeAttribute("inputmode");
+        this.focus();
+    });
+    scanInput.dataset.manualEnabled = "1";
+}
 
   const btn = document.getElementById("finishBtn");
   btn.style.display = "block";
