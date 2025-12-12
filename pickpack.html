@@ -315,6 +315,44 @@
             font-size: 18px;
         }
     }
+/* ===== LUPA SEARCH – TOUCH FRIENDLY ===== */
+.search-trigger,
+.search-button,
+.search-icon {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px;
+    min-height: 56px;
+}
+
+.search-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px; /* mai prietenos pe mobil */
+}
+
+/* SVG / icon lupa */
+.search-trigger svg,
+.search-trigger img {
+    width: 26px !important;
+    height: 26px !important;
+}
+
+/* pe mobil și mai mare */
+@media (max-width: 600px) {
+    .search-trigger {
+        width: 64px !important;
+        height: 64px !important;
+    }
+
+    .search-trigger svg,
+    .search-trigger img {
+        width: 30px !important;
+        height: 30px !important;
+    }
+}
+
 </style>
 </head>
 
