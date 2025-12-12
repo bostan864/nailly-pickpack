@@ -334,6 +334,61 @@
         height: 42px !important;
     }
 }
+/* ===== PANOU COMENZI ===== */
+.orders-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 65vh;
+    background: #fff;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+}
+
+.orders-panel.open {
+    transform: translateY(0);
+}
+
+.orders-panel-header {
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eee;
+    font-size: 18px;
+}
+
+.orders-panel-header button {
+    background:none;
+    border:none;
+    font-size:22px;
+    cursor:pointer;
+}
+
+.orders-panel-list {
+    flex:1;
+    overflow-y:auto;
+}
+
+.order-row {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.order-row:hover {
+    background:#f7f7f7;
+}
+
+
 </style>
 </head>
 
@@ -341,6 +396,23 @@
 
 <div class="logo-header">
     <img src="https://c.cdnmp.net/957918846/content/F%C4%83r%C4%83%20titlu%20%28192%20x%20192%20px%29%20%284%29.png" alt="Nailly Logo">
+</div>
+<!-- BUTON LISTA COMENZI -->
+<button id="openOrdersPanel" style="
+    width:100%;
+    margin: 10px 0 16px;
+    background:#2f80ed;
+">
+📋 Comenzi în pregătire
+</button>
+
+<!-- PANOU COMENZI -->
+<div id="ordersPanel" class="orders-panel">
+    <div class="orders-panel-header">
+        <strong>Comenzi în pregătire</strong>
+        <button onclick="closeOrdersPanel()">✕</button>
+    </div>
+    <div id="ordersPanelList" class="orders-panel-list"></div>
 </div>
 
 <!-- LUPA SUS DREAPTA -->
@@ -837,6 +909,38 @@ async function finalizeOrder() {
     if (e.key === "Escape") closeQS();
   });
 })();
+
+function openOrdersPanel() {
+    document.getElementById("ordersPanel").classList.add("open");
+    renderOrdersPanel();
+}
+
+function closeOrdersPanel() {
+    document.getElementById("ordersPanel").classList.remove("open");
+}
+
+document.getElementById("openOrdersPanel").addEventListener("click", openOrdersPanel);
+
+function renderOrdersPanel() {
+    const list = document.getElementById("ordersPanelList");
+    list.innerHTML = "";
+
+    if (!allOrders.length) {
+        list.innerHTML = "<div style='padding:16px'>Nu există comenzi.</div>";
+        return;
+    }
+
+    allOrders.forEach(o => {
+        const div = document.createElement("div");
+        div.className = "order-row";
+        div.textContent = `Comanda #${o.orderId}`;
+        div.onclick = () => {
+            closeOrdersPanel();
+            loadOrderById(o.orderId);
+        };
+        list.appendChild(div);
+    });
+}
 
 // ===================== INIT ======================
 loadOrders();
