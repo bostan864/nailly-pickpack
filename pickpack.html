@@ -352,7 +352,28 @@
         height: 30px !important;
     }
 }
+/* ================= LUPA – TOUCH FRIENDLY PE MOBIL ================= */
+@media (max-width: 768px) {
 
+  .search-btn,
+  .search-icon,
+  .search-trigger,
+  .mobile-search,
+  .header-search-button {
+    transform: scale(2);              /* +200% */
+    transform-origin: center;
+  }
+
+  /* mărim și zona de tap, nu doar iconița */
+  .search-btn,
+  .search-trigger,
+  .header-search-button {
+    padding: 16px !important;
+    min-width: 56px;
+    min-height: 56px;
+  }
+
+}
 </style>
 </head>
 
