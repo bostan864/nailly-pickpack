@@ -388,41 +388,31 @@
     background:#f7f7f7;
 }
 
-/* ===== LUPA FINALĂ – HIT AREA MARE PE MOBIL ===== */
+/* ===== BUTON SEARCH MARE – CONTROLAT ===== */
 #quickSearchIcon {
     position: fixed;
-    top: 12px;
-    right: 14px;
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
+    bottom: 100px;        /* jos-dreapta, nu sus */
+    right: 20px;
+    width: 88px;
+    height: 88px;
+    border-radius: 22px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255,255,255,0.95);
-    border: 1px solid rgba(0,0,0,0.15);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+
+    background: #ffffff;
+    border: 2px solid #d81b60;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+
     cursor: pointer;
-    z-index: 4000;
+    z-index: 9999;
 }
 
 #quickSearchIcon svg {
-    width: 22px;
-    height: 22px;
-}
-
-/* 📱 MOBIL – +200% REAL */
-@media (max-width: 768px) {
-    #quickSearchIcon {
-        width: 96px;
-        height: 96px;
-        border-radius: 24px;
-    }
-
-    #quickSearchIcon svg {
-        width: 40px;
-        height: 40px;
-    }
+    width: 40px;
+    height: 40px;
+    stroke: #d81b60;
 }
 
 
