@@ -646,12 +646,21 @@ function updateFinishButtonState() {
 function handleScan(event) {
   if (event.key !== "Enter") return;
 
-  const code = event.target.value.trim();
-  event.target.value = "";
+  let code = event.target.value.trim();
+event.target.value = "";
 
-  let found = currentProducts.find(
-    p => p.sku === code || p.ean === code
-  );
+/* 
+  FIX PENTRU EAN-URI CARE VIN FĂRĂ LEADING ZERO
+  ex: scanner trimite 121, noi avem 00000121
+*/
+if (/^\d+$/.test(code) && code.length < 8) {
+  code = code.padStart(8, "0");
+}
+
+let found = currentProducts.find(
+  p => p.sku === code || p.ean === code
+);
+
 
   if (!found) {
     feedbackError();
