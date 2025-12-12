@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8" />
 <title>Nailly – Pick & Pack PRO</title>
-
 <style>
   :root{
     --brand:#d81b60;
@@ -12,13 +11,19 @@
     --text:#222;
     --muted:#666;
     --bg:#f5f5f7;
+
+    /* control central pentru bottom nav */
+    --bottomNavH: 92px;      /* înălțime bară */
+    --finishGap: 0px;        /* dacă vrei spațiu extra între finish și nav */
   }
+
+  *{ box-sizing:border-box; }
 
   body{
     font-family: Arial, sans-serif;
     max-width: 900px;
     margin: 0 auto;
-    padding: 12px 10px 130px; /* spațiu pentru bottom bar + finish */
+    padding: 12px 10px calc(var(--bottomNavH) + 38px); /* spațiu bottom nav + rezervă */
     font-size: 18px;
     color: var(--text);
     background: var(--bg);
@@ -74,7 +79,6 @@
     border-radius: 14px;
     background:#ffffff;
     box-shadow: 0 3px 10px rgba(0,0,0,0.04);
-    box-sizing:border-box;
   }
   .stats-title{
     display:block;
@@ -152,7 +156,6 @@
     width: 100%;
     border-radius: 14px;
     border: 1px solid #ccc;
-    box-sizing:border-box;
     background:#fff;
   }
   input:focus{
@@ -161,7 +164,7 @@
     box-shadow:0 0 0 2px rgba(216,27,96,0.18);
   }
 
-  /* BUTTONS */
+  /* BUTTONS (globale) */
   button{
     padding: 18px;
     font-size: 18px;
@@ -173,7 +176,6 @@
     background: var(--brand);
     color:#fff;
     transition: .15s;
-    box-sizing:border-box;
   }
   button:hover{ filter: brightness(.96); }
 
@@ -242,7 +244,7 @@
   #finishBtn{
     position: fixed;
     left:0;
-    bottom: 92px; /* deasupra bottom nav PRO */
+    bottom: calc(var(--bottomNavH) + var(--finishGap));
     width:100%;
     padding: 20px;
     font-size: 20px;
@@ -353,7 +355,6 @@
     color:#fff;
     font-size: 18px;
     outline:none;
-    box-sizing:border-box;
   }
   #quickSearchInput::placeholder{ color: rgba(255,255,255,0.75); }
 
@@ -418,13 +419,15 @@
   .quick-search-item:last-child{ border-bottom:none; }
   .quick-search-item:hover{ background:#f5f7fb; }
 
-  /* BOTTOM NAV – PRO STYLE */
+  /********************************************
+   * BOTTOM NAV – FIX REAL (nu mai e afectat de button global)
+   ********************************************/
   #bottomNav{
     position: fixed;
     bottom:0;
     left:0;
     width:100%;
-    height: 92px;
+    height: var(--bottomNavH);
     background:#ffffff;
     border-top: 1px solid #ddd;
     display:flex;
@@ -432,11 +435,19 @@
     box-shadow: 0 -4px 14px rgba(0,0,0,0.12);
   }
 
-  .nav-btn{
+  /* reset complet pentru button-urile din bottom nav */
+  #bottomNav .nav-btn{
     flex:1;
     height:100%;
-    background:none;
-    border:none;
+
+    /* IMPORTANT: anulăm stilul global de button */
+    width:auto !important;
+    padding: 10px 6px !important;
+    border-radius: 0 !important;
+    background: none !important;
+    color:#111 !important;
+
+    border:none !important;
     cursor:pointer;
 
     display:flex;
@@ -444,38 +455,40 @@
     align-items:center;
     justify-content:center;
     gap: 6px;
-
-    color:#111;
-    padding-bottom: 6px;
   }
 
-  .nav-btn svg{
+  #bottomNav .nav-btn svg{
     stroke: var(--brand);
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
+    stroke-width: 2.4;
+    opacity: .90;
+    transition: .2s ease;
   }
 
-  .nav-btn span{
-    font-size: 14px;
-    font-weight: 700;
+  #bottomNav .nav-btn span{
+    font-size: 15px;
+    font-weight: 800;
     color:#444;
+    transition: .2s ease;
   }
 
-  .nav-btn.active span{
+  #bottomNav .nav-btn.active span{
     color: var(--brand);
   }
-  .nav-btn.active svg{
-    stroke: var(--brand);
+  #bottomNav .nav-btn.active svg{
+    opacity: 1;
+    transform: scale(1.05);
   }
 
-  .nav-btn:active{
-    background:#f7f7f7;
+  #bottomNav .nav-btn:active{
+    background: rgba(216, 27, 96, 0.08) !important;
   }
 
   /* mobile tuning */
   @media (max-width: 600px){
     body{
-      padding: 10px 8px 130px;
+      padding: 10px 8px calc(var(--bottomNavH) + 38px);
     }
     th, td{
       font-size: 15px;
@@ -485,140 +498,6 @@
       font-size: 17px;
     }
   }
-/* BOTTOM NAV – Boost vizibilitate PRO */
-#bottomNav{
-  height: 105px !important; /* mai înalt, stil aplicație */
-}
-
-.nav-btn{
-  padding-bottom: 12px !important;
-}
-
-.nav-btn svg{
-  width: 38px !important;
-  height: 38px !important;
-  stroke-width: 2.4 !important; /* mai bold, se vede premium */
-}
-
-.nav-btn span{
-  font-size: 16px !important;
-  font-weight: 800 !important;
-  margin-top: 6px !important;
-  color:#444;
-}
-
-.nav-btn.active span{
-  color: var(--brand) !important;
-}
-
-.nav-btn.active svg{
-  stroke: var(--brand) !important;
-}
-
-/* STATS BAR – PRO READABILITY */
-.stats-card{
-  padding: 14px 16px !important;
-}
-
-.stats-title{
-  font-size: 15px !important;
-  font-weight: 800 !important;
-  text-transform: uppercase;
-  letter-spacing: .3px;
-}
-
-.stats-number{
-  font-size: 32px !important;
-  font-weight: 900 !important;
-  line-height: 1;
-}
-
-.stats-card span:last-child{
-  font-size: 15px !important;
-  font-weight: 600;
-  opacity: .9;
-}
-/********************************************
- * UX PRO FINAL UPGRADE – NAILLY WMS PRO
- ********************************************/
-
-/* ---- Bottom Nav: mărire icon + text, look iOS premium ---- */
-#bottomNav {
-  height: 110px !important; /* mai înalt, mai ergonomic */
-  background: linear-gradient(to top, #ffffff, #fafafa) !important;
-  border-top: 1px solid #ddd !important;
-  box-shadow: 0 -6px 18px rgba(0,0,0,0.12) !important;
-}
-
-.nav-btn {
-  padding-top: 10px !important;
-  padding-bottom: 12px !important;
-  gap: 10px !important;
-}
-
-.nav-btn svg {
-  width: 40px !important;       /* icon mare și clar */
-  height: 40px !important;
-  stroke-width: 2.6 !important; /* icon mai bold */
-  opacity: 0.85;
-  transition: 0.2s ease;
-}
-
-.nav-btn span {
-  font-size: 16px !important;   /* text mai lizibil */
-  font-weight: 800 !important;
-  margin-top: 2px !important;
-  color: #555 !important;
-  transition: 0.2s ease;
-}
-
-/* ---- Active State (stil aplicație nativă) ---- */
-.nav-btn.active svg {
-  stroke: var(--brand) !important;
-  opacity: 1 !important;
-  transform: scale(1.06); /* mic efect elegant */
-}
-
-.nav-btn.active span {
-  color: var(--brand) !important;
-}
-
-/* ---- Tap Feedback pentru UX profesional ---- */
-.nav-btn:active {
-  background: rgba(216, 27, 96, 0.08) !important;
-  transition: 0.05s;
-}
-
-/* ---- Compactare spații pentru un workspace mai eficient ---- */
-h3 {
-  margin-top: 14px !important;
-}
-
-#statsBar {
-  margin-bottom: 4px !important;
-}
-
-#orderMeta {
-  margin-top: 6px !important;
-}
-
-/* ---- Tabel mai compact + lizibil ---- */
-table th, table td {
-  padding: 10px 6px !important;
-}
-
-#productsTable td:nth-child(3) {
-  font-size: 19px !important;
-}
-
-/* ---- Finish Button mai modern ---- */
-#finishBtn {
-  font-size: 22px !important;
-  height: 62px !important;
-  font-weight: 900 !important;
-  border-radius: 14px 14px 0 0 !important;
-}
-
 </style>
 </head>
 
