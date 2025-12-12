@@ -5,660 +5,500 @@
 <title>Nailly – Pick & Pack</title>
 
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        max-width: 900px;
-        margin: 20px auto;
-        padding: 0 10px 110px;
-        font-size: 18px;
-    }
+  :root{
+    --brand:#d81b60;
+    --ok:#28a745;
+    --blue:#2f80ed;
+    --text:#222;
+    --muted:#666;
+  }
 
-    /* LOGO */
-    .logo-header {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .logo-header img {
-    max-width: 130px;   /* MAI MIC */
-    width: 40%;
-    height: auto;
-}
-    @media (max-width: 600px) {
-        .logo-header img {
-            max-width: 160px;
-            width: 70%;
-        }
-    }
+  body{
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 10px 140px; /* spațiu pentru bottom bar + finish */
+    font-size: 18px;
+    color: var(--text);
+  }
 
-    h3 {
-        margin-top: 25px;
-        font-size: 22px;
-        font-weight: 600;
-    }
+  /* LOGO */
+  .logo-header{
+    text-align:center;
+    margin: 6px 0 14px;
+  }
+  .logo-header img{
+    max-width: 120px;
+    width: 42%;
+    height:auto;
+  }
 
-    /* ====== STATS BAR ====== */
-    #statsBar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 18px;
-    }
-    .stats-card {
-        flex: 1 1 180px;
-        padding: 14px 16px;
-        border-radius: 12px;
-        font-size: 17px;
-        background: #f3f3f3;
-        box-sizing: border-box;
-    }
-    .stats-title {
-        display: block;
-        margin-bottom: 6px;
-        font-weight: 600;
-    }
-    .stats-number {
-        font-weight: 700;
-        font-size: 31px; /* +30% deja */
-        margin-right: 6px;
-    }
-    .stats-pending--some {
-        background: #e8f7e9;
-        color: #1e7e34;
-    }
-    .stats-pending--none {
-        background: #fde8e8;
-        color: #b10000;
-    }
-    .stats-done {
-        background: #e8f0ff;
-        color: #1a3d8f;
-    }
+  h3{
+    margin-top: 18px;
+    font-size: 22px;
+    font-weight: 700;
+  }
 
-    /* ===== QUICK SEARCH (LUPA) ===== */
-    #quickSearchIcon{
-        position: fixed;
-        top: 12px;
-        right: 14px;
-        width: 46px;
-        height: 46px;
-        border-radius: 12px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        cursor:pointer;
-        z-index: 2000;
-        background: rgba(255,255,255,0.92);
-        border: 1px solid rgba(0,0,0,0.08);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.10);
-        user-select: none;
-    }
-    #quickSearchIcon svg{
-        width: 22px;
-        height: 22px;
-        stroke: #111;
-    }
+  /* STATS */
+  #statsBar{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .stats-card{
+    flex: 1 1 180px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background:#f3f3f3;
+    box-sizing:border-box;
+  }
+  .stats-title{
+    display:block;
+    margin-bottom: 6px;
+    font-weight: 700;
+    font-size: 15px;
+    color: #333;
+  }
+  .stats-number{
+    font-weight: 800;
+    font-size: 30px;
+    margin-right: 6px;
+  }
+  .stats-pending--some{ background:#e8f7e9; color:#1e7e34; }
+  .stats-pending--none{ background:#fde8e8; color:#b10000; }
+  .stats-done{ background:#e8f0ff; color:#1a3d8f; }
 
-    #quickSearchOverlay{
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.78);
-        display: none;
-        align-items: flex-start;
-        justify-content: center;
-        padding-top: 90px;
-        z-index: 1999;
-    }
-    #quickSearchOverlay.active{
-        display: flex;
-    }
-        
-    .quickSearchBox input{
-        width: 100%;
-        padding: 14px 56px 14px 16px;
-        border-radius: 999px;
-        border: 2px solid rgba(255,255,255,0.35);
-        background: rgba(0,0,0,0.35);
-        color: #fff;
-        font-size: 18px;
-        outline: none;
-        box-sizing: border-box;
-    }
-    .quickSearchBox input::placeholder{
-        color: rgba(255,255,255,0.75);
-    }
-    #quickSearchBtn{
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 42px;
-        height: 42px;
-        border-radius: 999px;
-        background: #fff;
-        border: none;
-        cursor: pointer;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        padding: 0;
-    }
-    #quickSearchBtn svg{
-        width: 22px;
-        height: 22px;
-        stroke: #111;
-    }
-    #quickSearchClose{
-        position: absolute;
-        right: -52px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 42px;
-        height: 42px;
-        border-radius: 12px;
-        background: rgba(255,255,255,0.12);
-        border: 1px solid rgba(255,255,255,0.25);
-        color: #fff;
-        font-size: 22px;
-        cursor: pointer;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-    }
+  /* INPUTS */
+  input{
+    padding: 18px;
+    font-size: 18px;
+    margin: 10px 0;
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    box-sizing:border-box;
+  }
 
-    /* === ELEMENTE STANDARD === */
-    input {
-        padding: 18px;
-        font-size: 18px;
-        margin: 10px 0;
-        width: 100%;
-        border-radius: 12px;
-        border: 1px solid #ccc;
-        box-sizing: border-box;
-    }
+  /* BUTTONS */
+  button{
+    padding: 18px;
+    font-size: 20px;
+    width: 100%;
+    border-radius: 14px;
+    font-weight: 800;
+    cursor:pointer;
+    border:none;
+    background: var(--brand);
+    color:#fff;
+    transition: .15s;
+    box-sizing:border-box;
+  }
+  button:hover{ filter: brightness(.95); }
 
-    button {
-        padding: 20px;
-        font-size: 22px;
-        width: 100%;
-        border-radius: 14px;
-        font-weight: bold;
-        cursor: pointer;
-        border: none;
-        background: #d81b60;
-        color: white;
-        transition: 0.2s;
-        box-sizing: border-box;
-    }
-    button:hover {
-        background: #b0144f;
-    }
+  /* CAMERA BUTTON (păstrăm același stil ca înainte) */
+  #cameraBtn{
+    margin-top: 8px;
+  }
 
-    /* TABEL PRODUSE */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 18px;
-        table-layout: fixed;
-    }
-    th, td {
-        padding: 14px;
-        border: 1px solid #ccc;
-        word-wrap: break-word;
-        white-space: normal;
-        font-size: 18px;
-    }
-    th {
-        background: #fafafa;
-        font-weight: 600;
-    }
+  /* ORDER META: TIMER + PROGRESS */
+  #orderMeta{
+    display:none;
+    margin: 10px 0 10px;
+  }
+  #orderInfoRow{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  #timerBox{
+    font-weight: 800;
+    font-size: 16px;
+    color:#333;
+  }
+  #progressOuter{
+    width:100%;
+    height: 12px;
+    background:#eee;
+    border-radius: 999px;
+    overflow:hidden;
+  }
+  #progressInner{
+    height:100%;
+    width:0;
+    background: var(--ok);
+    transition: width .2s ease-out;
+  }
+  #progressText{
+    margin-top: 6px;
+    font-size: 15px;
+    color:#555;
+  }
 
-    .ok {
-        background: #c8f7c5 !important;
-    }
-    .next-row {
-        box-shadow: inset 3px 0 0 #d81b60;
-        background: #fff9fc;
-    }
-    .errorInput {
-        background: #ffcccc !important;
-    }
+  /* TABLE */
+  table{
+    width:100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    table-layout: fixed;
+  }
+  th, td{
+    padding: 12px;
+    border: 1px solid #ccc;
+    word-wrap: break-word;
+    white-space: normal;
+    font-size: 17px;
+  }
+  th{
+    background:#fafafa;
+    font-weight: 800;
+  }
 
-    /* RAFT = BOLD + ALBASTRU vizibil */
-    #productsTable td:nth-child(3) {
-        font-weight: 800;
-        font-size: 19px;
-        color: #1e5bbf; /* albastru mai “curat”, nu spre negru */
-    }
+  .ok{ background:#c8f7c5 !important; }
+  .next-row{
+    box-shadow: inset 3px 0 0 var(--brand);
+    background:#fff9fc;
+  }
+  .errorInput{ background:#ffcccc !important; }
 
-    /* META COMANDĂ: TIMER + PROGRES */
-    #orderMeta {
-        display: none;
-        margin-top: 10px;
-        margin-bottom: 15px;
-    }
-    #orderInfoRow {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 16px;
-        color: #444;
-        margin-bottom: 8px;
-    }
-    #timerBox {
-        font-weight: 700;
-        font-size: 18px;
-    }
-    #progressOuter {
-        width: 100%;
-        height: 12px;
-        background: #eee;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    #progressInner {
-        height: 100%;
-        width: 0;
-        background: #28a745;
-        transition: width 0.2s ease-out;
-    }
-    #progressText {
-        margin-top: 6px;
-        font-size: 16px;
-        color: #555;
-    }
+  /* RAFT = bold + albastru */
+  #productsTable td:nth-child(3){
+    font-weight: 900;
+    font-size: 18px;
+    color:#1e5bbf;
+  }
 
-    /* BUTON FINAL FIX JOS */
-    #finishBtn {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        padding: 22px;
-        font-size: 24px;
-        text-align: center;
-        border-radius: 0;
-        color: white;
-        background: #888;
-        opacity: 0.85;
-        pointer-events: none;
-        transition: 0.25s;
-        display: none;
-        z-index: 999;
-    }
-    #finishBtn.active {
-        background: #28a745;
-        opacity: 1;
-        pointer-events: auto;
-    }
+  /* CAMERA */
+  #cameraScanner{
+    width:100%;
+    margin-top: 12px;
+    display:none;
+  }
 
-    /* CAMERA */
-    #cameraScanner {
-        width: 100%;
-        margin-top: 12px;
-        display: none;
-    }
+  /* FINISH BTN (deasupra bottom nav) */
+  #finishBtn{
+    position: fixed;
+    left:0;
+    bottom: 70px; /* fix deasupra bottom nav */
+    width:100%;
+    padding: 22px;
+    font-size: 24px;
+    text-align:center;
+    border-radius: 0;
+    background:#888;
+    opacity:.85;
+    pointer-events:none;
+    display:none;
+    z-index: 5000;
+  }
+  #finishBtn.active{
+    background: var(--ok);
+    opacity:1;
+    pointer-events:auto;
+  }
 
-    @media (max-width: 600px) {
-        th, td {
-            font-size: 18px;
-            padding: 14px;
-        }
-        button {
-            padding: 22px;
-            font-size: 24px;
-        }
-        input {
-            padding: 18px;
-            font-size: 18px;
-        }
-    }
-/* ================= LUPA – MARIRE REALA PE MOBIL ================= */
-#quickSearchIcon {
-    width: 46px;
-    height: 46px;
-}
-
-/* PE MOBIL – +200% REAL */
-@media (max-width: 768px) {
-    #quickSearchIcon {
-        width: 92px !important;   /* 200% */
-        height: 92px !important;  /* 200% */
-        border-radius: 20px;
-    }
-
-    #quickSearchIcon svg {
-        width: 42px !important;
-        height: 42px !important;
-    }
-}
-/* ===== PANOU COMENZI ===== */
-.orders-panel {
+  /* ORDERS PANEL */
+  .orders-panel{
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 65vh;
+    height: 70vh;
     background: #fff;
-    box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.25);
     border-top-left-radius: 18px;
     border-top-right-radius: 18px;
     transform: translateY(100%);
-    transition: transform 0.25s ease;
-    z-index: 3000;
-    display: flex;
+    transition: transform .22s ease;
+    z-index: 6500;
+    display:flex;
     flex-direction: column;
-}
+  }
+  .orders-panel.open{ transform: translateY(0); }
 
-.orders-panel.open {
-    transform: translateY(0);
-}
-
-.orders-panel-header {
+  .orders-panel-header{
     display:flex;
     justify-content: space-between;
-    align-items: center;
+    align-items:center;
     padding: 14px 16px;
     border-bottom: 1px solid #eee;
     font-size: 18px;
+    font-weight: 800;
+  }
+  .orders-panel-header{
+  position: relative;
 }
 
-.orders-panel-header button {
-    background:none;
-    border:none;
-    font-size:22px;
-    cursor:pointer;
+.orders-panel-header .close-btn{
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #f2f2f2;
+  border: 1px solid #e6e6e6;
+  color: #111;
+  font-weight: 900;
+  cursor: pointer;
 }
 
-.orders-panel-list {
+  .orders-panel-list{
     flex:1;
     overflow-y:auto;
-}
-
-.order-row {
+  }
+  .order-row{
     padding: 14px 16px;
     border-bottom: 1px solid #f0f0f0;
     font-size: 18px;
-    cursor: pointer;
-}
+    cursor:pointer;
+  }
+  .order-row:hover{ background:#f7f7f7; }
 
-.order-row:hover {
-    background:#f7f7f7;
-}
-
-/* ===== BUTON SEARCH MARE – CONTROLAT ===== */
-#quickSearchIcon {
-    position: fixed;
-    bottom: 100px;        /* jos-dreapta, nu sus */
-    right: 20px;
-    width: 88px;
-    height: 88px;
-    border-radius: 22px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #ffffff;
-    border: 2px solid #d81b60;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
-
-    cursor: pointer;
-    z-index: 9999;
-}
-
-#quickSearchIcon svg {
-    width: 40px;
-    height: 40px;
-    stroke: #d81b60;
-}
-.quick-search-results {
-    margin-top: 10px;
-    background: #fff;
-    border-radius: 12px;
-    max-height: 280px;
-    overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-}
-
-.quick-search-item {
-    padding: 14px 18px;
-    font-size: 18px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-}
-
-.quick-search-item:last-child {
-    border-bottom: none;
-}
-
-.quick-search-item:hover {
-    background: #f3f6fb;
-}
-/* === AUTOCOMPLETE LIST FIXED UNDER INPUT === */
-.quick-search-results {
-    position: absolute;
-    top: 58px; /* fix sub input */
-    left: 0;
-    width: 100%;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    z-index: 5000;
-    padding: 6px 0;
-    max-height: 260px;
-    overflow-y: auto;
-}
-
-/* Stil pentru fiecare rezultat */
-.quick-search-item {
-    padding: 12px 16px;
-    font-size: 18px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.quick-search-item:last-child {
-    border-bottom: none;
-}
-
-.quick-search-item:hover {
-    background: #f7f7f7;
-}
-
-/* Asigură layout stabil pe mobil */
-    .quick-search-results {
-        top: 56px;  /* ajustat pentru mobil */
-        font-size: 17px;
-    }
-}
-
-/* ===== QUICK SEARCH – STABIL PE MOBIL ===== */
-#quickSearchOverlay{
+  /* QUICK SEARCH OVERLAY (stabil pe mobil) */
+  #quickSearchOverlay{
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.78);
-    display: none;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 80px;
-    z-index: 3000;
-}
+    display:none;
+    z-index: 7000;
+  }
+  #quickSearchOverlay.active{ display:block; }
 
-#quickSearchOverlay.active{
-    display: flex;
-}
-
-.quickSearchBox{
+  .quickSearchBox{
     position: fixed;
-    top: 80px;
+    top: 88px;
     left: 50%;
     transform: translateX(-50%);
-    width: 92vw;
-    max-width: 520px;
-}
+    width: min(520px, 92vw);
+  }
 
-.quickSearchBox input{
+  .quickSearchInputWrap{
+    position: relative;
     width: 100%;
-    height: 48px;
-    padding: 0 56px 0 16px;
+  }
+
+  #quickSearchInput{
+    width: 100%;
+    height: 54px;
+    padding: 0 56px 0 18px;
     border-radius: 999px;
     border: 2px solid rgba(255,255,255,0.35);
     background: rgba(0,0,0,0.35);
-    color: #fff;
+    color:#fff;
     font-size: 18px;
-    outline: none;
-    box-sizing: border-box;
-}
+    outline:none;
+    box-sizing:border-box;
+  }
+  #quickSearchInput::placeholder{ color: rgba(255,255,255,0.75); }
 
-#quickSearchBtn{
-    position: absolute;
+  #quickSearchBtn{
+    position:absolute;
     right: 6px;
     top: 50%;
     transform: translateY(-50%);
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 999px;
-    background: #fff;
-    border: none;
+    background:#fff;
+    color:#111;
+    border:none;
     display:flex;
     align-items:center;
     justify-content:center;
-}
+    padding:0;
+    cursor:pointer;
+    font-weight: 900;
+  }
 
-#quickSearchClose{
-    position: absolute;
-    right: -50px;
+  #quickSearchClose{
+    position:absolute;
+    right: -52px;
     top: 50%;
     transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: #fff;
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.28);
+    color:#fff;
     font-size: 22px;
-}
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    user-select:none;
+  }
+
+  /* autocomplete results */
+  #quickSearchResults{
+    position: absolute;
+    top: 62px;
+    left:0;
+    width:100%;
+    background:#fff;
+    border-radius: 14px;
+    box-shadow: 0 14px 35px rgba(0,0,0,0.35);
+    max-height: 280px;
+    overflow-y:auto;
+    display:none;
+  }
+  #quickSearchResults.show{ display:block; }
+
+  .quick-search-item{
+    padding: 14px 16px;
+    font-size: 18px;
+    border-bottom: 1px solid #eee;
+    cursor:pointer;
+  }
+  .quick-search-item:last-child{ border-bottom:none; }
+  .quick-search-item:hover{ background:#f5f7fb; }
+
+  /* BOTTOM NAV */
+  #bottomNav{
+    position: fixed;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:70px;
+    background:#fff;
+    border-top: 2px solid #e9e9e9;
+    display:flex;
+    z-index: 7200;
+  }
+  .nav-btn{
+    flex:1;
+    height:100%;
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-size: 26px;
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+    justify-content:center;
+    color:#111;
+  }
+  .nav-btn span{
+    font-size: 12px;
+    margin-top: 4px;
+    color:#333;
+    font-weight: 700;
+  }
+  .nav-btn:active{ background:#f2f2f2; }
+
+  /* mobile tuning */
+  @media (max-width: 600px){
+    .logo-header img{ max-width: 110px; width: 42%; }
+    th, td{ font-size: 16px; padding: 11px; }
+  }
 
 </style>
 </head>
 
 <body>
 
-<div class="logo-header">
+  <div class="logo-header">
     <img src="https://c.cdnmp.net/957918846/content/F%C4%83r%C4%83%20titlu%20%28192%20x%20192%20px%29%20%284%29.png" alt="Nailly Logo">
-</div>
-
-<!-- BUTON LISTA COMENZI -->
-<button id="openOrdersPanel" style="
-    width:100%;
-    margin: 10px 0 16px;
-    background:#2f80ed;
-">
-📋 Comenzi în pregătire
-</button>
-
-<!-- PANOU COMENZI -->
-<div id="ordersPanel" class="orders-panel">
-    <div class="orders-panel-header">
-        <strong>Comenzi în pregătire</strong>
-        <button onclick="closeOrdersPanel()">✕</button>
-    </div>
-    <div id="ordersPanelList" class="orders-panel-list"></div>
-</div>
-
-<button id="quickSearchIcon" title="Caută comandă" type="button">
-  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-    <circle cx="11" cy="11" r="7"></circle>
-    <path d="M20 20l-3.5-3.5"></path>
-  </svg>
-</button>
-
-<!-- OVERLAY SEARCH -->
-<div id="quickSearchOverlay">
-  <div class="quickSearchBox">
-    <input id="quickSearchInput" placeholder="Scrie numărul comenzii…" inputmode="text" autocomplete="off" />
-    <button id="quickSearchBtn" type="button" title="Caută">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
-        <circle cx="11" cy="11" r="7"></circle>
-        <path d="M20 20l-3.5-3.5"></path>
-      </svg>
-    </button>
-    <div id="quickSearchClose" title="Închide">×</div>
-<div id="quickSearchResults" class="quick-search-results"></div>
-<div id="quickSearchResults" class="quick-search-results"></div>
   </div>
-</div>
 
-<!-- STATS -->
-<div id="statsBar">
+  <!-- STATS -->
+  <div id="statsBar">
     <div id="pendingBox" class="stats-card stats-pending--none">
-        <span class="stats-title">Status comenzi</span>
-        <span class="stats-number" id="pendingCount">0</span>
-        <span>comenzi de pregătit</span>
+      <span class="stats-title">Status comenzi</span>
+      <span class="stats-number" id="pendingCount">0</span>
+      <span>comenzi de pregătit</span>
     </div>
     <div id="doneBox" class="stats-card stats-done">
-        <span class="stats-title">Activitatea de astăzi</span>
-        <span class="stats-number" id="doneCount">0</span>
-        <span>comenzi finalizate</span>
+      <span class="stats-title">Activitatea de astăzi</span>
+      <span class="stats-number" id="doneCount">0</span>
+      <span>comenzi finalizate</span>
     </div>
-</div>
+  </div>
 
-<h3 id="orderTitle"></h3>
+  <h3 id="orderTitle"></h3>
 
-<div id="orderMeta">
+  <div id="orderMeta">
     <div id="orderInfoRow">
-        <span id="orderCode"></span>
-        <span id="timerBox">Timp: <span id="timer">00:00</span></span>
+      <span id="orderCode"></span>
+      <span id="timerBox">Timp: <span id="timer">00:00</span></span>
     </div>
-    <div id="progressOuter">
-        <div id="progressInner"></div>
-    </div>
+    <div id="progressOuter"><div id="progressInner"></div></div>
     <div id="progressText"></div>
-</div>
+  </div>
 
-<h3>Pas 2: Scanează produsele</h3>
+  <h3>Pas 2: Scanează produsele</h3>
 
-<input id="scanInput"
-       placeholder="Scanează EAN / SKU..."
-       onkeypress="handleScan(event)"
-       disabled />
+  <input id="scanInput"
+         placeholder="Scanează EAN / SKU..."
+         onkeypress="handleScan(event)"
+         disabled />
 
-<button onclick="startCameraScan()">Scanează cu camera telefonului</button>
+  <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
-<div id="cameraScanner"></div>
+  <div id="cameraScanner"></div>
 
-<table id="productsTable">
+  <table id="productsTable">
     <thead>
-        <tr>
-            <th>SKU</th>
-            <th>Produs</th>
-            <th>Raft</th>
-            <th>Cantitate</th>
-            <th>Scanat</th>
-            <th>Rămas</th>
-        </tr>
+      <tr>
+        <th>SKU</th>
+        <th>Produs</th>
+        <th>Raft</th>
+        <th>Cantitate</th>
+        <th>Scanat</th>
+        <th>Rămas</th>
+      </tr>
     </thead>
     <tbody></tbody>
-</table>
+  </table>
 
-<button id="finishBtn" onclick="finalizeOrder()">Finalizează comanda</button>
+  <button id="finishBtn" onclick="finalizeOrder()">Finalizează comanda</button>
 
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- ORDERS PANEL -->
+  <div id="ordersPanel" class="orders-panel">
+    <div class="orders-panel-header">
+      <div>Comenzi în pregătire</div>
+      <button class="close-btn" onclick="closeOrdersPanel()">✕</button>
+    </div>
+    <div id="ordersPanelList" class="orders-panel-list"></div>
+  </div>
+
+  <!-- QUICK SEARCH OVERLAY -->
+  <div id="quickSearchOverlay">
+    <div class="quickSearchBox">
+      <div class="quickSearchInputWrap">
+        <input id="quickSearchInput" placeholder="Scrie numărul comenzii…" inputmode="numeric" autocomplete="off">
+        <button id="quickSearchBtn" type="button" title="Caută">🔍</button>
+        <div id="quickSearchClose" title="Închide">×</div>
+        <div id="quickSearchResults"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div id="bottomNav">
+    <button id="btnHome" class="nav-btn" title="Refresh">🔄<span>Acasă</span></button>
+    <button id="btnOrders" class="nav-btn" title="Comenzi">📋<span>Comenzi</span></button>
+    <button id="btnSearch" class="nav-btn" title="Caută">🔍<span>Caută</span></button>
+  </div>
+
+  <!-- CAMERA LIB -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
-// ===================== CONFIG ======================
+/* ===================== CONFIG ====================== */
 const ORDER_LIST_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/orders-list";
-
 const ORDER_GET_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/order-get";
-
 const DELETE_ORDER_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/delete-order-file-orderId-";
-
 const PRODUCT_LOCATION_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.";
-
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFmc2lneGVjbXJ5Z21ib2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwNDQ0MzgsImV4cCI6MjA3NTYyMDQzOH0.b9MXrgxADVZGvdFaKFQggD-vMd0ayZ9hX4_PmYOzrfE";
 
@@ -668,7 +508,7 @@ let allOrders = [];
 let timerInterval = null;
 let orderStartTime = null;
 
-// ===================== HELPER: DATE KEY ======================
+/* ===================== HELPER: DATE KEY ====================== */
 function getTodayKey() {
   const d = new Date();
   const y = d.getFullYear();
@@ -677,7 +517,7 @@ function getTodayKey() {
   return `nailly_pnp_done_${y}${m}${day}`;
 }
 
-// ===================== AUDIO + VIBRAȚIE ======================
+/* ===================== AUDIO + VIBRAȚIE ====================== */
 function playBeep(freq = 800, duration = 120, type = "sine") {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -703,7 +543,7 @@ function feedbackError() {
   if (navigator.vibrate) navigator.vibrate([0, 80, 40, 80]);
 }
 
-// ===================== TIMER ======================
+/* ===================== TIMER ====================== */
 function startTimer() {
   if (timerInterval) clearInterval(timerInterval);
   orderStartTime = Date.now();
@@ -712,9 +552,9 @@ function startTimer() {
 
   timerInterval = setInterval(() => {
     const diff = Math.floor((Date.now() - orderStartTime) / 1000);
-    const m = String(Math.floor(diff / 60)).padStart(2, "0");
-    const s = String(diff % 60).padStart(2, "0");
-    timerEl.textContent = `${m}:${s}`;
+    const mm = String(Math.floor(diff / 60)).padStart(2, "0");
+    const ss = String(diff % 60).padStart(2, "0");
+    timerEl.textContent = `${mm}:${ss}`;
   }, 1000);
 }
 function stopTimer() {
@@ -724,7 +564,7 @@ function stopTimer() {
   }
 }
 
-// ===================== STATS UI ======================
+/* ===================== STATS ====================== */
 function updateStats() {
   const pendingBox = document.getElementById("pendingBox");
   const pendingCountEl = document.getElementById("pendingCount");
@@ -742,43 +582,27 @@ function updateStats() {
   doneCountEl.textContent = done;
 }
 
-// ===================== LOAD ORDERS ======================
-async function loadOrders() {
+/* ===================== LOAD ORDERS ====================== */
+async function loadOrders({silent=false} = {}) {
   try {
-    const res = await fetch(ORDER_LIST_URL);
+    const res = await fetch(ORDER_LIST_URL, { cache: "no-store" });
     const orders = await res.json();
-
     allOrders = Array.isArray(orders) ? orders : [];
     updateStats();
-
-    // dacă nu există comenzi → resetăm UI
-    if (!allOrders.length) {
-      currentOrderId = null;
-      currentProducts = [];
-      document.getElementById("orderTitle").textContent = "";
-      document.getElementById("orderMeta").style.display = "none";
-      document.querySelector("#productsTable tbody").innerHTML = "";
-
-      const scanInput = document.getElementById("scanInput");
-      scanInput.value = "";
-      scanInput.disabled = true;
-
-      const btn = document.getElementById("finishBtn");
-      btn.style.display = "none";
-      btn.classList.remove("active");
+    // dacă panel-ul e deschis, re-randăm lista
+    if (document.getElementById("ordersPanel").classList.contains("open")) {
+      renderOrdersPanel();
     }
-
   } catch (err) {
-    alert("Eroare la încărcarea comenzilor!");
     console.error(err);
+    if (!silent) alert("Eroare la încărcarea comenzilor!");
   }
 }
 
-// ===================== LOAD ORDER BY ID ======================
+/* ===================== LOAD ORDER BY ID ====================== */
 async function loadOrderById(orderId) {
   if (!orderId) return;
 
-  // validare: există în lista de pending?
   const exists = allOrders.some(o => String(o.orderId) === String(orderId));
   if (!exists) {
     feedbackError();
@@ -786,9 +610,9 @@ async function loadOrderById(orderId) {
     return;
   }
 
-  currentOrderId = orderId;
+  currentOrderId = String(orderId);
 
-  const res = await fetch(`${ORDER_GET_URL}?orderId=${encodeURIComponent(orderId)}`);
+  const res = await fetch(`${ORDER_GET_URL}?orderId=${encodeURIComponent(currentOrderId)}`, { cache: "no-store" });
   const data = await res.json();
 
   currentProducts = await Promise.all(
@@ -796,25 +620,22 @@ async function loadOrderById(orderId) {
       .filter(p => p.item_type === "product")
       .map(async p => {
         let originalSku = p.product_sku || "";
-        let lookupSku = originalSku.replace(/^0+/, "");
+        let lookupSku = String(originalSku).replace(/^0+/, "");
 
-        let locRes = await fetch(PRODUCT_LOCATION_URL + encodeURIComponent(lookupSku), {
-          method: "GET",
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        let shelf = "Fără locație";
+        try {
+          const locRes = await fetch(PRODUCT_LOCATION_URL + encodeURIComponent(lookupSku), {
+            method: "GET",
+            headers: {
+              "apikey": SUPABASE_ANON_KEY,
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+            }
+          });
+          const locData = await locRes.json().catch(() => []);
+          if (Array.isArray(locData) && locData.length > 0 && locData[0].location && locData[0].location !== "EMPTY") {
+            shelf = locData[0].location;
           }
-        });
-
-        let locData = [];
-        try { locData = await locRes.json(); } catch (_) {}
-
-        let shelf =
-          locData.length > 0 &&
-          locData[0].location &&
-          locData[0].location !== "EMPTY"
-            ? locData[0].location
-            : "Fără locație";
+        } catch (_) {}
 
         return {
           sku: originalSku,
@@ -827,30 +648,25 @@ async function loadOrderById(orderId) {
       })
   );
 
+  // sortare după raft
   currentProducts.sort((a, b) => {
     if (a.shelf === b.shelf) return String(a.sku).localeCompare(String(b.sku));
     return String(a.shelf).localeCompare(String(b.shelf));
   });
 
-  document.getElementById("orderTitle").textContent = "Comanda #" + orderId;
-  document.getElementById("orderCode").textContent = "ID comandă: " + orderId;
+  document.getElementById("orderTitle").textContent = "Comanda #" + currentOrderId;
+  document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
   scanInput.disabled = false;
 
-  /* PREVENIM DESCHIDEREA TASTATURII PE TERMINAL */
+  // prevenim tastatura pe terminal; scanerele wedge trimit text + Enter oricum
   scanInput.setAttribute("inputmode", "none");
   scanInput.setAttribute("readonly", "readonly");
+  setTimeout(() => scanInput.blur(), 50);
 
-  // important: la wedge scanners merge chiar și cu readonly
-  // păstrăm comportamentul confirmat de tine (fără tastatură)
-  setTimeout(() => {
-    // unele terminale forțează tastatura la focus; blur o oprește
-    scanInput.blur();
-  }, 50);
-
-  /* DEBLOCHEAZĂ TASTAREA MANUALĂ DOAR LA CLICK INTENȚIONAT */
+  // dacă vrea manual, click = deblochează
   if (!scanInput.dataset.manualEnabled) {
     scanInput.addEventListener("click", function () {
       this.removeAttribute("readonly");
@@ -860,15 +676,15 @@ async function loadOrderById(orderId) {
     scanInput.dataset.manualEnabled = "1";
   }
 
-  const btn = document.getElementById("finishBtn");
-  btn.style.display = "block";
-  btn.classList.remove("active");
+  const finishBtn = document.getElementById("finishBtn");
+  finishBtn.style.display = "block";
+  finishBtn.classList.remove("active");
 
   startTimer();
   renderTable();
 }
 
-// ===================== TABLE ======================
+/* ===================== TABLE ====================== */
 function renderTable() {
   const tbody = document.querySelector("#productsTable tbody");
   tbody.innerHTML = "";
@@ -881,12 +697,12 @@ function renderTable() {
     if (p.scanned === p.qty) tr.classList.add("ok");
 
     tr.innerHTML = `
-        <td>${p.sku ?? ""}</td>
-        <td>${p.name ?? ""}</td>
-        <td>${p.shelf ?? ""}</td>
-        <td style="text-align:center">${p.qty}</td>
-        <td style="text-align:center">${p.scanned}</td>
-        <td style="text-align:center">${p.qty - p.scanned}</td>
+      <td>${p.sku ?? ""}</td>
+      <td>${p.name ?? ""}</td>
+      <td>${p.shelf ?? ""}</td>
+      <td style="text-align:center">${p.qty}</td>
+      <td style="text-align:center">${p.scanned}</td>
+      <td style="text-align:center">${p.qty - p.scanned}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -911,17 +727,18 @@ function updateFinishButtonState() {
   else btn.classList.remove("active");
 }
 
-// ===================== SCAN ======================
+/* ===================== SCAN ====================== */
+function normalize(v){
+  if (!v) return "";
+  // elimină zerouri din față DOAR pentru numeric (EAN), și pentru SKU numeric
+  return String(v).replace(/^0+/, "");
+}
+
 function handleScan(event) {
   if (event.key !== "Enter") return;
 
-  let code = event.target.value.trim();
+  let code = (event.target.value || "").trim();
   event.target.value = "";
-
-  const normalize = (v) => {
-    if (!v) return "";
-    return String(v).replace(/^0+/, "");
-  };
 
   const scanned = normalize(code);
 
@@ -949,10 +766,10 @@ function handleScan(event) {
 function flashError() {
   let input = document.getElementById("scanInput");
   input.classList.add("errorInput");
-  setTimeout(() => input.classList.remove("errorInput"), 300);
+  setTimeout(() => input.classList.remove("errorInput"), 280);
 }
 
-// ===================== CAMERA SCAN ======================
+/* ===================== CAMERA SCAN ====================== */
 function startCameraScan() {
   const div = document.getElementById("cameraScanner");
   div.style.display = "block";
@@ -961,19 +778,25 @@ function startCameraScan() {
 
   html5QrCode.start(
     { facingMode: "environment" },
-    { fps: 10, qrbox: { width: 250, height: 150 } },
+    { fps: 10, qrbox: { width: 260, height: 160 } },
     (decodedText) => {
       document.getElementById("scanInput").value = decodedText;
       handleScan({ key: "Enter", target: { value: decodedText } });
 
       html5QrCode.stop().then(() => {
         div.style.display = "none";
+      }).catch(() => {
+        div.style.display = "none";
       });
     }
-  );
+  ).catch(err => {
+    console.error(err);
+    alert("Camera nu a putut porni. Verifică permisiunile.");
+    div.style.display = "none";
+  });
 }
 
-// ===================== FINALIZE ORDER ======================
+/* ===================== FINALIZE ORDER ====================== */
 async function finalizeOrder() {
   const btn = document.getElementById("finishBtn");
 
@@ -999,13 +822,16 @@ async function finalizeOrder() {
     if (res.ok && result.deleted?.length > 0) {
       alert("Comanda a fost finalizată!");
 
+      // incrementăm contorul local pentru azi
       const key = getTodayKey();
       const prev = Number(localStorage.getItem(key) || "0");
       localStorage.setItem(key, String(prev + 1));
 
+      // reset UI
       stopTimer();
       currentProducts = [];
       currentOrderId = null;
+
       document.getElementById("orderTitle").textContent = "";
       document.getElementById("orderMeta").style.display = "none";
       document.querySelector("#productsTable tbody").innerHTML = "";
@@ -1017,7 +843,8 @@ async function finalizeOrder() {
       btn.style.display = "none";
       btn.classList.remove("active");
 
-      await loadOrders();
+      // reîncarcă pending
+      await loadOrders({silent:true});
     } else {
       alert("Eroare la ștergerea fișierului!");
       console.error(result);
@@ -1028,114 +855,171 @@ async function finalizeOrder() {
   }
 }
 
-// ===================== QUICK SEARCH UI ======================
-(function initQuickSearch(){
-  const icon = document.getElementById("quickSearchIcon");
-  const overlay = document.getElementById("quickSearchOverlay");
-  const input = document.getElementById("quickSearchInput");
-  const btn = document.getElementById("quickSearchBtn");
-  const close = document.getElementById("quickSearchClose");
-  const resultsBox = document.getElementById("quickSearchResults");
+/* ===================== ORDERS PANEL ====================== */
+function openOrdersPanel() {
+  document.getElementById("ordersPanel").classList.add("open");
+  renderOrdersPanel();
+}
+function closeOrdersPanel() {
+  document.getElementById("ordersPanel").classList.remove("open");
+}
+function toggleOrdersPanel(){
+  const panel = document.getElementById("ordersPanel");
+  if (panel.classList.contains("open")) {
+    closeOrdersPanel();
+  } else {
+    openOrdersPanel();
+  }
+}
 
-  function openQS(){
-    overlay.classList.add("active");
-    input.value = "";
-    resultsBox.innerHTML = "";
-    setTimeout(() => input.focus(), 50);
+function renderOrdersPanel() {
+  const list = document.getElementById("ordersPanelList");
+  list.innerHTML = "";
+
+  if (!allOrders.length) {
+    list.innerHTML = "<div style='padding:16px;color:#666'>Nu există comenzi.</div>";
+    return;
   }
 
-  function closeQS(){
-    overlay.classList.remove("active");
-    input.value = "";
-    resultsBox.innerHTML = "";
+  allOrders.forEach(o => {
+    const div = document.createElement("div");
+    div.className = "order-row";
+    div.textContent = `Comanda #${o.orderId}`;
+    div.onclick = () => {
+      closeOrdersPanel();
+      closeQS();
+      loadOrderById(o.orderId);
+    };
+    list.appendChild(div);
+  });
+}
+
+/* ===================== QUICK SEARCH (overlay + autocomplete) ====================== */
+const qs = {
+  overlay: null,
+  input: null,
+  btn: null,
+  close: null,
+  results: null
+};
+
+function openQS(){
+  qs.overlay.classList.add("active");
+  qs.input.value = "";
+  qs.results.innerHTML = "";
+  qs.results.classList.remove("show");
+  setTimeout(() => qs.input.focus(), 60);
+}
+
+function closeQS(){
+  qs.overlay.classList.remove("active");
+  qs.input.value = "";
+  qs.results.innerHTML = "";
+  qs.results.classList.remove("show");
+}
+
+function renderQSResults(matches){
+  qs.results.innerHTML = "";
+  if (!matches.length) {
+    qs.results.classList.remove("show");
+    return;
   }
+  qs.results.classList.add("show");
 
-  function renderResults(list){
-    resultsBox.innerHTML = "";
+  matches.slice(0, 10).forEach(o => {
+    const div = document.createElement("div");
+    div.className = "quick-search-item";
+    div.textContent = `Comanda #${o.orderId}`;
+    div.onclick = () => {
+      closeQS();
+      loadOrderById(o.orderId);
+    };
+    qs.results.appendChild(div);
+  });
+}
 
-    if (!list.length) return;
-
-    list.slice(0, 10).forEach(o => {
-      const div = document.createElement("div");
-      div.className = "quick-search-item";
-      div.textContent = `Comanda #${o.orderId}`;
-      div.onclick = () => {
-        closeQS();
-        loadOrderById(o.orderId);
-      };
-      resultsBox.appendChild(div);
-    });
+function qsHandleInput(){
+  const v = (qs.input.value || "").trim();
+  if (!v) {
+    qs.results.innerHTML = "";
+    qs.results.classList.remove("show");
+    return;
   }
+  const matches = allOrders.filter(o => String(o.orderId).includes(v));
+  renderQSResults(matches);
+}
 
-  function handleInput(){
-    const v = input.value.trim();
-    if (v.length < 1) {
-      resultsBox.innerHTML = "";
-      return;
-    }
+function qsRunSearch(){
+  const v = (qs.input.value || "").trim();
+  if (!v) return;
+  closeQS();
+  loadOrderById(v);
+}
 
-    const matches = allOrders.filter(o =>
-      String(o.orderId).includes(v)
-    );
+/* ===================== BOTTOM NAV ====================== */
+function refreshHome(){
+  // închide overlay-uri deschise
+  closeOrdersPanel();
+  closeQS();
 
-    renderResults(matches);
-  }
+  // resetează comanda curentă
+  stopTimer();
+  currentProducts = [];
+  currentOrderId = null;
 
-  function runSearch(){
-    const v = input.value.trim();
-    if (!v) return;
-    closeQS();
-    loadOrderById(v);
-  }
+  document.getElementById("orderTitle").textContent = "";
+  document.getElementById("orderMeta").style.display = "none";
+  document.querySelector("#productsTable tbody").innerHTML = "";
 
-  icon.addEventListener("click", openQS);
-  close.addEventListener("click", closeQS);
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeQS(); });
+  const scanInput = document.getElementById("scanInput");
+  scanInput.value = "";
+  scanInput.disabled = true;
 
-  input.addEventListener("input", handleInput);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") runSearch();
+  const btn = document.getElementById("finishBtn");
+  btn.style.display = "none";
+  btn.classList.remove("active");
+
+  // reload comenzi + stats
+  loadOrders({ silent: true });
+  updateStats();
+
+  // feedback utilizator
+  feedbackSuccess();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // init quick search refs
+  qs.overlay = document.getElementById("quickSearchOverlay");
+  qs.input = document.getElementById("quickSearchInput");
+  qs.btn = document.getElementById("quickSearchBtn");
+  qs.close = document.getElementById("quickSearchClose");
+  qs.results = document.getElementById("quickSearchResults");
+
+  // quick search events
+  qs.btn.addEventListener("click", qsRunSearch);
+  qs.close.addEventListener("click", closeQS);
+  qs.overlay.addEventListener("click", (e) => { if (e.target === qs.overlay) closeQS(); });
+
+  qs.input.addEventListener("input", qsHandleInput);
+  qs.input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") qsRunSearch();
     if (e.key === "Escape") closeQS();
   });
 
-  btn.addEventListener("click", runSearch);
-})();
-function openOrdersPanel() {
-    document.getElementById("ordersPanel").classList.add("open");
-    renderOrdersPanel();
-}
+  // bottom nav
+  document.getElementById("btnHome").addEventListener("click", refreshHome);
+document.getElementById("btnOrders").addEventListener("click", toggleOrdersPanel);
+  document.getElementById("btnSearch").addEventListener("click", openQS);
 
-function closeOrdersPanel() {
-    document.getElementById("ordersPanel").classList.remove("open");
-}
-
-document.getElementById("openOrdersPanel").addEventListener("click", openOrdersPanel);
-
-function renderOrdersPanel() {
-    const list = document.getElementById("ordersPanelList");
-    list.innerHTML = "";
-
-    if (!allOrders.length) {
-        list.innerHTML = "<div style='padding:16px'>Nu există comenzi.</div>";
-        return;
-    }
-
-    allOrders.forEach(o => {
-        const div = document.createElement("div");
-        div.className = "order-row";
-        div.textContent = `Comanda #${o.orderId}`;
-        div.onclick = () => {
-            closeOrdersPanel();
-            loadOrderById(o.orderId);
-        };
-        list.appendChild(div);
+  // first load
+  loadOrders({silent:true});
 });
 
-}
-
-// ===================== INIT ======================
-loadOrders();
+/* (opțional) refresh automat la 30 sec, ca să nu mai „tragi în jos” */
+setInterval(() => loadOrders({silent:true}), 30000);
 </script>
+
 </body>
 </html>
+
 
