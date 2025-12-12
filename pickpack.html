@@ -387,6 +387,48 @@
 .order-row:hover {
     background:#f7f7f7;
 }
+/* ================= LUPA – FIX DEFINITIV PE MOBIL ================= */
+#quickSearchIcon {
+    position: fixed;
+    top: 12px;
+    right: 14px;
+
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid rgba(0,0,0,0.15);
+
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    cursor: pointer;
+    z-index: 4000;
+}
+
+/* ICON */
+#quickSearchIcon svg {
+    width: 22px;
+    height: 22px;
+    stroke: #111;
+}
+
+/* 🔴 PE MOBIL – HIT AREA MARE REAL */
+@media (max-width: 768px) {
+    #quickSearchIcon {
+        width: 96px;   /* +200% REAL */
+        height: 96px;  /* +200% REAL */
+        border-radius: 22px;
+    }
+
+    #quickSearchIcon svg {
+        width: 36px;
+        height: 36px;
+    }
+}
 
 
 </style>
@@ -415,13 +457,12 @@
     <div id="ordersPanelList" class="orders-panel-list"></div>
 </div>
 
-<!-- LUPA SUS DREAPTA -->
-<div id="quickSearchIcon" title="Caută comandă">
+<button id="quickSearchIcon" title="Caută comandă" type="button">
   <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
     <circle cx="11" cy="11" r="7"></circle>
     <path d="M20 20l-3.5-3.5"></path>
   </svg>
-</div>
+</button>
 
 <!-- OVERLAY SEARCH -->
 <div id="quickSearchOverlay">
