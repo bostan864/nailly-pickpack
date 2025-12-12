@@ -649,16 +649,21 @@ function handleScan(event) {
   let code = event.target.value.trim();
 event.target.value = "";
 
-/* 
-  FIX PENTRU EAN-URI CARE VIN FĂRĂ LEADING ZERO
-  ex: scanner trimite 121, noi avem 00000121
+/* NORMALIZARE CODURI:
+   - eliminăm toate zerourile din față
+   - funcționează pentru EAN-uri cu 0 artificial
+   - NU afectează coduri alfanumerice
 */
-if (/^\d+$/.test(code) && code.length < 8) {
-  code = code.padStart(8, "0");
-}
+const normalize = (v) => {
+  if (!v) return "";
+  return String(v).replace(/^0+/, "");
+};
 
-let found = currentProducts.find(
-  p => p.sku === code || p.ean === code
+const scanned = normalize(code);
+
+let found = currentProducts.find(p =>
+  normalize(p.sku) === scanned ||
+  normalize(p.ean) === scanned
 );
 
 
