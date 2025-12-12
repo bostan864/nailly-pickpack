@@ -315,64 +315,24 @@
             font-size: 18px;
         }
     }
-/* ===== LUPA SEARCH – TOUCH FRIENDLY ===== */
-.search-trigger,
-.search-button,
-.search-icon {
-    width: 56px !important;
-    height: 56px !important;
-    min-width: 56px;
-    min-height: 56px;
+/* ================= LUPA – MARIRE REALA PE MOBIL ================= */
+#quickSearchIcon {
+    width: 46px;
+    height: 46px;
 }
 
-.search-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px; /* mai prietenos pe mobil */
-}
-
-/* SVG / icon lupa */
-.search-trigger svg,
-.search-trigger img {
-    width: 56px !important;
-    height: 56px !important;
-}
-
-/* pe mobil și mai mare */
-@media (max-width: 600px) {
-    .search-trigger {
-        width: 64px !important;
-        height: 64px !important;
-    }
-
-    .search-trigger svg,
-    .search-trigger img {
-        width: 30px !important;
-        height: 30px !important;
-    }
-}
-/* ================= LUPA – TOUCH FRIENDLY PE MOBIL ================= */
+/* PE MOBIL – +200% REAL */
 @media (max-width: 768px) {
+    #quickSearchIcon {
+        width: 92px !important;   /* 200% */
+        height: 92px !important;  /* 200% */
+        border-radius: 20px;
+    }
 
-  .search-btn,
-  .search-icon,
-  .search-trigger,
-  .mobile-search,
-  .header-search-button {
-    transform: scale(2);              /* +200% */
-    transform-origin: center;
-  }
-
-  /* mărim și zona de tap, nu doar iconița */
-  .search-btn,
-  .search-trigger,
-  .header-search-button {
-    padding: 16px !important;
-    min-width: 56px;
-    min-height: 56px;
-  }
-
+    #quickSearchIcon svg {
+        width: 42px !important;
+        height: 42px !important;
+    }
 }
 </style>
 </head>
