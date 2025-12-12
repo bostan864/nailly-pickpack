@@ -10,14 +10,24 @@
         max-width: 900px;
         margin: 20px auto;
         padding: 0 10px 110px;
-        font-size: 18px; /* marire generala */
+        font-size: 18px;
     }
 
-    h1 {
-        color: #d81b60;
-        font-size: 32px;
+    /* LOGO */
+    .logo-header {
         text-align: center;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
+    }
+    .logo-header img {
+        max-width: 200px;
+        width: 60%;
+        height: auto;
+    }
+    @media (max-width: 600px) {
+        .logo-header img {
+            max-width: 160px;
+            width: 70%;
+        }
     }
 
     h3 {
@@ -31,7 +41,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
     }
     .stats-card {
         flex: 1 1 180px;
@@ -48,7 +58,7 @@
     }
     .stats-number {
         font-weight: 700;
-        font-size: 31px;
+        font-size: 31px; /* +30% deja */
         margin-right: 6px;
     }
     .stats-pending--some {
@@ -64,8 +74,102 @@
         color: #1a3d8f;
     }
 
+    /* ===== QUICK SEARCH (LUPA) ===== */
+    #quickSearchIcon{
+        position: fixed;
+        top: 12px;
+        right: 14px;
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+        z-index: 2000;
+        background: rgba(255,255,255,0.92);
+        border: 1px solid rgba(0,0,0,0.08);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.10);
+        user-select: none;
+    }
+    #quickSearchIcon svg{
+        width: 22px;
+        height: 22px;
+        stroke: #111;
+    }
+
+    #quickSearchOverlay{
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.78);
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 90px;
+        z-index: 1999;
+    }
+    #quickSearchOverlay.active{
+        display: flex;
+    }
+    .quickSearchBox{
+        position: relative;
+        width: min(520px, 92vw);
+    }
+    .quickSearchBox input{
+        width: 100%;
+        padding: 14px 56px 14px 16px;
+        border-radius: 999px;
+        border: 2px solid rgba(255,255,255,0.35);
+        background: rgba(0,0,0,0.35);
+        color: #fff;
+        font-size: 18px;
+        outline: none;
+        box-sizing: border-box;
+    }
+    .quickSearchBox input::placeholder{
+        color: rgba(255,255,255,0.75);
+    }
+    #quickSearchBtn{
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        background: #fff;
+        border: none;
+        cursor: pointer;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding: 0;
+    }
+    #quickSearchBtn svg{
+        width: 22px;
+        height: 22px;
+        stroke: #111;
+    }
+    #quickSearchClose{
+        position: absolute;
+        right: -52px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.25);
+        color: #fff;
+        font-size: 22px;
+        cursor: pointer;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    }
+
     /* === ELEMENTE STANDARD === */
-    input, select {
+    input {
         padding: 18px;
         font-size: 18px;
         margin: 10px 0;
@@ -88,14 +192,8 @@
         transition: 0.2s;
         box-sizing: border-box;
     }
-
     button:hover {
         background: #b0144f;
-    }
-
-    /* SEARCH INPUT */
-    #orderSearch {
-        margin-top: 5px;
     }
 
     /* TABEL PRODUSE */
@@ -105,7 +203,6 @@
         margin-top: 18px;
         table-layout: fixed;
     }
-
     th, td {
         padding: 14px;
         border: 1px solid #ccc;
@@ -113,7 +210,6 @@
         white-space: normal;
         font-size: 18px;
     }
-
     th {
         background: #fafafa;
         font-weight: 600;
@@ -122,14 +218,19 @@
     .ok {
         background: #c8f7c5 !important;
     }
-
     .next-row {
         box-shadow: inset 3px 0 0 #d81b60;
         background: #fff9fc;
     }
-
     .errorInput {
         background: #ffcccc !important;
+    }
+
+    /* RAFT = BOLD + ALBASTRU vizibil */
+    #productsTable td:nth-child(3) {
+        font-weight: 800;
+        font-size: 19px;
+        color: #1e5bbf; /* albastru mai “curat”, nu spre negru */
     }
 
     /* META COMANDĂ: TIMER + PROGRES */
@@ -147,7 +248,7 @@
         margin-bottom: 8px;
     }
     #timerBox {
-        font-weight: 600;
+        font-weight: 700;
         font-size: 18px;
     }
     #progressOuter {
@@ -200,50 +301,20 @@
         display: none;
     }
 
-    /* ======== OPTIMIZARE PENTRU MOBIL ======== */
     @media (max-width: 600px) {
-        h1 {
-            font-size: 30px;
-        }
-
         th, td {
             font-size: 18px;
             padding: 14px;
         }
-
         button {
             padding: 22px;
             font-size: 24px;
         }
-
-        input, select {
+        input {
             padding: 18px;
             font-size: 18px;
         }
     }
-.logo-header {
-    text-align: center;
-    margin-bottom: 25px;
-}
-
-.logo-header img {
-    max-width: 200px;
-    width: 60%;
-    height: auto;
-}
-
-@media (max-width: 600px) {
-    .logo-header img {
-        max-width: 160px;
-        width: 70%;
-    }
-}
-#productsTable td:nth-child(3) {
-    font-weight: 700;
-    font-size: 19px;
-    color: #2f80ed; /* albastru clar, vizibil */
-}
-
 </style>
 </head>
 
@@ -253,6 +324,27 @@
     <img src="https://c.cdnmp.net/957918846/content/F%C4%83r%C4%83%20titlu%20%28192%20x%20192%20px%29%20%284%29.png" alt="Nailly Logo">
 </div>
 
+<!-- LUPA SUS DREAPTA -->
+<div id="quickSearchIcon" title="Caută comandă">
+  <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M20 20l-3.5-3.5"></path>
+  </svg>
+</div>
+
+<!-- OVERLAY SEARCH -->
+<div id="quickSearchOverlay">
+  <div class="quickSearchBox">
+    <input id="quickSearchInput" placeholder="Scrie numărul comenzii…" inputmode="text" autocomplete="off" />
+    <button id="quickSearchBtn" type="button" title="Caută">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.5-3.5"></path>
+      </svg>
+    </button>
+    <div id="quickSearchClose" title="Închide">×</div>
+  </div>
+</div>
 
 <!-- STATS -->
 <div id="statsBar">
@@ -268,17 +360,6 @@
     </div>
 </div>
 
-<!-- ================= PAS 1 ================= -->
-<h3>Pas 1: Selectează comanda</h3>
-
-<input id="orderSearch" placeholder="Caută comandă după număr..." oninput="filterOrders()" />
-
-<select id="orderList">
-    <option>Se încarcă comenzile...</option>
-</select>
-
-<button onclick="loadOrder()">Încarcă comanda</button>
-
 <h3 id="orderTitle"></h3>
 
 <div id="orderMeta">
@@ -292,7 +373,6 @@
     <div id="progressText"></div>
 </div>
 
-<!-- ================= PAS 2 ================= -->
 <h3>Pas 2: Scanează produsele</h3>
 
 <input id="scanInput"
@@ -318,10 +398,8 @@
     <tbody></tbody>
 </table>
 
-<!-- BUTON FIX JOS -->
 <button id="finishBtn" onclick="finalizeOrder()">Finalizează comanda</button>
 
-<!-- LIBRĂRIE CAMERA -->
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <script>
@@ -369,21 +447,14 @@ function playBeep(freq = 800, duration = 120, type = "sine") {
     gain.connect(ctx.destination);
     osc.start();
     gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(
-      0.001,
-      ctx.currentTime + duration / 1000
-    );
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration / 1000);
     osc.stop(ctx.currentTime + duration / 1000 + 0.02);
-  } catch (e) {
-    // ignorăm dacă nu e suportat
-  }
+  } catch (e) {}
 }
-
 function feedbackSuccess() {
   playBeep(900, 100, "square");
   if (navigator.vibrate) navigator.vibrate(40);
 }
-
 function feedbackError() {
   playBeep(220, 200, "sawtooth");
   if (navigator.vibrate) navigator.vibrate([0, 80, 40, 80]);
@@ -403,7 +474,6 @@ function startTimer() {
     timerEl.textContent = `${m}:${s}`;
   }, 1000);
 }
-
 function stopTimer() {
   if (timerInterval) {
     clearInterval(timerInterval);
@@ -416,61 +486,17 @@ function updateStats() {
   const pendingBox = document.getElementById("pendingBox");
   const pendingCountEl = document.getElementById("pendingCount");
   const doneCountEl = document.getElementById("doneCount");
-  const select = document.getElementById("orderList");
 
-  // comenzi în listă (excluzând cazul "Nu există comenzi...")
-  let pending = 0;
-  for (let i = 0; i < select.options.length; i++) {
-    if (select.options[i].value) pending++;
-  }
-
+  const pending = Array.isArray(allOrders) ? allOrders.length : 0;
   pendingCountEl.textContent = pending;
+
   pendingBox.classList.remove("stats-pending--some", "stats-pending--none");
-  if (pending > 0) {
-    pendingBox.classList.add("stats-pending--some");
-  } else {
-    pendingBox.classList.add("stats-pending--none");
-  }
+  if (pending > 0) pendingBox.classList.add("stats-pending--some");
+  else pendingBox.classList.add("stats-pending--none");
 
   const key = getTodayKey();
   const done = Number(localStorage.getItem(key) || "0");
   doneCountEl.textContent = done;
-}
-
-// ===================== REBUILD ORDER LIST ======================
-function rebuildOrderList() {
-  const select = document.getElementById("orderList");
-  const searchInput = document.getElementById("orderSearch");
-  const term = (searchInput.value || "").trim();
-
-  select.innerHTML = "";
-
-  let filtered = allOrders;
-  if (term) {
-    filtered = allOrders.filter(o =>
-      String(o.orderId).includes(term)
-    );
-  }
-
-  if (filtered.length === 0) {
-    const opt = document.createElement("option");
-    opt.textContent = "Nu există comenzi de pregătit";
-    opt.value = "";
-    select.appendChild(opt);
-  } else {
-    filtered.forEach((o, index) => {
-      const opt = document.createElement("option");
-      opt.value = o.orderId;
-      opt.textContent = `${index + 1}. Comanda #${o.orderId}`;
-      select.appendChild(opt);
-    });
-  }
-
-  updateStats();
-}
-
-function filterOrders() {
-  rebuildOrderList();
 }
 
 // ===================== LOAD ORDERS ======================
@@ -480,7 +506,7 @@ async function loadOrders() {
     const orders = await res.json();
 
     allOrders = Array.isArray(orders) ? orders : [];
-    rebuildOrderList();
+    updateStats();
 
     // dacă nu există comenzi → resetăm UI
     if (!allOrders.length) {
@@ -489,9 +515,11 @@ async function loadOrders() {
       document.getElementById("orderTitle").textContent = "";
       document.getElementById("orderMeta").style.display = "none";
       document.querySelector("#productsTable tbody").innerHTML = "";
+
       const scanInput = document.getElementById("scanInput");
       scanInput.value = "";
       scanInput.disabled = true;
+
       const btn = document.getElementById("finishBtn");
       btn.style.display = "none";
       btn.classList.remove("active");
@@ -503,19 +531,25 @@ async function loadOrders() {
   }
 }
 
-// ===================== LOAD ORDER ======================
-async function loadOrder() {
-  const select = document.getElementById("orderList");
-  const orderId = select.value;
+// ===================== LOAD ORDER BY ID ======================
+async function loadOrderById(orderId) {
   if (!orderId) return;
+
+  // validare: există în lista de pending?
+  const exists = allOrders.some(o => String(o.orderId) === String(orderId));
+  if (!exists) {
+    feedbackError();
+    alert("Comanda nu există în lista de pregătit. Verifică numărul.");
+    return;
+  }
 
   currentOrderId = orderId;
 
-  const res = await fetch(`${ORDER_GET_URL}?orderId=${orderId}`);
+  const res = await fetch(`${ORDER_GET_URL}?orderId=${encodeURIComponent(orderId)}`);
   const data = await res.json();
 
   currentProducts = await Promise.all(
-    data.line_items
+    (data.line_items || [])
       .filter(p => p.item_type === "product")
       .map(async p => {
         let originalSku = p.product_sku || "";
@@ -530,9 +564,7 @@ async function loadOrder() {
         });
 
         let locData = [];
-        try {
-          locData = await locRes.json();
-        } catch (_) {}
+        try { locData = await locRes.json(); } catch (_) {}
 
         let shelf =
           locData.length > 0 &&
@@ -552,11 +584,8 @@ async function loadOrder() {
       })
   );
 
-  // sortare după raft (o singură trecere optimă)
   currentProducts.sort((a, b) => {
-    if (a.shelf === b.shelf) {
-      return String(a.sku).localeCompare(String(b.sku));
-    }
+    if (a.shelf === b.shelf) return String(a.sku).localeCompare(String(b.sku));
     return String(a.shelf).localeCompare(String(b.shelf));
   });
 
@@ -565,25 +594,28 @@ async function loadOrder() {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
-scanInput.disabled = false;
+  scanInput.disabled = false;
 
-/* PREVENIM DESCHIDEREA TASTATURII PE TERMINAL */
-scanInput.setAttribute("inputmode", "none");
-scanInput.setAttribute("readonly", "readonly");
+  /* PREVENIM DESCHIDEREA TASTATURII PE TERMINAL */
+  scanInput.setAttribute("inputmode", "none");
+  scanInput.setAttribute("readonly", "readonly");
 
-setTimeout(() => {
+  // important: la wedge scanners merge chiar și cu readonly
+  // păstrăm comportamentul confirmat de tine (fără tastatură)
+  setTimeout(() => {
+    // unele terminale forțează tastatura la focus; blur o oprește
     scanInput.blur();
-}, 50);
+  }, 50);
 
-/* DEBLOCHEAZĂ TASTAREA MANUALĂ DOAR LA CLICK INTENȚIONAT */
-if (!scanInput.dataset.manualEnabled) {
+  /* DEBLOCHEAZĂ TASTAREA MANUALĂ DOAR LA CLICK INTENȚIONAT */
+  if (!scanInput.dataset.manualEnabled) {
     scanInput.addEventListener("click", function () {
-        this.removeAttribute("readonly");
-        this.removeAttribute("inputmode");
-        this.focus();
+      this.removeAttribute("readonly");
+      this.removeAttribute("inputmode");
+      this.focus();
     });
     scanInput.dataset.manualEnabled = "1";
-}
+  }
 
   const btn = document.getElementById("finishBtn");
   btn.style.display = "block";
@@ -606,40 +638,34 @@ function renderTable() {
     if (p.scanned === p.qty) tr.classList.add("ok");
 
     tr.innerHTML = `
-        <td>${p.sku}</td>
-        <td>${p.name}</td>
-        <td>${p.shelf}</td>
-        <td>${p.qty}</td>
-        <td>${p.scanned}</td>
-        <td>${p.qty - p.scanned}</td>
+        <td>${p.sku ?? ""}</td>
+        <td>${p.name ?? ""}</td>
+        <td>${p.shelf ?? ""}</td>
+        <td style="text-align:center">${p.qty}</td>
+        <td style="text-align:center">${p.scanned}</td>
+        <td style="text-align:center">${p.qty - p.scanned}</td>
     `;
     tbody.appendChild(tr);
   });
 
-  // progres total
   const totalQty = currentProducts.reduce((s, p) => s + p.qty, 0);
   const totalScanned = currentProducts.reduce((s, p) => s + p.scanned, 0);
   const pct = totalQty > 0 ? Math.round((totalScanned / totalQty) * 100) : 0;
 
-  const progressInner = document.getElementById("progressInner");
-  const progressText = document.getElementById("progressText");
-  progressInner.style.width = pct + "%";
-  progressText.textContent = `Progres: ${totalScanned}/${totalQty} (${pct}%)`;
+  document.getElementById("progressInner").style.width = pct + "%";
+  document.getElementById("progressText").textContent =
+    `Progres: ${totalScanned}/${totalQty} (${pct}%)`;
 
   updateFinishButtonState();
 }
 
-// ===================== CHECK IF ALL PRODUCTS ARE SCANNED ======================
 function updateFinishButtonState() {
   const allScanned = currentProducts.length > 0 &&
     currentProducts.every(p => p.scanned >= p.qty);
 
   const btn = document.getElementById("finishBtn");
-  if (allScanned) {
-    btn.classList.add("active");
-  } else {
-    btn.classList.remove("active");
-  }
+  if (allScanned) btn.classList.add("active");
+  else btn.classList.remove("active");
 }
 
 // ===================== SCAN ======================
@@ -647,25 +673,19 @@ function handleScan(event) {
   if (event.key !== "Enter") return;
 
   let code = event.target.value.trim();
-event.target.value = "";
+  event.target.value = "";
 
-/* NORMALIZARE CODURI:
-   - eliminăm toate zerourile din față
-   - funcționează pentru EAN-uri cu 0 artificial
-   - NU afectează coduri alfanumerice
-*/
-const normalize = (v) => {
-  if (!v) return "";
-  return String(v).replace(/^0+/, "");
-};
+  const normalize = (v) => {
+    if (!v) return "";
+    return String(v).replace(/^0+/, "");
+  };
 
-const scanned = normalize(code);
+  const scanned = normalize(code);
 
-let found = currentProducts.find(p =>
-  normalize(p.sku) === scanned ||
-  normalize(p.ean) === scanned
-);
-
+  let found = currentProducts.find(p =>
+    normalize(p.sku) === scanned ||
+    normalize(p.ean) === scanned
+  );
 
   if (!found) {
     feedbackError();
@@ -718,12 +738,10 @@ async function finalizeOrder() {
     alert("Trebuie să scanezi toate produsele!");
     return;
   }
-
   if (!currentOrderId) {
     alert("Nu există comandă încărcată!");
     return;
   }
-
   if (!confirm("Finalizezi comanda?")) return;
 
   try {
@@ -738,12 +756,10 @@ async function finalizeOrder() {
     if (res.ok && result.deleted?.length > 0) {
       alert("Comanda a fost finalizată!");
 
-      // incrementăm contorul din ziua curentă
       const key = getTodayKey();
       const prev = Number(localStorage.getItem(key) || "0");
       localStorage.setItem(key, String(prev + 1));
 
-      // reset UI pentru comandă
       stopTimer();
       currentProducts = [];
       currentOrderId = null;
@@ -758,21 +774,54 @@ async function finalizeOrder() {
       btn.style.display = "none";
       btn.classList.remove("active");
 
-      await loadOrders(); // reîncarcă lista și updatează stats
-
+      await loadOrders();
     } else {
       alert("Eroare la ștergerea fișierului!");
       console.error(result);
     }
-
   } catch (err) {
     console.error(err);
     alert("Eroare la server!");
   }
 }
 
+// ===================== QUICK SEARCH UI ======================
+(function initQuickSearch(){
+  const icon = document.getElementById("quickSearchIcon");
+  const overlay = document.getElementById("quickSearchOverlay");
+  const input = document.getElementById("quickSearchInput");
+  const btn = document.getElementById("quickSearchBtn");
+  const close = document.getElementById("quickSearchClose");
+
+  function openQS(){
+    overlay.classList.add("active");
+    setTimeout(() => input.focus(), 50);
+  }
+  function closeQS(){
+    overlay.classList.remove("active");
+    input.value = "";
+  }
+  function runSearch(){
+    const v = (input.value || "").trim();
+    if (!v) return;
+    closeQS();
+    loadOrderById(v);
+  }
+
+  icon.addEventListener("click", openQS);
+  close.addEventListener("click", closeQS);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeQS(); });
+
+  btn.addEventListener("click", runSearch);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") runSearch();
+    if (e.key === "Escape") closeQS();
+  });
+})();
+
 // ===================== INIT ======================
 loadOrders();
 </script>
 </body>
 </html>
+
