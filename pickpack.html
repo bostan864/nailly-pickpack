@@ -1308,7 +1308,7 @@ document.addEventListener("DOMContentLoaded", () => {
 setInterval(() => loadOrders({silent:true}), 30000);
 </script>
 <script>
-/* ===== LOGIN HARDCODAT ===== */
+/* ===== LOGIN HARDCODAT (STABIL) ===== */
 const LOGIN_USER = "nailly";
 const LOGIN_PASS = "0604";
 
@@ -1316,17 +1316,19 @@ function doLogin(){
   const u = document.getElementById("loginUser").value.trim();
   const p = document.getElementById("loginPass").value.trim();
 
-  if(u === LOGIN_USER && p === LOGIN_PASS){
-    localStorage.setItem("nailly_logged","1");
-    document.getElementById("loginOverlay").style.display = "none";
-  }else{
+  if (u === LOGIN_USER && p === LOGIN_PASS) {
+    localStorage.setItem("nailly_logged", "1");
+
+    // 🔥 refresh complet după login
+    location.reload();
+  } else {
     document.getElementById("loginError").style.display = "block";
   }
 }
 
-/* verificare la refresh */
+/* verificare la refresh / redeschidere */
 document.addEventListener("DOMContentLoaded", () => {
-  if(localStorage.getItem("nailly_logged") === "1"){
+  if (localStorage.getItem("nailly_logged") === "1") {
     document.getElementById("loginOverlay").style.display = "none";
   }
 });
