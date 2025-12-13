@@ -30,11 +30,12 @@
   }
   /* APP HEADER */
   .app-header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:10px 6px 4px;
-  }
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 6px 8px;
+}
+
 
   .logo-header{
     display:flex;
@@ -615,7 +616,7 @@
   <!-- STATS -->
   <div id="statsBar">
     <div id="pendingBox" class="stats-card stats-pending--none">
-<span class="stats-title"⚠️ Status comenzi</span>
+<span class="stats-title">⚠️ Status comenzi</span>
       <span class="stats-number" id="pendingCount">0</span>
       <span>comenzi de pregătit</span>
     </div>
@@ -1311,40 +1312,67 @@ setInterval(() => loadOrders({silent:true}), 30000);
 /* =====================================
    LOGIN WMS NAILLY – STABIL & CONTROLAT
    - Login o dată pe zi / device
-   - Fără flicker
-   - Fără reload la scroll
+   - Fără flicker / fără layout jump
+   - Fără reload la pull-to-refresh
    ===================================== */
 
 const LOGIN_USER = "nailly";
 const LOGIN_PASS = "0604";
 
-/* 🔑 helper: data de azi */
+/* helper: data de azi (format stabil) */
 function getTodayKey() {
   const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-/* 🔐 LOGIN */
-function doLogin(){
-  const u = document.getElementById("loginUser").value.trim();
-  const p = document.getElementById("loginPass").value.trim();
+/* arată/ascunde overlay fără să forțeze reflow aiurea */
+function hideOverlay(overlay) {
+  if (!overlay) return;
+  overlay.style.display = "none";
+  overlay.style.visibility = "hidden";
+  overlay.style.opacity = "0";
+}
+
+function showOverlay(overlay) {
+  if (!overlay) return;
+  overlay.style.display = "flex";   // dacă overlay-ul tău e pe flex
+  overlay.style.visibility = "visible";
+  overlay.style.opacity = "1";
+}
+
+/* LOGIN */
+function doLogin() {
+  const uEl = document.getElementById("loginUser");
+  const pEl = document.getElementById("loginPass");
   const overlay = document.getElementById("loginOverlay");
+  const err = document.getElementById("loginError");
+
+  const u = (uEl?.value || "").trim();
+  const p = (pEl?.value || "").trim();
 
   if (u === LOGIN_USER && p === LOGIN_PASS) {
     localStorage.setItem("nailly_logged", "1");
     localStorage.setItem("nailly_login_day", getTodayKey());
 
-    // ascundem instant, fără reload
-    overlay.style.display = "none";
-    overlay.style.visibility = "hidden";
-    overlay.style.opacity = "0";
+    if (err) err.style.display = "none";
+    hideOverlay(overlay);
   } else {
-    document.getElementById("loginError").style.display = "block";
+    if (err) err.style.display = "block";
   }
 }
 
-/* 🔍 VERIFICARE IMEDIATĂ (fără DOMContentLoaded) */
-(function enforceLogin(){
+/* LOGOUT (opțional) */
+function doLogout() {
+  localStorage.removeItem("nailly_logged");
+  localStorage.removeItem("nailly_login_day");
+  location.reload();
+}
+
+/* VERIFICARE LOGIN – rulează DUPĂ ce UI e încărcat (fără să-ți taie logo-ul) */
+window.addEventListener("load", () => {
   const overlay = document.getElementById("loginOverlay");
   if (!overlay) return;
 
@@ -1353,27 +1381,14 @@ function doLogin(){
   const today = getTodayKey();
 
   if (logged && loginDay === today) {
-    // OK – ascundem
-    overlay.style.display = "none";
-    overlay.style.visibility = "hidden";
-    overlay.style.opacity = "0";
+    hideOverlay(overlay);
   } else {
-    // forțăm login (device nou sau zi nouă)
+    // device nou / zi nouă => cere login
     localStorage.removeItem("nailly_logged");
     localStorage.removeItem("nailly_login_day");
-
-    overlay.style.display = "flex";
-    overlay.style.visibility = "visible";
-    overlay.style.opacity = "1";
+    showOverlay(overlay);
   }
-})();
-
-/* 🚪 LOGOUT MANUAL (opțional) */
-function doLogout(){
-  localStorage.removeItem("nailly_logged");
-  localStorage.removeItem("nailly_login_day");
-  location.reload();
-}
+});
 </script>
 
 
