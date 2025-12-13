@@ -4,6 +4,12 @@
 <meta charset="UTF-8" />
 <title>Nailly – Pick & Pack PRO</title>
 <style>
+#loginOverlay{
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
   :root{
     --brand:#d81b60;
     --ok:#28a745;
@@ -586,7 +592,7 @@
 </head>
 
 <body>
-<div id="loginOverlay">
+<div id="loginOverlay" style="display:none">
   <div class="login-box">
     <h2>Autentificare</h2>
 
@@ -1308,30 +1314,55 @@ document.addEventListener("DOMContentLoaded", () => {
 setInterval(() => loadOrders({silent:true}), 30000);
 </script>
 <script>
-/* ===== LOGIN HARDCODAT (STABIL) ===== */
+/* ================================
+   LOGIN HARDCODAT – NAILLY WMS
+   FĂRĂ FLICKER / FĂRĂ RELOAD
+   ================================ */
+
 const LOGIN_USER = "nailly";
 const LOGIN_PASS = "0604";
 
+/* 🔐 LOGIN */
 function doLogin(){
   const u = document.getElementById("loginUser").value.trim();
   const p = document.getElementById("loginPass").value.trim();
+  const overlay = document.getElementById("loginOverlay");
 
   if (u === LOGIN_USER && p === LOGIN_PASS) {
     localStorage.setItem("nailly_logged", "1");
 
-    // 🔥 refresh complet după login
-    location.reload();
+    // ascundem overlay instant
+    overlay.style.display = "none";
+    overlay.style.visibility = "hidden";
+    overlay.style.opacity = "0";
   } else {
     document.getElementById("loginError").style.display = "block";
   }
 }
 
-/* verificare la refresh / redeschidere */
-document.addEventListener("DOMContentLoaded", () => {
-  if (localStorage.getItem("nailly_logged") === "1") {
-    document.getElementById("loginOverlay").style.display = "none";
+/* 🔄 VERIFICARE IMEDIATĂ (fără DOMContentLoaded) */
+(function checkLoginInstant(){
+  const logged = localStorage.getItem("nailly_logged") === "1";
+  const overlay = document.getElementById("loginOverlay");
+
+  if (!overlay) return;
+
+  if (logged) {
+    overlay.style.display = "none";
+    overlay.style.visibility = "hidden";
+    overlay.style.opacity = "0";
+  } else {
+    overlay.style.display = "flex";
+    overlay.style.visibility = "visible";
+    overlay.style.opacity = "1";
   }
-});
+})();
+
+/* 🚪 LOGOUT (opțional – dacă vrei buton) */
+function doLogout(){
+  localStorage.removeItem("nailly_logged");
+  location.reload(); // aici e OK
+}
 </script>
 
 </body>
