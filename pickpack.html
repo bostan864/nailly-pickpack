@@ -498,6 +498,39 @@
       font-size: 17px;
     }
   }
+.order-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.order-left{
+  font-size:17px;
+  font-weight:600;
+  color:#222;
+}
+/* BUTON ANULARE – mic, sigur, UX corect */
+.cancel-btn{
+  width: auto !important;          /* 🔥 ASTA rezolvă problema */
+  padding: 6px 14px !important;
+  font-size: 14px !important;
+  border-radius: 999px !important;
+
+  background:#fde8ef !important;
+  border:1px solid #d81b60 !important;
+  color:#d81b60 !important;
+
+  cursor:pointer;
+  white-space:nowrap;
+  flex-shrink: 0;                  /* nu se întinde */
+}
+
+.cancel-btn:hover{
+  background:#d81b60 !important;
+  color:#fff !important;
+}
+
 </style>
 </head>
 
@@ -978,6 +1011,53 @@ async function finalizeOrder() {
     alert("Eroare la server!");
   }
 }
+async function cancelOrder(orderId, event){
+  event.stopPropagation(); // nu deschide comanda
+
+  if(!confirm("Sigur vrei să marchezi comanda ca ANULATĂ?")) return;
+
+  try{
+    const res = await fetch(DELETE_ORDER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId })
+    });
+
+    const result = await res.json().catch(() => ({}));
+
+    if(res.ok){
+      alert("Comanda a fost anulată.");
+
+      // reset stare curentă dacă era încărcată
+      if(String(currentOrderId) === String(orderId)){
+        stopTimer();
+        currentProducts = [];
+        currentOrderId = null;
+
+        document.getElementById("orderTitle").textContent = "";
+        document.getElementById("orderMeta").style.display = "none";
+        document.querySelector("#productsTable tbody").innerHTML = "";
+
+        const scanInput = document.getElementById("scanInput");
+        scanInput.value = "";
+        scanInput.disabled = true;
+
+        const btn = document.getElementById("finishBtn");
+        btn.style.display = "none";
+        btn.classList.remove("active");
+      }
+
+      await loadOrders({ silent:true });
+      updateStats();
+    } else {
+      alert("Eroare la anularea comenzii!");
+      console.error(result);
+    }
+  } catch(err){
+    console.error(err);
+    alert("Eroare server la anulare!");
+  }
+}
 
 /* ===================== ORDERS PANEL ====================== */
 function openOrdersPanel() {
@@ -1008,8 +1088,17 @@ function renderOrdersPanel() {
 
   allOrders.forEach(o => {
     const div = document.createElement("div");
-    div.className = "order-row";
-    div.innerHTML = `<div>Comanda #${o.orderId}</div><span>Tap pentru detalii</span>`;
+div.className = "order-row";
+
+div.innerHTML = `
+  <div class="order-left">
+    Comanda #${o.orderId}
+  </div>
+  <button class="cancel-btn" onclick="cancelOrder('${o.orderId}', event)">
+    Anulată
+  </button>
+`;
+
     div.onclick = () => {
       closeOrdersPanel();
       closeQS();
