@@ -1314,13 +1314,21 @@ document.addEventListener("DOMContentLoaded", () => {
 setInterval(() => loadOrders({silent:true}), 30000);
 </script>
 <script>
-/* ================================
-   LOGIN HARDCODAT – NAILLY WMS
-   FĂRĂ FLICKER / FĂRĂ RELOAD
-   ================================ */
+/* =====================================
+   LOGIN WMS NAILLY – STABIL & CONTROLAT
+   - Login o dată pe zi / device
+   - Fără flicker
+   - Fără reload la scroll
+   ===================================== */
 
 const LOGIN_USER = "nailly";
 const LOGIN_PASS = "0604";
+
+/* 🔑 helper: data de azi */
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
 
 /* 🔐 LOGIN */
 function doLogin(){
@@ -1330,8 +1338,9 @@ function doLogin(){
 
   if (u === LOGIN_USER && p === LOGIN_PASS) {
     localStorage.setItem("nailly_logged", "1");
+    localStorage.setItem("nailly_login_day", getTodayKey());
 
-    // ascundem overlay instant
+    // ascundem instant, fără reload
     overlay.style.display = "none";
     overlay.style.visibility = "hidden";
     overlay.style.opacity = "0";
@@ -1340,30 +1349,39 @@ function doLogin(){
   }
 }
 
-/* 🔄 VERIFICARE IMEDIATĂ (fără DOMContentLoaded) */
-(function checkLoginInstant(){
-  const logged = localStorage.getItem("nailly_logged") === "1";
+/* 🔍 VERIFICARE IMEDIATĂ (fără DOMContentLoaded) */
+(function enforceLogin(){
   const overlay = document.getElementById("loginOverlay");
-
   if (!overlay) return;
 
-  if (logged) {
+  const logged = localStorage.getItem("nailly_logged") === "1";
+  const loginDay = localStorage.getItem("nailly_login_day");
+  const today = getTodayKey();
+
+  if (logged && loginDay === today) {
+    // OK – ascundem
     overlay.style.display = "none";
     overlay.style.visibility = "hidden";
     overlay.style.opacity = "0";
   } else {
+    // forțăm login (device nou sau zi nouă)
+    localStorage.removeItem("nailly_logged");
+    localStorage.removeItem("nailly_login_day");
+
     overlay.style.display = "flex";
     overlay.style.visibility = "visible";
     overlay.style.opacity = "1";
   }
 })();
 
-/* 🚪 LOGOUT (opțional – dacă vrei buton) */
+/* 🚪 LOGOUT MANUAL (opțional) */
 function doLogout(){
   localStorage.removeItem("nailly_logged");
-  location.reload(); // aici e OK
+  localStorage.removeItem("nailly_login_day");
+  location.reload();
 }
 </script>
+
 
 </body>
 </html>
