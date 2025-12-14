@@ -1282,7 +1282,7 @@ function renderQSResults(matches){
     div.textContent = `Comanda #${o.orderId}`;
     div.onclick = () => {
   closeQS();
-  hardResetToScanMode();
+  resetUIForNewOrder();   // 🔴 reset vizual complet
   loadOrderById(o.orderId);
   setActiveNav("btnOrders");
 };
@@ -1342,6 +1342,25 @@ function refreshHome(){
   feedbackSuccess();
 }
 
+function resetUIForNewOrder() {
+  stopTimer();
+
+  currentProducts = [];
+  currentOrderId = null;
+
+  document.getElementById("orderTitle").textContent = "";
+  document.getElementById("orderMeta").style.display = "none";
+  document.querySelector("#productsTable tbody").innerHTML = "";
+
+  const scanInput = document.getElementById("scanInput");
+  scanInput.value = "";
+  scanInput.disabled = true;
+
+  const btn = document.getElementById("finishBtn");
+  btn.style.display = "none";
+  btn.classList.remove("active");
+}
+
 /* ===================== INIT ====================== */
 document.addEventListener("DOMContentLoaded", () => {
   qs.overlay = document.getElementById("quickSearchOverlay");
@@ -1370,42 +1389,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("btnSearch").addEventListener("click", () => {
     setActiveNav("btnSearch");
-document.body.classList.add("wms-search-mode");
     openQS();
   });
 
   loadOrders({silent:true});
 });
-function hardResetToScanMode() {
-  // închide panouri
-  closeOrdersPanel();
-  closeQS();
-document.body.classList.remove("wms-search-mode");
-
-  // oprește timerul vechi
-  stopTimer();
-
-  // reset stare
-  currentProducts = [];
-  currentOrderId = null;
-
-  // reset UI
-  document.getElementById("orderTitle").textContent = "";
-  document.getElementById("orderMeta").style.display = "none";
-  document.querySelector("#productsTable tbody").innerHTML = "";
-
-  const scanInput = document.getElementById("scanInput");
-  scanInput.value = "";
-  scanInput.disabled = true;
-  scanInput.blur();
-
-  const btn = document.getElementById("finishBtn");
-  btn.style.display = "none";
-  btn.classList.remove("active");
-
-  // 🔒 dezactivăm complet tastatura
-  document.body.classList.remove("wms-search-mode");
-}
 
 /* refresh automat la 30 sec */
 setInterval(() => loadOrders({silent:true}), 30000);
