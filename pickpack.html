@@ -583,58 +583,74 @@
   display:none;
 }
 /* ============================
-   WMS HANDHELD MODE (FORȚAT)
+   WMS MOBILE MODE – FORȚAT
    ============================ */
-@media (max-width: 900px){
 
-  body{
-    font-size: 22px;
-  }
+body.wms-mobile{
+  font-size: 22px;
+}
 
-  #orderTitle{
-    font-size: 26px;
-  }
+/* TITLURI */
+body.wms-mobile h3{
+  font-size: 24px;
+}
+body.wms-mobile #orderTitle{
+  font-size: 26px;
+}
 
-  h3{
-    font-size: 24px;
-  }
+/* INPUT SCANARE */
+body.wms-mobile #scanInput{
+  font-size: 24px;
+  padding: 22px;
+}
 
-  #scanInput{
-    font-size: 24px;
-    padding: 22px;
-  }
+/* TABEL */
+body.wms-mobile th{
+  font-size: 18px;
+}
+body.wms-mobile td{
+  font-size: 20px;
+  padding: 16px 12px;
+}
 
-  th{
-    font-size: 18px;
-  }
+/* RAFT – CEL MAI IMPORTANT */
+body.wms-mobile #productsTable td:nth-child(3){
+  font-size: 26px;
+  font-weight: 900;
+}
 
-  td{
-    font-size: 20px;
-    padding: 16px 12px;
-  }
+/* CANTITĂȚI */
+body.wms-mobile #productsTable td:nth-child(4),
+body.wms-mobile #productsTable td:nth-child(5),
+body.wms-mobile #productsTable td:nth-child(6){
+  font-size: 20px;
+  font-weight: 800;
+}
 
-  #productsTable td:nth-child(3){
-    font-size: 24px;
-    font-weight: 900;
-  }
+/* PROGRESS */
+body.wms-mobile #progressOuter{
+  height: 20px;
+}
+body.wms-mobile #progressText{
+  font-size: 18px;
+}
 
-  #finishBtn{
-    font-size: 24px;
-    padding: 24px;
-  }
+/* FINALIZE */
+body.wms-mobile #finishBtn{
+  font-size: 26px;
+  padding: 26px;
+}
 
-  #bottomNav{
-    height: 140px;
-  }
-
-  #bottomNav .nav-btn span{
-    font-size: 20px;
-  }
-
-  #bottomNav .nav-btn svg{
-    width: 56px;
-    height: 56px;
-  }
+/* BOTTOM NAV */
+body.wms-mobile #bottomNav{
+  height: 150px;
+}
+body.wms-mobile #bottomNav .nav-btn span{
+  font-size: 20px;
+}
+body.wms-mobile #bottomNav .nav-btn svg{
+  width: 60px;
+  height: 60px;
 }
 
 </style>
