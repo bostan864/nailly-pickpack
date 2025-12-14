@@ -1281,11 +1281,10 @@ function renderQSResults(matches){
     div.className = "quick-search-item";
     div.textContent = `Comanda #${o.orderId}`;
     div.onclick = () => {
-  closeQS();
-  resetUIForNewOrder();   // 🔴 reset vizual complet
-  loadOrderById(o.orderId);
-  setActiveNav("btnOrders");
-};
+      closeQS();
+      loadOrderById(o.orderId);
+      setActiveNav("btnSearch");
+    };
     qs.results.appendChild(div);
   });
 }
@@ -1340,25 +1339,6 @@ function refreshHome(){
   loadOrders({ silent: true });
   updateStats();
   feedbackSuccess();
-}
-
-function resetUIForNewOrder() {
-  stopTimer();
-
-  currentProducts = [];
-  currentOrderId = null;
-
-  document.getElementById("orderTitle").textContent = "";
-  document.getElementById("orderMeta").style.display = "none";
-  document.querySelector("#productsTable tbody").innerHTML = "";
-
-  const scanInput = document.getElementById("scanInput");
-  scanInput.value = "";
-  scanInput.disabled = true;
-
-  const btn = document.getElementById("finishBtn");
-  btn.style.display = "none";
-  btn.classList.remove("active");
 }
 
 /* ===================== INIT ====================== */
