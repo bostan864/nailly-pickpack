@@ -1281,10 +1281,11 @@ function renderQSResults(matches){
     div.className = "quick-search-item";
     div.textContent = `Comanda #${o.orderId}`;
     div.onclick = () => {
-      closeQS();
-      loadOrderById(o.orderId);
-      setActiveNav("btnSearch");
-    };
+  closeQS();
+  hardResetToScanMode();
+  loadOrderById(o.orderId);
+  setActiveNav("btnOrders");
+};
     qs.results.appendChild(div);
   });
 }
@@ -1369,51 +1370,45 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("btnSearch").addEventListener("click", () => {
     setActiveNav("btnSearch");
+document.body.classList.add("wms-search-mode");
     openQS();
   });
 
   loadOrders({silent:true});
 });
+function hardResetToScanMode() {
+  // închide panouri
+  closeOrdersPanel();
+  closeQS();
+document.body.classList.remove("wms-search-mode");
+
+  // oprește timerul vechi
+  stopTimer();
+
+  // reset stare
+  currentProducts = [];
+  currentOrderId = null;
+
+  // reset UI
+  document.getElementById("orderTitle").textContent = "";
+  document.getElementById("orderMeta").style.display = "none";
+  document.querySelector("#productsTable tbody").innerHTML = "";
+
+  const scanInput = document.getElementById("scanInput");
+  scanInput.value = "";
+  scanInput.disabled = true;
+  scanInput.blur();
+
+  const btn = document.getElementById("finishBtn");
+  btn.style.display = "none";
+  btn.classList.remove("active");
+
+  // 🔒 dezactivăm complet tastatura
+  document.body.classList.remove("wms-search-mode");
+}
 
 /* refresh automat la 30 sec */
 setInterval(() => loadOrders({silent:true}), 30000);
-/* ===============================
-   FIX ZOOM HONEYWELL / TERMINAL
-   - fără CSS
-   - fără viewport
-   - fără impact UX
-   =============================== */
-
-(function () {
-  const input = document.getElementById("scanInput");
-  if (!input) return;
-
-  let lastScale = 1;
-
-  function resetZoom() {
-    try {
-      document.body.style.transform = "scale(1)";
-      document.body.style.transformOrigin = "0 0";
-      window.scrollTo(0, 0);
-    } catch (e) {}
-  }
-
-  input.addEventListener("focus", () => {
-    lastScale = window.visualViewport?.scale || 1;
-    setTimeout(resetZoom, 30);
-    setTimeout(resetZoom, 120);
-  });
-
-  input.addEventListener("blur", () => {
-    setTimeout(resetZoom, 30);
-  });
-
-  // extra siguranță – dacă Android face zoom din senin
-  window.addEventListener("resize", () => {
-    setTimeout(resetZoom, 30);
-  });
-})();
-
 </script>
 <script>
 /* =====================================
