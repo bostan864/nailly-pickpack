@@ -18,11 +18,6 @@
   }
 
   *{ box-sizing:border-box; }
-html, body{
-  height: 100%;
-  overflow: hidden;
-}
-
 
   body{
     font-family: Arial, sans-serif;
@@ -716,11 +711,9 @@ body.wms-mobile #bottomNav .nav-btn svg{
   <h3>Pas 2: Scanează produsele</h3>
 
   <input id="scanInput"
-       type="text"
-       inputmode="none"
-       placeholder="Scanează EAN / SKU..."
-       onkeypress="handleScan(event)"
-       disabled />
+         placeholder="Scanează EAN / SKU..."
+         onkeypress="handleScan(event)"
+         disabled />
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
@@ -1384,6 +1377,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* refresh automat la 30 sec */
 setInterval(() => loadOrders({silent:true}), 30000);
+/* ===============================
+   FIX ZOOM HONEYWELL / TERMINAL
+   - fără CSS
+   - fără viewport
+   - fără impact UX
+   =============================== */
+
+(function () {
+  const input = document.getElementById("scanInput");
+  if (!input) return;
+
+  let lastScale = 1;
+
+  function resetZoom() {
+    try {
+      document.body.style.transform = "scale(1)";
+      document.body.style.transformOrigin = "0 0";
+      window.scrollTo(0, 0);
+    } catch (e) {}
+  }
+
+  input.addEventListener("focus", () => {
+    lastScale = window.visualViewport?.scale || 1;
+    setTimeout(resetZoom, 30);
+    setTimeout(resetZoom, 120);
+  });
+
+  input.addEventListener("blur", () => {
+    setTimeout(resetZoom, 30);
+  });
+
+  // extra siguranță – dacă Android face zoom din senin
+  window.addEventListener("resize", () => {
+    setTimeout(resetZoom, 30);
+  });
+})();
+
 </script>
 <script>
 /* =====================================
