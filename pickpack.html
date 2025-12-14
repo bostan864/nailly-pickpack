@@ -1,11 +1,8 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Nailly – Pick & Pack PRO</title>
-</head>
+<meta charset="UTF-8" />
+<title>Nailly – Pick & Pack PRO</title>
 <style>
   :root{
     --brand:#d81b60;
@@ -16,7 +13,7 @@
     --bg:#f5f5f7;
 
     /* control central pentru bottom nav */
-    --bottomNavH: 88px;      /* înălțime bară */
+    --bottomNavH: 120px;      /* înălțime bară */
     --finishGap: 0px;        /* dacă vrei spațiu extra între finish și nav */
   }
 
@@ -264,13 +261,6 @@
     opacity:1;
     pointer-events:auto;
   }
-#finishBtn{
-  padding: 14px;
-  font-size: 18px;
-}
-#finishBtn{
-  box-shadow: 0 -4px 10px rgba(0,0,0,.08);
-}
 
   /* ORDERS PANEL */
   .orders-panel{
@@ -367,10 +357,6 @@
     outline:none;
   }
   #quickSearchInput::placeholder{ color: rgba(255,255,255,0.75); }
-#quickSearchInput{
-  height: 46px;
-  font-size: 17px;
-}
 
   #quickSearchBtn{
     position:absolute;
@@ -665,28 +651,6 @@ body.wms-mobile #bottomNav .nav-btn span{
 body.wms-mobile #bottomNav .nav-btn svg{
   width: 60px;
   height: 60px;
-}
-#bottomNav .nav-btn svg{
-  width: 34px;
-  height: 34px;
-}
-
-#bottomNav .nav-btn span{
-  font-size: 14px;
-}
-#productsTable td{
-  padding: 10px 6px;
-  font-size: 15px;
-}
-#productsTable td:nth-child(3){
-  font-size: 17px;
-}
-#orderMeta{
-  padding: 6px 10px;
-}
-
-#progressText{
-  font-size: 14px;
 }
 
 </style>
@@ -1500,5 +1464,4 @@ window.addEventListener("load", () => {
 
 </body>
 </html>
-
 
