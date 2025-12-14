@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-<meta charset="UTF-8" />
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<title>Nailly – Pick & Pack PRO</title>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nailly – Pick & Pack PRO</title>
+</head>
 <style>
   :root{
     --brand:#d81b60;
@@ -360,10 +358,6 @@
     color:#fff;
     font-size: 18px;
     outline:none;
-#quickSearchInput{
-  font-size: 18px !important;
-}
-
   }
   #quickSearchInput::placeholder{ color: rgba(255,255,255,0.75); }
 
@@ -1270,26 +1264,12 @@ function openQS(){
   qs.results.classList.remove("show");
   setTimeout(() => qs.input.focus(), 60);
 }
-function resetViewportZoom(){
-  const meta = document.querySelector('meta[name=viewport]');
-  if(meta){
-    meta.setAttribute(
-      "content",
-      "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    );
-  }
-}
-
 function closeQS(){
   qs.overlay.classList.remove("active");
-  qs.input.blur();
   qs.input.value = "";
   qs.results.innerHTML = "";
   qs.results.classList.remove("show");
-
-  setTimeout(resetViewportZoom, 50);
 }
-
 
 function renderQSResults(matches){
   qs.results.innerHTML = "";
