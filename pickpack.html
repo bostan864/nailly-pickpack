@@ -1034,18 +1034,31 @@ function normalizeEan(v){
   if (!v) return "";
   return String(v); // EAN se compară EXACT
 }
+function normalizeBarcode(raw){
+  if (!raw) return "";
+
+  raw = String(raw).trim();
+
+  // dacă scannerul trimite EAN trunchiat (11–12 cifre)
+  if (/^\d{11,12}$/.test(raw)) {
+    return raw.padStart(13, "0");
+  }
+
+  return raw;
+}
 
 let scanBuffer = "";
 function handleScan(event) {
   // ENTER = final scan
-  if (event.key === "Enter") {
-    const code = scanBuffer.trim();
-    scanBuffer = "";
-    event.target.value = "";
+ if (event.key === "Enter") {
+  const code = normalizeBarcode(scanBuffer);
+  scanBuffer = "";
+  event.target.value = "";
 
-    processScannedCode(code);
-    return;
-  }
+  processScannedCode(code);
+  return;
+}
+
 
   // colectăm TOATE caracterele (scanner wedge)
   if (event.key.length === 1) {
