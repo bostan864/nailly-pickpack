@@ -711,9 +711,8 @@ body.wms-mobile #bottomNav .nav-btn svg{
   <h3>Pas 2: Scanează produsele</h3>
 
   <input id="scanInput"
-         placeholder="Scanează EAN / SKU..."
-         onkeypress="handleScan(event)"
-         disabled />
+       placeholder="Scanează EAN / SKU..."
+       disabled />
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
@@ -956,15 +955,19 @@ async function loadOrderById(orderId) {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
-  scanInput.disabled = false;
-  scanInput.value = "";
+scanInput.disabled = false;
+scanInput.value = "";
 
-  scanInput.focus(); // focus înainte de timeout
+scanInput.focus(); // focus pe input
 
-  setTimeout(() => {
-    scanInput.setAttribute("inputmode", "none");
-    scanInput.removeAttribute("readonly");
-  }, 50);
+// ✅ ATAȘEAZĂ EVENIMENTUL CORECT
+scanInput.removeEventListener("keydown", handleScan);
+scanInput.addEventListener("keydown", handleScan);
+
+setTimeout(() => {
+  scanInput.setAttribute("inputmode", "none");
+  scanInput.removeAttribute("readonly");
+}, 50);
 
   // dacă vrea manual, click = deblochează
   if (!scanInput.dataset.manualEnabled) {
