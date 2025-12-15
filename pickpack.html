@@ -1044,9 +1044,9 @@ function handleScan(event) {
   const scanned = normalize(code);
 
   let found = currentProducts.find(p =>
-    normalize(p.sku) === scanned ||
-    normalize(p.ean) === scanned
-  );
+  normalize(p.sku) === scanned ||
+  (p.ean && normalize(p.ean) === scanned)  // ✅ doar dacă există ean
+);
 
   if (!found) {
     feedbackError();
