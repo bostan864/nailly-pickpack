@@ -1034,7 +1034,15 @@ function updateFinishButtonState() {
 /* ===================== SCAN ====================== */
 function normalize(v){
   if (!v) return "";
-  return String(v).replace(/^0+/, "");
+  v = String(v).trim();
+
+  // 🧽 elimină toate caracterele non-numerice (dacă e cazul)
+  v = v.replace(/\D/g, "");
+
+  // 🔧 elimină zero-urile din față
+  v = v.replace(/^0+/, "");
+
+  return v;
 }
 
 function handleScan(event) {
