@@ -935,13 +935,13 @@ async function loadOrderById(orderId) {
         } catch (_) {}
 
         return {
-          sku: originalSku,
-          ean: p.product_ean,
-          name: p.product_name,
-          qty: Number(p.quantity),
-          shelf,
-          scanned: 0
-        };
+  sku: normalize(originalSku),    // 🔁 adaugă normalize aici
+  ean: normalize(p.product_ean),  // 🔁 și aici
+  name: p.product_name,
+  qty: Number(p.quantity),
+  shelf,
+  scanned: 0
+};
       })
   );
 
