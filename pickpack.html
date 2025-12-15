@@ -989,26 +989,29 @@ async function loadOrderById(orderId) {
   document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
   document.getElementById("orderMeta").style.display = "block";
 
-  const scanInput = document.getElementById("scanInput");
+    const scanInput = document.getElementById("scanInput");
+
   scanInput.disabled = false;
   scanInput.value = "";
   scanInput.focus();
 
-  scanInput.removeEventListener("input", handleScanAuto);
-  scanInput.addEventListener("input", handleScanAuto);
+  // 🔥 Remove existing input listeners and reset complet
+  const newScanInput = scanInput.cloneNode(true);
+  scanInput.parentNode.replaceChild(newScanInput, scanInput);
 
-  setTimeout(() => {
-    scanInput.setAttribute("inputmode", "none");
-    scanInput.removeAttribute("readonly");
-  }, 50);
+  // 🔥 Adaugă din nou listener
+  newScanInput.addEventListener("input", handleScanAuto);
+  newScanInput.setAttribute("inputmode", "none");
+  newScanInput.removeAttribute("readonly");
 
-  if (!scanInput.dataset.manualEnabled) {
-    scanInput.addEventListener("click", function () {
+  // 🔥 Setup pentru click manual dacă e pe mobil
+  if (!newScanInput.dataset.manualEnabled) {
+    newScanInput.addEventListener("click", function () {
       this.removeAttribute("readonly");
       this.removeAttribute("inputmode");
       this.focus();
     });
-    scanInput.dataset.manualEnabled = "1";
+    newScanInput.dataset.manualEnabled = "1";
   }
 
   const finishBtn = document.getElementById("finishBtn");
