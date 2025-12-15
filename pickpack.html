@@ -711,20 +711,9 @@ body.wms-mobile #bottomNav .nav-btn svg{
   <h3>Pas 2: Scanează produsele</h3>
 
   <input id="scanInput"
-  autocomplete="off"
-  autocorrect="off"
-  autocapitalize="off"
-  spellcheck="false"
-  style="
-    position: fixed;
-    bottom: -100px;
-    left: 0;
-    height: 1px;
-    width: 1px;
-    opacity: 0.01;
-  "
-/>
-
+         placeholder="Scanează EAN / SKU..."
+         onkeypress="handleScan(event)"
+         disabled />
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
@@ -966,25 +955,31 @@ async function loadOrderById(orderId) {
   document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
   document.getElementById("orderMeta").style.display = "block";
 
-const scanInput = document.getElementById("scanInput");
+  const scanInput = document.getElementById("scanInput");
+  scanInput.disabled = false;
 
-scanInput.value = "";
-scanInput.disabled = false;
+  // prevenim tastatura pe terminal; scanerele wedge trimit text + Enter oricum
+  scanInput.setAttribute("inputmode", "none");
+  scanInput.setAttribute("readonly", "readonly");
+  setTimeout(() => scanInput.blur(), 50);
 
-// NU readonly – scannerul trebuie să poată scrie
-scanInput.removeAttribute("readonly");
+  // dacă vrea manual, click = deblochează
+  if (!scanInput.dataset.manualEnabled) {
+    scanInput.addEventListener("click", function () {
+      this.removeAttribute("readonly");
+      this.removeAttribute("inputmode");
+      this.focus();
+    });
+    scanInput.dataset.manualEnabled = "1";
+  }
 
-// ascundem tastatura software, dar permitem input hardware
-scanInput.setAttribute("inputmode", "none");
-scanInput.setAttribute("autocomplete", "off");
+  const finishBtn = document.getElementById("finishBtn");
+  finishBtn.style.display = "block";
+  finishBtn.classList.remove("active");
 
-// focus HARD
-setTimeout(() => scanInput.focus(), 50);
-
-// dacă pierde focusul, îl forțăm înapoi
-scanInput.onblur = () => {
-  setTimeout(() => scanInput.focus(), 20);
-};
+  startTimer();
+  renderTable();
+}
 
 /* ===================== TABLE ====================== */
 function renderTable() {
@@ -1030,55 +1025,37 @@ function updateFinishButtonState() {
 }
 
 /* ===================== SCAN ====================== */
-function normalizeSku(v){
+function normalize(v){
   if (!v) return "";
   return String(v).replace(/^0+/, "");
 }
 
-function normalizeEan(v){
-  if (!v) return "";
-  return String(v); // EAN se compară EXACT
-}
-function normalizeBarcode(raw){
-  if (!raw) return "";
-
-  raw = String(raw).trim();
-
-  // dacă scannerul trimite EAN trunchiat (11–12 cifre)
-  if (/^\d{11,12}$/.test(raw)) {
-    return raw.padStart(13, "0");
-  }
-
-  return raw;
-}
-
-let scanBuffer = "";
-let scanTimer = null;
-
 function handleScan(event) {
+  if (event.key !== "Enter") return;
 
-  // caractere normale de la scanner (EAN, Code128 etc)
-  if (event.key.length === 1) {
-    scanBuffer += event.key;
+  let code = (event.target.value || "").trim();
+  event.target.value = "";
 
-    clearTimeout(scanTimer);
+  const scanned = normalize(code);
 
-    // dacă NU vine ENTER, procesăm automat
-    scanTimer = setTimeout(() => {
-      const code = normalizeBarcode(scanBuffer);
-      scanBuffer = "";
-      processScannedCode(code);
-    }, 50);
+  let found = currentProducts.find(p =>
+    normalize(p.sku) === scanned ||
+    normalize(p.ean) === scanned
+  );
 
+  if (!found) {
+    feedbackError();
+    flashError();
     return;
   }
 
-  // dacă vine ENTER (unele scannere)
-  if (event.key === "Enter") {
-    const code = normalizeBarcode(scanBuffer);
-    scanBuffer = "";
-    event.target.value = "";
-    processScannedCode(code);
+  if (found.scanned < found.qty) {
+    found.scanned++;
+    feedbackSuccess();
+    renderTable();
+  } else {
+    feedbackError();
+    flashError();
   }
 }
 
@@ -1087,47 +1064,6 @@ function flashError() {
   input.classList.add("errorInput");
   setTimeout(() => input.classList.remove("errorInput"), 280);
 }
-function processScannedCode(code){
-  if(!code){
-    feedbackError();
-    return;
-  }
-
-  let found = false;
-
-  currentProducts.forEach(p => {
-
-    const skuMatch =
-      p.sku && normalizeSku(p.sku) === normalizeSku(code);
-
-    const eanMatch =
-      p.ean && String(p.ean) === String(code);
-
-    if ((skuMatch || eanMatch) && p.scanned < p.qty) {
-      p.scanned++;
-      found = true;
-    }
-  });
-
-  if(found){
-    feedbackSuccess();
-    renderTable();
-  } else {
-    feedbackError();
-    flashError();
-  }
-}
-// ===================== SCANNER GLOBAL LISTENER =====================
-document.addEventListener("keydown", (event) => {
-
-  // dacă userul scrie în QUICK SEARCH sau LOGIN, NU scanăm
-  const el = document.activeElement;
-  if (el && el.tagName === "INPUT" && el.id !== "scanInput") {
-    return;
-  }
-
-  handleScan(event);
-});
 
 /* ===================== CAMERA SCAN ====================== */
 function startCameraScan() {
@@ -1141,7 +1077,7 @@ function startCameraScan() {
     { fps: 10, qrbox: { width: 260, height: 160 } },
     (decodedText) => {
       document.getElementById("scanInput").value = decodedText;
-processScannedCode(normalizeBarcode(decodedText));
+      handleScan({ key: "Enter", target: { value: decodedText } });
 
       html5QrCode.stop().then(() => {
         div.style.display = "none";
