@@ -935,15 +935,13 @@ async function loadOrderById(orderId) {
         } catch (_) {}
 
         return {
-  sku: originalSku,
-  ean: p.product_ean,
-  normSku: normalize(originalSku),
-  normEan: normalize(p.product_ean),
-  name: p.product_name,
-  qty: Number(p.quantity),
-  shelf,
-  scanned: 0
-};
+          sku: originalSku,
+          ean: p.product_ean,
+          name: p.product_name,
+          qty: Number(p.quantity),
+          shelf,
+          scanned: 0
+        };
       })
   );
 
@@ -1032,31 +1030,39 @@ function updateFinishButtonState() {
 }
 
 /* ===================== SCAN ====================== */
-function normalize(v){
-  if (!v) return "";
-  v = String(v).trim();
+function normalizeVariants(v) {
+  if (!v) return [];
 
-  // 🧽 elimină toate caracterele non-numerice (dacă e cazul)
-  v = v.replace(/\D/g, "");
+  const s = String(v).trim();
+  const variants = new Set();
 
-  // 🔧 elimină zero-urile din față
-  v = v.replace(/^0+/, "");
+  variants.add(s);                     // original
+  variants.add(s.replace(/^0+/, ""));  // fără 0 în față
 
-  return v;
+  if (s.length > 1) {
+    variants.add(s.slice(0, -1));      // fără ultima cifră
+    variants.add(s.replace(/^0+/, "").slice(0, -1)); // fără 0 + fără ultima
+  }
+
+  return [...variants].filter(Boolean);
 }
 
 function handleScan(event) {
   if (event.key !== "Enter") return;
 
-  let code = (event.target.value || "").trim();
+  const raw = (event.target.value || "").trim();
   event.target.value = "";
 
-  const scanned = normalize(code);
+  const scannedVariants = normalizeVariants(raw);
 
-  let found = currentProducts.find(p =>
-  p.normSku === scanned || p.normEan === scanned
-);
+  let found = currentProducts.find(p => {
+    const skuVariants = normalizeVariants(p.sku);
+    const eanVariants = normalizeVariants(p.ean);
 
+    return scannedVariants.some(v =>
+      skuVariants.includes(v) || eanVariants.includes(v)
+    );
+  });
 
   if (!found) {
     feedbackError();
