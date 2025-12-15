@@ -935,13 +935,15 @@ async function loadOrderById(orderId) {
         } catch (_) {}
 
         return {
-          sku: originalSku,
-          ean: p.product_ean,
-          name: p.product_name,
-          qty: Number(p.quantity),
-          shelf,
-          scanned: 0
-        };
+  sku: originalSku,
+  ean: p.product_ean,
+  normSku: normalize(originalSku),
+  normEan: normalize(p.product_ean),
+  name: p.product_name,
+  qty: Number(p.quantity),
+  shelf,
+  scanned: 0
+};
       })
   );
 
@@ -1044,10 +1046,9 @@ function handleScan(event) {
   const scanned = normalize(code);
 
   let found = currentProducts.find(p => {
-    const sku = normalize(p.sku);
-    const ean = normalize(p.ean);
-    return sku === scanned || ean === scanned;
-  });
+  return p.normSku === scanned || p.normEan === scanned;
+});
+
 
   if (!found) {
     feedbackError();
