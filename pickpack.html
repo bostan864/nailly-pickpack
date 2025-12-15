@@ -711,7 +711,7 @@ body.wms-mobile #bottomNav .nav-btn svg{
   <h3>Pas 2: Scanează produsele</h3>
 
   <input id="scanInput"
-       inputmode="none"
+       type="text"
        autocomplete="off"
        placeholder="Scanează EAN / SKU…"
        onkeypress="handleScan(event)" />
@@ -958,10 +958,9 @@ async function loadOrderById(orderId) {
   document.getElementById("orderMeta").style.display = "block";
 
     const scanInput = document.getElementById("scanInput");
-  scanInput.disabled = false;
-  scanInput.removeAttribute("readonly");       // ✅ scoate readonly
-  scanInput.removeAttribute("inputmode");      // ✅ scoate inputmode
-  scanInput.focus();                           // ✅ focus pe input
+scanInput.disabled = false;
+scanInput.setAttribute("readonly", "readonly"); // previne afișarea tastaturii
+scanInput.focus();                              // permite scrierea de la scanner
 
   // dacă vrea manual, click = deblochează
   if (!scanInput.dataset.manualEnabled) {
