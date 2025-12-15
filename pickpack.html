@@ -710,17 +710,12 @@ body.wms-mobile #bottomNav .nav-btn svg{
 
   <h3>Pas 2: Scanează produsele</h3>
 
-  <input
+<input
   id="scanInput"
-  placeholder="Scanează EAN / SKU..."
+  placeholder="Scriere manuală (opțional)"
   autocomplete="off"
-  autocorrect="off"
-  autocapitalize="off"
-  spellcheck="false"
-  inputmode="none"
-  readonly
-  disabled
-/>
+>
+
 
 
 
@@ -1065,6 +1060,31 @@ function normalize(v){
 
 function handleScan(event) {
   if (event.key !== "Enter") return;
+function processScannedCode(code) {
+  if (!code) return;
+
+  const scanned = normalize(code);
+
+  const found = currentProducts.find(p =>
+    normalize(p.sku) === scanned ||
+    normalize(p.ean) === scanned
+  );
+
+  if (!found) {
+    feedbackError();
+    flashError();
+    return;
+  }
+
+  if (found.scanned < found.qty) {
+    found.scanned++;
+    feedbackSuccess();
+    renderTable();
+  } else {
+    feedbackError();
+    flashError();
+  }
+}
 
   const input = event.target;
   const code = normalize(input.value);
@@ -1493,6 +1513,35 @@ window.addEventListener("load", () => {
     showOverlay(overlay);
   }
 });
+/* ===================== SCANNER GLOBAL ====================== */
+let scanBuffer = "";
+let scanTimer = null;
+
+document.addEventListener("keydown", (event) => {
+  // ignorăm dacă userul chiar scrie într-un input (manual)
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+  // scannerul trimite caractere rapide
+  if (event.key.length === 1) {
+    scanBuffer += event.key;
+
+    clearTimeout(scanTimer);
+    scanTimer = setTimeout(() => {
+      processScannedCode(scanBuffer);
+      scanBuffer = "";
+    }, 50);
+
+    return;
+  }
+
+  // unele scannere trimit Enter
+  if (event.key === "Enter") {
+    processScannedCode(scanBuffer);
+    scanBuffer = "";
+  }
+});
+
 </script>
 
 
