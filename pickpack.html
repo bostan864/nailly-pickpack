@@ -912,7 +912,10 @@ async function loadOrderById(orderId) {
 
   currentOrderId = String(orderId);
 
-  const res = await fetch(`${ORDER_GET_URL}?orderId=${encodeURIComponent(currentOrderId)}`, { cache: "no-store" });
+  const res = await fetch(
+    `${ORDER_GET_URL}?orderId=${encodeURIComponent(currentOrderId)}`,
+    { cache: "no-store" }
+  );
   const data = await res.json();
 
   currentProducts = await Promise.all(
@@ -924,15 +927,18 @@ async function loadOrderById(orderId) {
 
         let shelf = "Fără locație";
         try {
-          const locRes = await fetch(PRODUCT_LOCATION_URL + encodeURIComponent(lookupSku), {
-            method: "GET",
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          const locRes = await fetch(
+            PRODUCT_LOCATION_URL + encodeURIComponent(lookupSku),
+            {
+              method: "GET",
+              headers: {
+                apikey: SUPABASE_ANON_KEY,
+                Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+              }
             }
-          });
+          );
           const locData = await locRes.json().catch(() => []);
-          if (Array.isArray(locData) && locData.length > 0 && locData[0].location && locData[0].location !== "EMPTY") {
+          if (Array.isArray(locData) && locData[0]?.location && locData[0].location !== "EMPTY") {
             shelf = locData[0].location;
           }
         } catch (_) {}
@@ -957,25 +963,17 @@ async function loadOrderById(orderId) {
   document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
   document.getElementById("orderMeta").style.display = "block";
 
-    const scanInput = document.getElementById("scanInput");
-scanInput.disabled = false;
-scanInput.value = "";               // curăță eventual
-scanInput.removeEventListener("keydown", handleScan);
-scanInput.addEventListener("keydown", handleScan);
-scanInput.focus();                  // focus înainte de readonly
-setTimeout(() => {
-  scanInput.setAttribute("readonly", "readonly");
-}, 100);
+  const scanInput = document.getElementById("scanInput");
+  scanInput.disabled = false;
+  scanInput.value = "";
 
-  // dacă vrea manual, click = deblochează
-  if (!scanInput.dataset.manualEnabled) {
-    scanInput.addEventListener("click", function () {
-      this.removeAttribute("readonly");
-      this.removeAttribute("inputmode");
-      this.focus();
-    });
-    scanInput.dataset.manualEnabled = "1";
-  }
+  scanInput.removeEventListener("input", handleScanAuto);
+  scanInput.addEventListener("input", handleScanAuto);
+
+  scanInput.focus();
+  setTimeout(() => {
+    scanInput.setAttribute("readonly", "readonly");
+  }, 100);
 
   const finishBtn = document.getElementById("finishBtn");
   finishBtn.style.display = "block";
@@ -984,51 +982,6 @@ setTimeout(() => {
   startTimer();
   renderTable();
 }
-  scanInput.removeEventListener("keydown", handleScan); // evită duplicat
-scanInput.addEventListener("keydown", handleScan);
-
-/* ===================== TABLE ====================== */
-function renderTable() {
-  const tbody = document.querySelector("#productsTable tbody");
-  tbody.innerHTML = "";
-
-  const nextIndex = currentProducts.findIndex(p => p.scanned < p.qty);
-
-  currentProducts.forEach((p, index) => {
-    const tr = document.createElement("tr");
-    if (index === nextIndex) tr.classList.add("next-row");
-    if (p.scanned === p.qty) tr.classList.add("ok");
-
-    tr.innerHTML = `
-      <td>${p.sku ?? ""}</td>
-      <td>${p.name ?? ""}</td>
-      <td>${p.shelf ?? ""}</td>
-      <td>${p.qty}</td>
-      <td>${p.scanned}</td>
-      <td>${p.qty - p.scanned}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  const totalQty = currentProducts.reduce((s, p) => s + p.qty, 0);
-  const totalScanned = currentProducts.reduce((s, p) => s + p.scanned, 0);
-  const pct = totalQty > 0 ? Math.round((totalScanned / totalQty) * 100) : 0;
-
-  document.getElementById("progressInner").style.width = pct + "%";
-  document.getElementById("progressText").textContent =
-    `Progres: ${totalScanned}/${totalQty} (${pct}%)`;
-
-  updateFinishButtonState();
-}
-
-function updateFinishButtonState() {
-  const allScanned = currentProducts.length > 0 &&
-    currentProducts.every(p => p.scanned >= p.qty);
-
-  const btn = document.getElementById("finishBtn");
-  if (allScanned) btn.classList.add("active");
-  else btn.classList.remove("active");
-}
 
 /* ===================== SCAN ====================== */
 function normalize(v){
@@ -1036,39 +989,39 @@ function normalize(v){
   return String(v).replace(/^0+/, "");
 }
 
-function handleScan(event) {
-  if (event.key !== "Enter") return;
+let scanTimer = null;
 
-  let code = (event.target.value || "").trim();
-  event.target.value = "";
+function handleScanAuto(event) {
+  if (scanTimer) clearTimeout(scanTimer);
 
-  const scanned = normalize(code);
+  scanTimer = setTimeout(() => {
+    const code = (event.target.value || "").trim();
+    if (!code) return;
 
-  let found = currentProducts.find(p =>
-    normalize(p.sku) === scanned ||
-    normalize(p.ean) === scanned
-  );
+    event.target.value = ""; // curăță inputul
 
-  if (!found) {
-    feedbackError();
-    flashError();
-    return;
-  }
+    const scanned = normalize(code);
 
-  if (found.scanned < found.qty) {
-    found.scanned++;
-    feedbackSuccess();
-    renderTable();
-  } else {
-    feedbackError();
-    flashError();
-  }
-}
+    let found = currentProducts.find(p =>
+      normalize(p.sku) === scanned ||
+      normalize(p.ean) === scanned
+    );
 
-function flashError() {
-  let input = document.getElementById("scanInput");
-  input.classList.add("errorInput");
-  setTimeout(() => input.classList.remove("errorInput"), 280);
+    if (!found) {
+      feedbackError();
+      flashError();
+      return;
+    }
+
+    if (found.scanned < found.qty) {
+      found.scanned++;
+      feedbackSuccess();
+      renderTable();
+    } else {
+      feedbackError();
+      flashError();
+    }
+  }, 250); // 250ms pauză după scan
 }
 
 /* ===================== CAMERA SCAN ====================== */
