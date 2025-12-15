@@ -984,48 +984,40 @@ async function loadOrderById(orderId) {
     return String(a.shelf).localeCompare(String(b.shelf));
   });
 
-  // ===================== UI =====================
-document.getElementById("orderTitle").textContent = "Comanda #" + currentOrderId;
-document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
-document.getElementById("orderMeta").style.display = "block";
+  /* ===================== UI ===================== */
+  document.getElementById("orderTitle").textContent = "Comanda #" + currentOrderId;
+  document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
+  document.getElementById("orderMeta").style.display = "block";
 
-// Înlocuiește complet inputul scan
-const oldInput = document.getElementById("scanInput");
-const newInput = oldInput.cloneNode(true); // păstrează toate atributele
-oldInput.parentNode.replaceChild(newInput, oldInput);
+  const scanInput = document.getElementById("scanInput");
+  scanInput.disabled = false;
+  scanInput.value = "";
+  scanInput.focus();
 
-// Activează și curăță
-newInput.disabled = false;
-newInput.value = "";
-newInput.setAttribute("inputmode", "none");
-newInput.removeAttribute("readonly");
+  scanInput.removeEventListener("input", handleScanAuto);
+  scanInput.addEventListener("input", handleScanAuto);
 
-// Adaugă event listener fresh
-newInput.addEventListener("input", handleScanAuto);
+  setTimeout(() => {
+    scanInput.setAttribute("inputmode", "none");
+    scanInput.removeAttribute("readonly");
+  }, 50);
 
-// Autofocus cu delay (mobil-friendly)
-setTimeout(() => {
-  newInput.focus();
-}, 100);
+  if (!scanInput.dataset.manualEnabled) {
+    scanInput.addEventListener("click", function () {
+      this.removeAttribute("readonly");
+      this.removeAttribute("inputmode");
+      this.focus();
+    });
+    scanInput.dataset.manualEnabled = "1";
+  }
 
-// Click manual (fallback pentru unele browsere)
-if (!newInput.dataset.manualEnabled) {
-  newInput.addEventListener("click", function () {
-    this.removeAttribute("readonly");
-    this.removeAttribute("inputmode");
-    this.focus();
-  });
-  newInput.dataset.manualEnabled = "1";
+  const finishBtn = document.getElementById("finishBtn");
+  finishBtn.style.display = "block";
+  finishBtn.classList.remove("active");
+
+  startTimer();
+  renderTable();
 }
-
-// Finish button vizibil
-const finishBtn = document.getElementById("finishBtn");
-finishBtn.style.display = "block";
-finishBtn.classList.remove("active");
-
-startTimer();
-renderTable();
-
 
 /* ===================== TABLE ====================== */
 function renderTable() {
