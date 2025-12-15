@@ -710,13 +710,11 @@ body.wms-mobile #bottomNav .nav-btn svg{
 
   <h3>Pas 2: Scanează produsele</h3>
 
-<input
-  id="scanInput"
-  placeholder="Scriere manuală (opțional)"
-  autocomplete="off"
->
-
-
+  <input id="scanInput"
+       inputmode="none"
+       autocomplete="off"
+       placeholder="Scanează EAN / SKU…"
+       onkeypress="handleScan(event)" />
 
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
@@ -959,37 +957,11 @@ async function loadOrderById(orderId) {
   document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
   document.getElementById("orderMeta").style.display = "block";
 
-  const scanInput = document.getElementById("scanInput");
+    const scanInput = document.getElementById("scanInput");
   scanInput.disabled = false;
-scanInput.value = "";
-scanInput.focus();
-
-scanInput.removeAttribute("disabled");
-scanInput.setAttribute("readonly", "readonly");
-scanInput.setAttribute("inputmode", "none");
-
-scanInput.value = "";
-
-// 🔥 focus forțat
-scanInput.focus();
-
-// 🔁 re-fixăm focus dacă se pierde
-scanInput.onblur = () => {
-  setTimeout(() => scanInput.focus(), 50);
-};
-
-// listener unic
-scanInput.onkeydown = handleScan;
-
-// ne asigurăm că nu dublăm listenerul
-scanInput.onkeydown = null;
-scanInput.addEventListener("keydown", handleScan);
-
-
-  // prevenim tastatura pe terminal; scanerele wedge trimit text + Enter oricum
-  scanInput.setAttribute("inputmode", "none");
-  scanInput.setAttribute("readonly", "readonly");
-  setTimeout(() => scanInput.blur(), 50);
+  scanInput.removeAttribute("readonly");       // ✅ scoate readonly
+  scanInput.removeAttribute("inputmode");      // ✅ scoate inputmode
+  scanInput.focus();                           // ✅ focus pe input
 
   // dacă vrea manual, click = deblochează
   if (!scanInput.dataset.manualEnabled) {
@@ -1008,7 +980,7 @@ scanInput.addEventListener("keydown", handleScan);
   startTimer();
   renderTable();
 }
-
+  
 /* ===================== TABLE ====================== */
 function renderTable() {
   const tbody = document.querySelector("#productsTable tbody");
@@ -1060,41 +1032,15 @@ function normalize(v){
 
 function handleScan(event) {
   if (event.key !== "Enter") return;
-function processScannedCode(code) {
-  if (!code) return;
+
+  let code = (event.target.value || "").trim();
+  event.target.value = "";
 
   const scanned = normalize(code);
 
-  const found = currentProducts.find(p =>
+  let found = currentProducts.find(p =>
     normalize(p.sku) === scanned ||
     normalize(p.ean) === scanned
-  );
-
-  if (!found) {
-    feedbackError();
-    flashError();
-    return;
-  }
-
-  if (found.scanned < found.qty) {
-    found.scanned++;
-    feedbackSuccess();
-    renderTable();
-  } else {
-    feedbackError();
-    flashError();
-  }
-}
-
-  const input = event.target;
-  const code = normalize(input.value);
-  input.value = "";
-
-  if (!code) return;
-
-  const found = currentProducts.find(p =>
-    normalize(p.sku) === code ||
-    normalize(p.ean) === code
   );
 
   if (!found) {
@@ -1513,35 +1459,6 @@ window.addEventListener("load", () => {
     showOverlay(overlay);
   }
 });
-/* ===================== SCANNER GLOBAL ====================== */
-let scanBuffer = "";
-let scanTimer = null;
-
-document.addEventListener("keydown", (event) => {
-  // ignorăm dacă userul chiar scrie într-un input (manual)
-  const tag = document.activeElement?.tagName;
-  if (tag === "INPUT" || tag === "TEXTAREA") return;
-
-  // scannerul trimite caractere rapide
-  if (event.key.length === 1) {
-    scanBuffer += event.key;
-
-    clearTimeout(scanTimer);
-    scanTimer = setTimeout(() => {
-      processScannedCode(scanBuffer);
-      scanBuffer = "";
-    }, 50);
-
-    return;
-  }
-
-  // unele scannere trimit Enter
-  if (event.key === "Enter") {
-    processScannedCode(scanBuffer);
-    scanBuffer = "";
-  }
-});
-
 </script>
 
 
