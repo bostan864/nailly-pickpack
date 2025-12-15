@@ -896,7 +896,6 @@ async function loadOrders({silent=false} = {}) {
   }
 }
 
-/* ===================== LOAD ORDER BY ID ====================== */
 async function loadOrderById(orderId) {
   if (!orderId) return;
 
@@ -909,47 +908,70 @@ async function loadOrderById(orderId) {
 
   currentOrderId = String(orderId);
 
-  const res = await fetch(`${ORDER_GET_URL}?orderId=${encodeURIComponent(currentOrderId)}`, { cache: "no-store" });
+  const res = await fetch(
+    `${ORDER_GET_URL}?orderId=${encodeURIComponent(currentOrderId)}`,
+    { cache: "no-store" }
+  );
   const data = await res.json();
 
-  currentProducts = await Promise.all(
-    (data.line_items || [])
-      .filter(p => p.item_type === "product")
-      .map(async p => {
-        let originalSku = p.product_sku || "";
-        let lookupSku = String(originalSku).replace(/^0+/, "");
+  const products = (data.line_items || []).filter(p => p.item_type === "product");
 
-        let shelf = "Fără locație";
-        try {
-          const locRes = await fetch(PRODUCT_LOCATION_URL + encodeURIComponent(lookupSku), {
-            method: "GET",
-            headers: {
-              "apikey": SUPABASE_ANON_KEY,
-              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-            }
-          });
-          const locData = await locRes.json().catch(() => []);
-          if (Array.isArray(locData) && locData.length > 0 && locData[0].location && locData[0].location !== "EMPTY") {
-            shelf = locData[0].location;
-          }
-        } catch (_) {}
+  /* ===================== 🔥 1. COLECTĂM TOATE SKU-URILE ===================== */
+  const skuList = [
+    ...new Set(
+      products
+        .map(p => String(p.product_sku || "").replace(/^0+/, ""))
+        .filter(Boolean)
+    )
+  ];
 
-        return {
-          sku: originalSku,
-          ean: p.product_ean,
-          name: p.product_name,
-          qty: Number(p.quantity),
-          shelf,
-          scanned: 0
-        };
-      })
-  );
+  /* ===================== 🔥 2. UN SINGUR FETCH LA SUPABASE ===================== */
+  let locationMap = new Map();
 
+  if (skuList.length) {
+    const locRes = await fetch(
+      `${PRODUCT_LOCATION_URL}in.(${skuList.map(encodeURIComponent).join(",")})`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+
+    const locData = await locRes.json().catch(() => []);
+
+    locData.forEach(row => {
+      if (row.sku && row.location && row.location !== "EMPTY") {
+        locationMap.set(String(row.sku), row.location);
+      }
+    });
+  }
+
+  /* ===================== 🔥 3. CONSTRUIM PRODUSELE ===================== */
+  currentProducts = products.map(p => {
+    const originalSku = p.product_sku || "";
+    const lookupSku = String(originalSku).replace(/^0+/, "");
+
+    return {
+      sku: originalSku,
+      ean: p.product_ean,
+      name: p.product_name,
+      qty: Number(p.quantity),
+      shelf: locationMap.get(lookupSku) || "Fără locație",
+      scanned: 0
+    };
+  });
+
+  /* ===================== SORTARE ===================== */
   currentProducts.sort((a, b) => {
-    if (a.shelf === b.shelf) return String(a.sku).localeCompare(String(b.sku));
+    if (a.shelf === b.shelf) {
+      return String(a.sku).localeCompare(String(b.sku));
+    }
     return String(a.shelf).localeCompare(String(b.shelf));
   });
 
+  /* ===================== UI ===================== */
   document.getElementById("orderTitle").textContent = "Comanda #" + currentOrderId;
   document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
   document.getElementById("orderMeta").style.display = "block";
@@ -957,18 +979,16 @@ async function loadOrderById(orderId) {
   const scanInput = document.getElementById("scanInput");
   scanInput.disabled = false;
   scanInput.value = "";
+  scanInput.focus();
 
-  scanInput.focus(); // focus înainte de timeout
-scanInput.removeEventListener("input", handleScanAuto);
-scanInput.addEventListener("input", handleScanAuto);
-
+  scanInput.removeEventListener("input", handleScanAuto);
+  scanInput.addEventListener("input", handleScanAuto);
 
   setTimeout(() => {
     scanInput.setAttribute("inputmode", "none");
     scanInput.removeAttribute("readonly");
   }, 50);
 
-  // dacă vrea manual, click = deblochează
   if (!scanInput.dataset.manualEnabled) {
     scanInput.addEventListener("click", function () {
       this.removeAttribute("readonly");
