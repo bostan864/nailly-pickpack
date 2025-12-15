@@ -713,7 +713,7 @@ body.wms-mobile #bottomNav .nav-btn svg{
   <input id="scanInput"
        placeholder="Scanează EAN / SKU..."
        onkeydown="handleScan(event)"
-       disabled />
+       readonly />
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
@@ -957,9 +957,9 @@ async function loadOrderById(orderId) {
 
 const scanInput = document.getElementById("scanInput");
 
-scanInput.disabled = false;
-scanInput.value = "";
 scanInput.removeAttribute("readonly");
+scanInput.value = "";
+scanInput.setAttribute("readonly", "readonly");
 scanInput.setAttribute("inputmode", "none"); // NU deschide tastatura
 
 // focus HARD – obligatoriu pentru scaner
@@ -1048,21 +1048,32 @@ function normalizeBarcode(raw){
 }
 
 let scanBuffer = "";
+let scanTimer = null;
+
 function handleScan(event) {
-  // ENTER = final scan
- if (event.key === "Enter") {
-  const code = normalizeBarcode(scanBuffer);
-  scanBuffer = "";
-  event.target.value = "";
 
-  processScannedCode(code);
-  return;
-}
-
-
-  // colectăm TOATE caracterele (scanner wedge)
+  // caractere normale de la scanner (EAN, Code128 etc)
   if (event.key.length === 1) {
     scanBuffer += event.key;
+
+    clearTimeout(scanTimer);
+
+    // dacă NU vine ENTER, procesăm automat
+    scanTimer = setTimeout(() => {
+      const code = normalizeBarcode(scanBuffer);
+      scanBuffer = "";
+      processScannedCode(code);
+    }, 50);
+
+    return;
+  }
+
+  // dacă vine ENTER (unele scannere)
+  if (event.key === "Enter") {
+    const code = normalizeBarcode(scanBuffer);
+    scanBuffer = "";
+    event.target.value = "";
+    processScannedCode(code);
   }
 }
 
@@ -1080,8 +1091,9 @@ function processScannedCode(code){
   let found = false;
 
   currentProducts.forEach(p => {
+
     const skuMatch =
-      normalizeSku(p.sku) === normalizeSku(code);
+      p.sku && normalizeSku(p.sku) === normalizeSku(code);
 
     const eanMatch =
       p.ean && String(p.ean) === String(code);
@@ -1113,7 +1125,7 @@ function startCameraScan() {
     { fps: 10, qrbox: { width: 260, height: 160 } },
     (decodedText) => {
       document.getElementById("scanInput").value = decodedText;
-      handleScan({ key: "Enter", target: { value: decodedText } });
+processScannedCode(normalizeBarcode(decodedText));
 
       html5QrCode.stop().then(() => {
         div.style.display = "none";
