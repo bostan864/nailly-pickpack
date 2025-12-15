@@ -710,10 +710,15 @@ body.wms-mobile #bottomNav .nav-btn svg{
 
   <h3>Pas 2: Scanează produsele</h3>
 
-  <input id="scanInput"
-         placeholder="Scanează EAN / SKU..."
-         onkeypress="handleScan(event)"
-         disabled />
+  <input
+  id="scanInput"
+  placeholder="Scanează EAN / SKU..."
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+/>
+
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
@@ -956,7 +961,8 @@ async function loadOrderById(orderId) {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
-  scanInput.disabled = false;
+scanInput.addEventListener("keydown", handleScan);
+
 
   // prevenim tastatura pe terminal; scanerele wedge trimit text + Enter oricum
   scanInput.setAttribute("inputmode", "none");
@@ -1033,12 +1039,18 @@ function normalize(v){
 function handleScan(event) {
   if (event.key !== "Enter") return;
 
-  let code = (event.target.value || "").trim();
-  event.target.value = "";
+  const input = event.target;
+  const code = (input.value || "").trim();
+  input.value = "";
+
+  if (!code) {
+    feedbackError();
+    return;
+  }
 
   const scanned = normalize(code);
 
-  let found = currentProducts.find(p =>
+  const found = currentProducts.find(p =>
     normalize(p.sku) === scanned ||
     normalize(p.ean) === scanned
   );
