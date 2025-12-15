@@ -713,8 +713,8 @@ body.wms-mobile #bottomNav .nav-btn svg{
   <input id="scanInput"
        type="text"
        autocomplete="off"
-       placeholder="Scanează EAN / SKU…"
-       onkeypress="handleScan(event)" />
+       placeholder="Scanează EAN / SKU…" />
+
 
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
@@ -959,8 +959,13 @@ async function loadOrderById(orderId) {
 
     const scanInput = document.getElementById("scanInput");
 scanInput.disabled = false;
-scanInput.setAttribute("readonly", "readonly"); // previne afișarea tastaturii
-scanInput.focus();                              // permite scrierea de la scanner
+scanInput.value = "";               // curăță eventual
+scanInput.removeEventListener("keydown", handleScan);
+scanInput.addEventListener("keydown", handleScan);
+scanInput.focus();                  // focus înainte de readonly
+setTimeout(() => {
+  scanInput.setAttribute("readonly", "readonly");
+}, 100);
 
   // dacă vrea manual, click = deblochează
   if (!scanInput.dataset.manualEnabled) {
@@ -979,7 +984,9 @@ scanInput.focus();                              // permite scrierea de la scanne
   startTimer();
   renderTable();
 }
-  
+  scanInput.removeEventListener("keydown", handleScan); // evită duplicat
+scanInput.addEventListener("keydown", handleScan);
+
 /* ===================== TABLE ====================== */
 function renderTable() {
   const tbody = document.querySelector("#productsTable tbody");
