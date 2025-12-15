@@ -710,14 +710,13 @@ body.wms-mobile #bottomNav .nav-btn svg{
 
   <h3>Pas 2: Scanează produsele</h3>
 
-  <input id="scanInput"
+<input id="scanInput"
   placeholder="Scanează EAN / SKU..."
   autocomplete="off"
   autocorrect="off"
   autocapitalize="off"
-  spellcheck="false"
-  inputmode="none"
-  readonly>
+  spellcheck="false">
+
 
 
 
@@ -962,23 +961,20 @@ async function loadOrderById(orderId) {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
+scanInput.value = "";
+scanInput.disabled = false;
+scanInput.focus();
+
+// evităm dublări
+scanInput.removeEventListener("keydown", handleScan);
+scanInput.addEventListener("keydown", handleScan);
+;
 // ================= SCAN MODE FIX =================
 scanInput.onkeydown = handleScan;
 scanInput.disabled = false;
 scanInput.value = "";
 scanInput.focus();
 
-// 🔒 NU deschide tastatura Android
-scanInput.setAttribute("readonly", "readonly");
-scanInput.setAttribute("inputmode", "none");
-
-// ✍️ Tastatura DOAR intenționat (dublu tap)
-if (!scanInput.dataset.manual) {
-  scanInput.addEventListener("dblclick", () => {
-    scanInput.removeAttribute("readonly");
-    scanInput.removeAttribute("inputmode");
-    scanInput.focus();
-  });
   scanInput.dataset.manual = "1";
 }
 
@@ -1035,6 +1031,8 @@ function updateFinishButtonState() {
 
 /* ===================== SCAN ====================== */
 
+/* ===================== SCAN ====================== */
+
 function normalize(v){
   if (!v) return "";
   return String(v).replace(/^0+/, "");
@@ -1044,43 +1042,50 @@ let scanBuffer = "";
 let scanTimer = null;
 
 function handleScan(event) {
-  // ignorăm orice nu e caracter (scanner wedge)
-  if (event.key.length !== 1) return;
+  // caractere normale de la scanner
+  if (event.key.length === 1) {
+    scanBuffer += event.key;
 
-  scanBuffer += event.key;
+    clearTimeout(scanTimer);
+    scanTimer = setTimeout(() => {
+      processScan(scanBuffer);
+      scanBuffer = "";
+    }, 80);
 
-  clearTimeout(scanTimer);
+    return;
+  }
 
-  // dacă nu mai vine nimic în 60ms => scan complet
-  scanTimer = setTimeout(() => {
-    const code = normalize(scanBuffer);
+  // ENTER finalizează scanul (pentru scannere care trimit ENTER)
+  if (event.key === "Enter") {
+    clearTimeout(scanTimer);
+    processScan(scanBuffer);
     scanBuffer = "";
+  }
+}
 
-    if (!code) {
-      feedbackError();
-      return;
-    }
+function processScan(codeRaw){
+  const code = normalize(codeRaw);
+  if (!code) return;
 
-    const found = currentProducts.find(p =>
-      normalize(p.sku) === code ||
-      normalize(p.ean) === code
-    );
+  const found = currentProducts.find(p =>
+    normalize(p.sku) === code ||
+    normalize(p.ean) === code
+  );
 
-    if (!found) {
-      feedbackError();
-      flashError();
-      return;
-    }
+  if (!found) {
+    feedbackError();
+    flashError();
+    return;
+  }
 
-    if (found.scanned < found.qty) {
-      found.scanned++;
-      feedbackSuccess();
-      renderTable();
-    } else {
-      feedbackError();
-      flashError();
-    }
-  }, 60);
+  if (found.scanned < found.qty) {
+    found.scanned++;
+    feedbackSuccess();
+    renderTable();
+  } else {
+    feedbackError();
+    flashError();
+  }
 }
 
 function flashError() {
