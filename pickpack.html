@@ -711,8 +711,20 @@ body.wms-mobile #bottomNav .nav-btn svg{
   <h3>Pas 2: Scanează produsele</h3>
 
   <input id="scanInput"
-       placeholder="Scanează EAN / SKU..."
-       readonly />
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  style="
+    position: fixed;
+    bottom: -100px;
+    left: 0;
+    height: 1px;
+    width: 1px;
+    opacity: 0.01;
+  "
+/>
+
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
@@ -956,29 +968,23 @@ async function loadOrderById(orderId) {
 
 const scanInput = document.getElementById("scanInput");
 
-scanInput.removeAttribute("readonly");
 scanInput.value = "";
-scanInput.setAttribute("readonly", "readonly");
-scanInput.setAttribute("inputmode", "none"); // NU deschide tastatura
+scanInput.disabled = false;
 
-// focus HARD – obligatoriu pentru scaner
-setTimeout(() => {
-  scanInput.focus();
-}, 50);
+// NU readonly – scannerul trebuie să poată scrie
+scanInput.removeAttribute("readonly");
+
+// ascundem tastatura software, dar permitem input hardware
+scanInput.setAttribute("inputmode", "none");
+scanInput.setAttribute("autocomplete", "off");
+
+// focus HARD
+setTimeout(() => scanInput.focus(), 50);
 
 // dacă pierde focusul, îl forțăm înapoi
-scanInput.addEventListener("blur", () => {
+scanInput.onblur = () => {
   setTimeout(() => scanInput.focus(), 20);
-});
-
-
-  const finishBtn = document.getElementById("finishBtn");
-  finishBtn.style.display = "block";
-  finishBtn.classList.remove("active");
-
-  startTimer();
-  renderTable();
-}
+};
 
 /* ===================== TABLE ====================== */
 function renderTable() {
