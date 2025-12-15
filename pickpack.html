@@ -956,22 +956,27 @@ async function loadOrderById(orderId) {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
-  scanInput.disabled = false;
+scanInput.disabled = false;
+scanInput.value = ""; // curăță eventual
 
-  // prevenim tastatura pe terminal; scanerele wedge trimit text + Enter oricum
-  scanInput.setAttribute("inputmode", "none");
+// focus imediat
+scanInput.focus();
+
+// blocăm tastatura virtuală imediat după focus
+setTimeout(() => {
   scanInput.setAttribute("readonly", "readonly");
-  setTimeout(() => scanInput.blur(), 50);
+  scanInput.setAttribute("inputmode", "none");
+}, 100);
 
-  // dacă vrea manual, click = deblochează
-  if (!scanInput.dataset.manualEnabled) {
-    scanInput.addEventListener("click", function () {
-      this.removeAttribute("readonly");
-      this.removeAttribute("inputmode");
-      this.focus();
-    });
-    scanInput.dataset.manualEnabled = "1";
-  }
+// dacă vrea manual, click = deblochează
+if (!scanInput.dataset.manualEnabled) {
+  scanInput.addEventListener("click", function () {
+    this.removeAttribute("readonly");
+    this.removeAttribute("inputmode");
+    this.focus();
+  });
+  scanInput.dataset.manualEnabled = "1";
+}
 
   const finishBtn = document.getElementById("finishBtn");
   finishBtn.style.display = "block";
