@@ -712,7 +712,6 @@ body.wms-mobile #bottomNav .nav-btn svg{
 
   <input id="scanInput"
        placeholder="Scanează EAN / SKU..."
-       onkeydown="handleScan(event)"
        readonly />
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
@@ -1112,6 +1111,17 @@ function processScannedCode(code){
     flashError();
   }
 }
+// ===================== SCANNER GLOBAL LISTENER =====================
+document.addEventListener("keydown", (event) => {
+
+  // dacă userul scrie în QUICK SEARCH sau LOGIN, NU scanăm
+  const el = document.activeElement;
+  if (el && el.tagName === "INPUT" && el.id !== "scanInput") {
+    return;
+  }
+
+  handleScan(event);
+});
 
 /* ===================== CAMERA SCAN ====================== */
 function startCameraScan() {
