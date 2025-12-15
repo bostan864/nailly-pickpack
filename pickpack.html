@@ -935,13 +935,13 @@ async function loadOrderById(orderId) {
         } catch (_) {}
 
         return {
-  sku: normalize(originalSku),    // 🔁 adaugă normalize aici
-  ean: normalize(p.product_ean),  // 🔁 și aici
-  name: p.product_name,
-  qty: Number(p.quantity),
-  shelf,
-  scanned: 0
-};
+          sku: originalSku,
+          ean: p.product_ean,
+          name: p.product_name,
+          qty: Number(p.quantity),
+          shelf,
+          scanned: 0
+        };
       })
   );
 
@@ -1043,10 +1043,11 @@ function handleScan(event) {
 
   const scanned = normalize(code);
 
-  let found = currentProducts.find(p =>
-  normalize(p.sku) === scanned ||
-  (p.ean && normalize(p.ean) === scanned)  // ✅ doar dacă există ean
-);
+  let found = currentProducts.find(p => {
+    const sku = normalize(p.sku);
+    const ean = normalize(p.ean);
+    return sku === scanned || ean === scanned;
+  });
 
   if (!found) {
     feedbackError();
