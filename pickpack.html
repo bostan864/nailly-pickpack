@@ -956,27 +956,25 @@ async function loadOrderById(orderId) {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
-scanInput.disabled = false;
-scanInput.value = ""; // curăță eventual
+  scanInput.disabled = false;
+  scanInput.value = "";
 
-// focus imediat
-scanInput.focus();
+  scanInput.focus(); // focus înainte de timeout
 
-// blocăm tastatura virtuală imediat după focus
-setTimeout(() => {
-  scanInput.setAttribute("readonly", "readonly");
-  scanInput.setAttribute("inputmode", "none");
-}, 100);
+  setTimeout(() => {
+    scanInput.setAttribute("inputmode", "none");
+    scanInput.removeAttribute("readonly");
+  }, 50);
 
-// dacă vrea manual, click = deblochează
-if (!scanInput.dataset.manualEnabled) {
-  scanInput.addEventListener("click", function () {
-    this.removeAttribute("readonly");
-    this.removeAttribute("inputmode");
-    this.focus();
-  });
-  scanInput.dataset.manualEnabled = "1";
-}
+  // dacă vrea manual, click = deblochează
+  if (!scanInput.dataset.manualEnabled) {
+    scanInput.addEventListener("click", function () {
+      this.removeAttribute("readonly");
+      this.removeAttribute("inputmode");
+      this.focus();
+    });
+    scanInput.dataset.manualEnabled = "1";
+  }
 
   const finishBtn = document.getElementById("finishBtn");
   finishBtn.style.display = "block";
