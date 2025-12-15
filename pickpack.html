@@ -711,11 +711,14 @@ body.wms-mobile #bottomNav .nav-btn svg{
   <h3>Pas 2: Scanează produsele</h3>
 
   <input id="scanInput"
-       placeholder="Scanează EAN / SKU..."
-       autocomplete="off"
-       autocorrect="off"
-       autocapitalize="off"
-       spellcheck="false">
+  placeholder="Scanează EAN / SKU..."
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  inputmode="none"
+  readonly>
+
 
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
@@ -959,24 +962,25 @@ async function loadOrderById(orderId) {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
+// ================= SCAN MODE FIX =================
 scanInput.onkeydown = handleScan;
 scanInput.disabled = false;
 scanInput.value = "";
 scanInput.focus();
 
+// 🔒 NU deschide tastatura Android
+scanInput.setAttribute("readonly", "readonly");
+scanInput.setAttribute("inputmode", "none");
 
-  // prevenim tastatura pe terminal; scanerele wedge trimit text + Enter oricum
- 
-
-  // dacă vrea manual, click = deblochează
-  if (!scanInput.dataset.manualEnabled) {
-    scanInput.addEventListener("click", function () {
-      this.removeAttribute("readonly");
-      this.removeAttribute("inputmode");
-      this.focus();
-    });
-    scanInput.dataset.manualEnabled = "1";
-  }
+// ✍️ Tastatura DOAR intenționat (dublu tap)
+if (!scanInput.dataset.manual) {
+  scanInput.addEventListener("dblclick", () => {
+    scanInput.removeAttribute("readonly");
+    scanInput.removeAttribute("inputmode");
+    scanInput.focus();
+  });
+  scanInput.dataset.manual = "1";
+}
 
   const finishBtn = document.getElementById("finishBtn");
   finishBtn.style.display = "block";
@@ -1030,52 +1034,61 @@ function updateFinishButtonState() {
 }
 
 /* ===================== SCAN ====================== */
+
 function normalize(v){
   if (!v) return "";
   return String(v).replace(/^0+/, "");
 }
 
+let scanBuffer = "";
+let scanTimer = null;
 
 function handleScan(event) {
-  if (event.key !== "Enter") return;
+  // ignorăm orice nu e caracter (scanner wedge)
+  if (event.key.length !== 1) return;
 
-  const input = event.target;
-  const code = (input.value || "").trim();
-  input.value = "";
+  scanBuffer += event.key;
 
-  if (!code) {
-    feedbackError();
-    return;
-  }
+  clearTimeout(scanTimer);
 
-  const scanned = normalize(code);
+  // dacă nu mai vine nimic în 60ms => scan complet
+  scanTimer = setTimeout(() => {
+    const code = normalize(scanBuffer);
+    scanBuffer = "";
 
-  const found = currentProducts.find(p =>
-    normalize(p.sku) === scanned ||
-    normalize(p.ean) === scanned
-  );
+    if (!code) {
+      feedbackError();
+      return;
+    }
 
-  if (!found) {
-    feedbackError();
-    flashError();
-    return;
-  }
+    const found = currentProducts.find(p =>
+      normalize(p.sku) === code ||
+      normalize(p.ean) === code
+    );
 
-  if (found.scanned < found.qty) {
-    found.scanned++;
-    feedbackSuccess();
-    renderTable();
-  } else {
-    feedbackError();
-    flashError();
-  }
+    if (!found) {
+      feedbackError();
+      flashError();
+      return;
+    }
+
+    if (found.scanned < found.qty) {
+      found.scanned++;
+      feedbackSuccess();
+      renderTable();
+    } else {
+      feedbackError();
+      flashError();
+    }
+  }, 60);
 }
 
 function flashError() {
-  let input = document.getElementById("scanInput");
+  const input = document.getElementById("scanInput");
   input.classList.add("errorInput");
   setTimeout(() => input.classList.remove("errorInput"), 280);
 }
+
 
 /* ===================== CAMERA SCAN ====================== */
 function startCameraScan() {
