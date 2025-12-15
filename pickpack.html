@@ -984,43 +984,48 @@ async function loadOrderById(orderId) {
     return String(a.shelf).localeCompare(String(b.shelf));
   });
 
-  /* ===================== UI ===================== */
-  document.getElementById("orderTitle").textContent = "Comanda #" + currentOrderId;
-  document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
-  document.getElementById("orderMeta").style.display = "block";
+  // ===================== UI =====================
+document.getElementById("orderTitle").textContent = "Comanda #" + currentOrderId;
+document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
+document.getElementById("orderMeta").style.display = "block";
 
-    const scanInput = document.getElementById("scanInput");
+// Înlocuiește complet inputul scan
+const oldInput = document.getElementById("scanInput");
+const newInput = oldInput.cloneNode(true); // păstrează toate atributele
+oldInput.parentNode.replaceChild(newInput, oldInput);
 
-  scanInput.disabled = false;
-  scanInput.value = "";
-  scanInput.focus();
+// Activează și curăță
+newInput.disabled = false;
+newInput.value = "";
+newInput.setAttribute("inputmode", "none");
+newInput.removeAttribute("readonly");
 
-  // 🔥 Remove existing input listeners and reset complet
-  const newScanInput = scanInput.cloneNode(true);
-  scanInput.parentNode.replaceChild(newScanInput, scanInput);
+// Adaugă event listener fresh
+newInput.addEventListener("input", handleScanAuto);
 
-  // 🔥 Adaugă din nou listener
-  newScanInput.addEventListener("input", handleScanAuto);
-  newScanInput.setAttribute("inputmode", "none");
-  newScanInput.removeAttribute("readonly");
+// Autofocus cu delay (mobil-friendly)
+setTimeout(() => {
+  newInput.focus();
+}, 100);
 
-  // 🔥 Setup pentru click manual dacă e pe mobil
-  if (!newScanInput.dataset.manualEnabled) {
-    newScanInput.addEventListener("click", function () {
-      this.removeAttribute("readonly");
-      this.removeAttribute("inputmode");
-      this.focus();
-    });
-    newScanInput.dataset.manualEnabled = "1";
-  }
-
-  const finishBtn = document.getElementById("finishBtn");
-  finishBtn.style.display = "block";
-  finishBtn.classList.remove("active");
-
-  startTimer();
-  renderTable();
+// Click manual (fallback pentru unele browsere)
+if (!newInput.dataset.manualEnabled) {
+  newInput.addEventListener("click", function () {
+    this.removeAttribute("readonly");
+    this.removeAttribute("inputmode");
+    this.focus();
+  });
+  newInput.dataset.manualEnabled = "1";
 }
+
+// Finish button vizibil
+const finishBtn = document.getElementById("finishBtn");
+finishBtn.style.display = "block";
+finishBtn.classList.remove("active");
+
+startTimer();
+renderTable();
+
 
 /* ===================== TABLE ====================== */
 function renderTable() {
