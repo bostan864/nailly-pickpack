@@ -1071,6 +1071,35 @@ function flashError() {
   input.classList.add("errorInput");
   setTimeout(() => input.classList.remove("errorInput"), 280);
 }
+function processScannedCode(code){
+  if(!code){
+    feedbackError();
+    return;
+  }
+
+  let found = false;
+
+  currentProducts.forEach(p => {
+    const skuMatch =
+      normalizeSku(p.sku) === normalizeSku(code);
+
+    const eanMatch =
+      p.ean && String(p.ean) === String(code);
+
+    if ((skuMatch || eanMatch) && p.scanned < p.qty) {
+      p.scanned++;
+      found = true;
+    }
+  });
+
+  if(found){
+    feedbackSuccess();
+    renderTable();
+  } else {
+    feedbackError();
+    flashError();
+  }
+}
 
 /* ===================== CAMERA SCAN ====================== */
 function startCameraScan() {
