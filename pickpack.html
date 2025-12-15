@@ -613,14 +613,27 @@ body.wms-mobile td{
   padding: 16px 12px;
 }
 
-/* RAFT – CEL MAI IMPORTANT */
+/* NUMELE PRODUSULUI – COL 2 (nou) */
+body.wms-mobile #productsTable td:nth-child(2){
+  font-size: 24px;
+  font-weight: 800;
+  color: #111;
+}
+
+/* RAFT – COL 3 (actualizat) */
 body.wms-mobile #productsTable td:nth-child(3){
-  font-size: 26px;
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--brand);
+}
+
+/* CANTITATE TOTALĂ – COL 4 (actualizat) */
+body.wms-mobile #productsTable td:nth-child(4){
+  font-size: 22px;
   font-weight: 900;
 }
 
-/* CANTITĂȚI */
-body.wms-mobile #productsTable td:nth-child(4),
+/* CANTITATE SCANATĂ ȘI RĂMASĂ – COL 5 și 6 (nicio schimbare) */
 body.wms-mobile #productsTable td:nth-child(5),
 body.wms-mobile #productsTable td:nth-child(6){
   font-size: 20px;
