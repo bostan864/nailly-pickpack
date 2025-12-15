@@ -717,8 +717,11 @@ body.wms-mobile #bottomNav .nav-btn svg{
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
+  inputmode="none"
+  readonly
   disabled
 />
+
 
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
@@ -965,6 +968,23 @@ async function loadOrderById(orderId) {
   scanInput.disabled = false;
 scanInput.value = "";
 scanInput.focus();
+
+scanInput.removeAttribute("disabled");
+scanInput.setAttribute("readonly", "readonly");
+scanInput.setAttribute("inputmode", "none");
+
+scanInput.value = "";
+
+// 🔥 focus forțat
+scanInput.focus();
+
+// 🔁 re-fixăm focus dacă se pierde
+scanInput.onblur = () => {
+  setTimeout(() => scanInput.focus(), 50);
+};
+
+// listener unic
+scanInput.onkeydown = handleScan;
 
 // ne asigurăm că nu dublăm listenerul
 scanInput.onkeydown = null;
