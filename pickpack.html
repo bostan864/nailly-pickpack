@@ -963,6 +963,8 @@ scanInput.focus(); // focus pe input
 // ✅ ATAȘEAZĂ EVENIMENTUL CORECT
 scanInput.removeEventListener("keydown", handleScan);
 scanInput.addEventListener("keydown", handleScan);
+scanInput.removeEventListener("input", handleScanAuto);
+scanInput.addEventListener("input", handleScanAuto);
 
 setTimeout(() => {
   scanInput.setAttribute("inputmode", "none");
@@ -1038,6 +1040,15 @@ function normalize(v){
 
 function handleScan(event) {
   if (event.key !== "Enter") return;
+function handleScanAuto(e) {
+  const val = e.target.value || "";
+  if (val.includes("\n")) {
+    const cleaned = val.trim();
+    e.target.value = "";
+    handleScan({ key: "Enter", target: { value: cleaned } });
+  }
+}
+
 
   let code = (event.target.value || "").trim();
   event.target.value = "";
