@@ -1045,9 +1045,9 @@ function handleScan(event) {
 
   const scanned = normalize(code);
 
-  let found = currentProducts.find(p => {
-  return p.normSku === scanned || p.normEan === scanned;
-});
+  let found = currentProducts.find(p =>
+  p.normSku === scanned || p.normEan === scanned
+);
 
 
   if (!found) {
