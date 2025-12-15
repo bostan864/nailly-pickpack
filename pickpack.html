@@ -711,9 +711,9 @@ body.wms-mobile #bottomNav .nav-btn svg{
   <h3>Pas 2: Scanează produsele</h3>
 
   <input id="scanInput"
-         placeholder="Scanează EAN / SKU..."
-         onkeypress="handleScan(event)"
-         disabled />
+       placeholder="Scanează EAN / SKU..."
+       onkeydown="handleScan(event)"
+       disabled />
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
@@ -955,23 +955,23 @@ async function loadOrderById(orderId) {
   document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
   document.getElementById("orderMeta").style.display = "block";
 
-  const scanInput = document.getElementById("scanInput");
-  scanInput.disabled = false;
+const scanInput = document.getElementById("scanInput");
 
-  // prevenim tastatura pe terminal; scanerele wedge trimit text + Enter oricum
-  scanInput.setAttribute("inputmode", "none");
-  scanInput.setAttribute("readonly", "readonly");
-  setTimeout(() => scanInput.blur(), 50);
+scanInput.disabled = false;
+scanInput.value = "";
+scanInput.removeAttribute("readonly");
+scanInput.setAttribute("inputmode", "none"); // NU deschide tastatura
 
-  // dacă vrea manual, click = deblochează
-  if (!scanInput.dataset.manualEnabled) {
-    scanInput.addEventListener("click", function () {
-      this.removeAttribute("readonly");
-      this.removeAttribute("inputmode");
-      this.focus();
-    });
-    scanInput.dataset.manualEnabled = "1";
-  }
+// focus HARD – obligatoriu pentru scaner
+setTimeout(() => {
+  scanInput.focus();
+}, 50);
+
+// dacă pierde focusul, îl forțăm înapoi
+scanInput.addEventListener("blur", () => {
+  setTimeout(() => scanInput.focus(), 20);
+});
+
 
   const finishBtn = document.getElementById("finishBtn");
   finishBtn.style.display = "block";
@@ -1025,37 +1025,31 @@ function updateFinishButtonState() {
 }
 
 /* ===================== SCAN ====================== */
-function normalize(v){
+function normalizeSku(v){
   if (!v) return "";
   return String(v).replace(/^0+/, "");
 }
 
+function normalizeEan(v){
+  if (!v) return "";
+  return String(v); // EAN se compară EXACT
+}
+
+let scanBuffer = "";
 function handleScan(event) {
-  if (event.key !== "Enter") return;
+  // ENTER = final scan
+  if (event.key === "Enter") {
+    const code = scanBuffer.trim();
+    scanBuffer = "";
+    event.target.value = "";
 
-  let code = (event.target.value || "").trim();
-  event.target.value = "";
-
-  const scanned = normalize(code);
-
-  let found = currentProducts.find(p =>
-    normalize(p.sku) === scanned ||
-    normalize(p.ean) === scanned
-  );
-
-  if (!found) {
-    feedbackError();
-    flashError();
+    processScannedCode(code);
     return;
   }
 
-  if (found.scanned < found.qty) {
-    found.scanned++;
-    feedbackSuccess();
-    renderTable();
-  } else {
-    feedbackError();
-    flashError();
+  // colectăm TOATE caracterele (scanner wedge)
+  if (event.key.length === 1) {
+    scanBuffer += event.key;
   }
 }
 
