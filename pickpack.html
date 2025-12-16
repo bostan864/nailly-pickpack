@@ -619,18 +619,19 @@ body.wms-mobile #productsTable td:nth-child(2){
   font-weight: 800;
   color: #111;
 }
-
 /* RAFT – COL 3 (actualizat) */
 body.wms-mobile #productsTable td:nth-child(3){
-  font-size: 32px;
+  font-size: 40px;
   font-weight: 900;
   color: var(--brand);
+  letter-spacing: 1px;
 }
 
-/* CANTITATE TOTALĂ – COL 4 (actualizat) */
+/* CANTITATE TOTALĂ – COL 4 (MARE ȘI CLAR) */
 body.wms-mobile #productsTable td:nth-child(4){
-  font-size: 22px;
+  font-size: 34px;     /* 🔥 mare, lizibil pe terminal */
   font-weight: 900;
+  color: #111;
 }
 
 /* CANTITATE SCANATĂ ȘI RĂMASĂ – COL 5 și 6 (nicio schimbare) */
@@ -664,6 +665,31 @@ body.wms-mobile #bottomNav .nav-btn span{
 body.wms-mobile #bottomNav .nav-btn svg{
   width: 60px;
   height: 60px;
+}
+/* ===== STATS BOOST – WMS REAL ===== */
+body.wms-mobile #statsBar{
+  gap: 16px;
+}
+
+body.wms-mobile .stats-card{
+  padding: 20px 18px;
+  border-radius: 18px;
+}
+
+body.wms-mobile .stats-title{
+  font-size: 20px;
+  font-weight: 800;
+}
+
+body.wms-mobile .stats-number{
+  font-size: 42px;
+  font-weight: 900;
+}
+
+body.wms-mobile #pendingTotal{
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  margin-top: 6px;
 }
 
 </style>
