@@ -14,7 +14,7 @@
 
     /* control central pentru bottom nav */
     --bottomNavH: 150px;      /* înălțime bară */
-    --finishGap: 10px;        /* dacă vrei spațiu extra între finish și nav */
+    --finishGap: 9px;        /* dacă vrei spațiu extra între finish și nav */
   }
 
   *{ box-sizing:border-box; }
@@ -621,7 +621,7 @@ body.wms-mobile #productsTable td:nth-child(2){
 }
 /* RAFT – COL 3 (actualizat) */
 body.wms-mobile #productsTable td:nth-child(3){
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 900;
   color: var(--brand);
   letter-spacing: 1px;
@@ -984,16 +984,15 @@ async function loadOrderById(orderId) {
   /* ===================== 🔥 2. UN SINGUR FETCH LA SUPABASE ===================== */
   let locationMap = new Map();
 
-  if (skuList.length) {
-    const locRes = await fetch(
-      `${PRODUCT_LOCATION_URL}in.(${skuList.map(encodeURIComponent).join(",")})`,
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-      }
-    );
+  const locRes = await fetch(
+  `${PRODUCT_LOCATION_URL}sku=in.(${skuList.map(sku => `%22${encodeURIComponent(sku)}%22`).join(",")})`,
+  {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+    }
+  }
+);
 
     const locData = await locRes.json().catch(() => []);
 
