@@ -1060,6 +1060,7 @@ async function loadOrderById(orderId) {
 
   startTimer();
   renderTable();
+  resetScanContext();
 }
 
 /* ===================== TABLE ====================== */
@@ -1103,6 +1104,26 @@ function updateFinishButtonState() {
   const btn = document.getElementById("finishBtn");
   if (allScanned) btn.classList.add("active");
   else btn.classList.remove("active");
+}
+/* ===================== SCAN CONTEXT RESET ====================== */
+function resetScanContext() {
+  const scanInput = document.getElementById("scanInput");
+  if (!scanInput) return;
+
+  scanInput.value = "";
+  scanInput.disabled = false;
+
+  // reset complet focus + listener
+  scanInput.blur();
+  scanInput.removeEventListener("input", handleScanAuto);
+  scanInput.addEventListener("input", handleScanAuto);
+
+  // rearmare scanner hardware
+  setTimeout(() => {
+    scanInput.setAttribute("inputmode", "none");
+    scanInput.removeAttribute("readonly");
+    scanInput.focus();
+  }, 80);
 }
 
 /* ===================== SCAN ====================== */
