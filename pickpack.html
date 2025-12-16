@@ -13,7 +13,7 @@
     --bg:#f5f5f7;
 
     /* control central pentru bottom nav */
-    --bottomNavH: 150px;      /* înălțime bară */
+    --bottomNavH: 140px;      /* înălțime bară */
     --finishGap: 9px;        /* dacă vrei spațiu extra între finish și nav */
   }
 
@@ -984,6 +984,7 @@ async function loadOrderById(orderId) {
   /* ===================== 🔥 2. UN SINGUR FETCH LA SUPABASE ===================== */
   let locationMap = new Map();
 
+  if (skuList.length) {
   const locRes = await fetch(
   `${PRODUCT_LOCATION_URL}sku=in.(${skuList.map(sku => encodeURIComponent(sku)).join(",")})`,
   {
