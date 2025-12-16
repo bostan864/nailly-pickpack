@@ -985,7 +985,7 @@ async function loadOrderById(orderId) {
   let locationMap = new Map();
 
   const locRes = await fetch(
-  `${PRODUCT_LOCATION_URL}sku=in.(${skuList.map(sku => `%22${encodeURIComponent(sku)}%22`).join(",")})`,
+  `${PRODUCT_LOCATION_URL}sku=in.(${skuList.map(sku => encodeURIComponent(sku)).join(",")})`,
   {
     headers: {
       apikey: SUPABASE_ANON_KEY,
