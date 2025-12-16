@@ -972,37 +972,43 @@ async function loadOrderById(orderId) {
 
   const products = (data.line_items || []).filter(p => p.item_type === "product");
 
-  /* ===================== 🔥 1. COLECTĂM TOATE SKU-URILE ===================== */
-  const skuList = [
-    ...new Set(
-      products
-        .map(p => String(p.product_sku || "").replace(/^0+/, ""))
-        .filter(Boolean)
-    )
-  ];
+   /* ===================== 🔥 1. COLECTĂM TOATE SKU-URILE ===================== */
+const skuList = [
+  ...new Set(
+    products
+      .map(p => String(p.product_sku || "").replace(/^0+/, ""))
+      .filter(Boolean)
+  )
+];
 
-  /* ===================== 🔥 2. UN SINGUR FETCH LA SUPABASE ===================== */
-  let locationMap = new Map();
+/* ===================== 🔥 2. UN SINGUR FETCH LA SUPABASE ===================== */
+let locationMap = new Map();
 
-  if (skuList.length) {
-  const locRes = await fetch(
-  `${PRODUCT_LOCATION_URL}sku=in.(${skuList.map(sku => encodeURIComponent(sku)).join(",")})`,
-  {
+if (skuList.length) {
+  // Normalizare SKU (fără 0 la început)
+  const cleanSkus = skuList.map(sku => String(sku).replace(/^0+/, ""));
+
+  const url = `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=in.(${cleanSkus.map(sku => `"${encodeURIComponent(sku)}"`).join(",")})`;
+
+  console.log("[DEBUG] URL locații produse:", url); // ajută la debugging
+
+  const locRes = await fetch(url, {
     headers: {
       apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${SUPABASE_ANON_KEY}`
     }
-  }
-);
+  });
 
-    const locData = await locRes.json().catch(() => []);
+  const locData = await locRes.json().catch(() => []);
 
-    locData.forEach(row => {
-      if (row.sku && row.location && row.location !== "EMPTY") {
-        locationMap.set(String(row.sku), row.location);
-      }
-    });
-  }
+  locData.forEach(row => {
+    if (row.sku && row.location && row.location !== "EMPTY") {
+      locationMap.set(String(row.sku), row.location);
+    }
+  });
+}
+
+
 
   /* ===================== 🔥 3. CONSTRUIM PRODUSELE ===================== */
   currentProducts = products.map(p => {
