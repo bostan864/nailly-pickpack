@@ -701,7 +701,10 @@ body.wms-mobile #bottomNav .nav-btn svg{
     <div id="pendingBox" class="stats-card stats-pending--none">
 <span class="stats-title">⚠️ Status comenzi</span>
       <span class="stats-number" id="pendingCount">0</span>
-      <span>comenzi de pregătit</span>
+      <span>comenzi de pregătit</span><span id="pendingTotal" style="display:block; font-size:15px; font-weight:500; color:#333;">
+  Total: 0 RON
+</span>
+
     </div>
     <div id="doneBox" class="stats-card stats-done">
 <span class="stats-title">✔️ Activitatea de astăzi</span>
@@ -883,6 +886,19 @@ function updateStats() {
 
   const pending = Array.isArray(allOrders) ? allOrders.length : 0;
   pendingCountEl.textContent = pending;
+let totalAmount = 0;
+
+allOrders.forEach(o => {
+  totalAmount += Number(o.total_amount || o.subtotal_amount || 0);
+});
+
+const formattedTotal = totalAmount.toLocaleString("ro-RO", {
+  style: "currency",
+  currency: "RON",
+  minimumFractionDigits: 2
+});
+
+document.getElementById("pendingTotal").textContent = `Total: ${formattedTotal}`;
 
   pendingBox.classList.remove("stats-pending--some", "stats-pending--none");
   if (pending > 0) pendingBox.classList.add("stats-pending--some");
@@ -898,6 +914,7 @@ async function loadOrders({silent=false} = {}) {
   try {
     const res = await fetch(ORDER_LIST_URL, { cache: "no-store" });
     const orders = await res.json();
+console.log("Comenzi încărcate:", orders);
     allOrders = Array.isArray(orders) ? orders : [];
     updateStats();
     if (document.getElementById("ordersPanel").classList.contains("open")) {
