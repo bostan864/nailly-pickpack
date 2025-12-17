@@ -1042,9 +1042,15 @@ if (skuList.length) {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
-  scanInput.disabled = false;
-  scanInput.value = "";
-  scanInput.focus();
+scanInput.disabled = false;
+scanInput.value = "";
+
+// 👇 Asigurare extra pentru device-uri lente
+setTimeout(() => {
+  scanInput.scrollIntoView({ behavior: "smooth", block: "center" });
+  scanInput.focus({ preventScroll: true });
+}, 120);
+
 
   scanInput.removeEventListener("input", handleScanAuto);
   scanInput.addEventListener("input", handleScanAuto);
@@ -1469,8 +1475,8 @@ function refreshHome(){
   document.querySelector("#productsTable tbody").innerHTML = "";
 
   const scanInput = document.getElementById("scanInput");
-  scanInput.value = "";
-  scanInput.disabled = true;
+   scanInput.value = "";
+scanInput.focus();
 
   const btn = document.getElementById("finishBtn");
   btn.style.display = "none";
