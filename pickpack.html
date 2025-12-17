@@ -1042,18 +1042,9 @@ if (skuList.length) {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
-scanInput.disabled = false;
-scanInput.value = "";
-
-// 👉 Asigură că input-ul de scanare este vizibil și focusat
-setTimeout(() => {
-  const scanInput = document.getElementById("scanInput");
-  if (scanInput) {
-    scanInput.scrollIntoView({ behavior: "smooth", block: "center" });
-    scanInput.focus({ preventScroll: true });
-  }
-}, 150);
-
+  scanInput.disabled = false;
+  scanInput.value = "";
+  scanInput.focus();
 
   scanInput.removeEventListener("input", handleScanAuto);
   scanInput.addEventListener("input", handleScanAuto);
@@ -1078,8 +1069,8 @@ setTimeout(() => {
 
   startTimer();
   renderTable();
-  resetScanContext();
 }
+
 
 /* ===================== TABLE ====================== */
 function renderTable() {
