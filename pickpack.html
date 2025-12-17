@@ -550,39 +550,41 @@
   z-index:99999;
 }
 
-.login-box{
-  width:320px;
-  background:#fff;
-  border-radius:18px;
-  padding:24px;
-  box-shadow:0 20px 40px rgba(0,0,0,.18);
-  text-align:center;
+.login-box {
+  width: 90vw;              /* 🔥 ocupă 90% din ecran */
+  max-width: 460px;         /* 🔒 limită pe ecrane mari */
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.18);
+  text-align: center;
 }
 
-.login-box h2{
-  margin-bottom:18px;
-  color:#d81b60;
+.login-box h2 {
+  margin-bottom: 24px;
+  color: #d81b60;
+  font-size: 24px;          /* 🔠 mai vizibil */
 }
 
-.login-box input{
-  width:100%;
-  padding:14px;
-  margin-bottom:12px;
-  border-radius:12px;
-  border:1px solid #ccc;
-  font-size:16px;
+.login-box input {
+  width: 100%;
+  padding: 18px;            /* 🔥 mai înalt */
+  margin-bottom: 16px;
+  border-radius: 14px;
+  border: 1px solid #ccc;
+  font-size: 20px;          /* 🔠 text mai mare */
 }
 
-.login-box button{
-  width:100%;
-  padding:14px;
-  border-radius:14px;
-  border:none;
-  background:#d81b60;
-  color:#fff;
-  font-size:16px;
-  font-weight:800;
-  cursor:pointer;
+.login-box button {
+  width: 100%;
+  padding: 18px;
+  border-radius: 16px;
+  border: none;
+  background: #d81b60;
+  color: #fff;
+  font-size: 20px;          /* 🔠 mai vizibil */
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .login-error{
