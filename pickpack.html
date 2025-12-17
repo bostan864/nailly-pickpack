@@ -400,18 +400,20 @@
     user-select:none;
   }
 
-  #quickSearchResults{
+  #quickSearchResults {
   position: absolute;
   top: 62px;
-  left:0;
-  width:100%;
-  background:#fff;
+  left: 0;
+  width: 100%;
+  background: #fff;
   border-radius: 14px;
-  box-shadow: 0 14px 35px rgba(0,0,0,0.35);
-  max-height: 60vh; /* 🔥 mai înaltă, mai mult spațiu pe telefon */
-  overflow-y:auto;
-  display:none;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+  max-height: 420px; /* 🔥 mărim cu 50% */
+  max-height: 60vh;
+  overflow-y: auto;
+  display: none;
 }
+
 
   #quickSearchResults.show{ display:block; }
 
