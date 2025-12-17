@@ -1278,7 +1278,11 @@ async function finalizeOrder() {
       btn.classList.remove("active");
 
       await loadOrders({silent:true});
-    } else {
+      setTimeout(() => location.reload(), 400);
+
+    } 
+      
+      else {
       alert("Eroare la ștergerea fișierului!");
       console.error(result);
     }
