@@ -1045,11 +1045,14 @@ if (skuList.length) {
 scanInput.disabled = false;
 scanInput.value = "";
 
-// 👇 Asigurare extra pentru device-uri lente
+// 👉 Asigură că input-ul de scanare este vizibil și focusat
 setTimeout(() => {
-  scanInput.scrollIntoView({ behavior: "smooth", block: "center" });
-  scanInput.focus({ preventScroll: true });
-}, 120);
+  const scanInput = document.getElementById("scanInput");
+  if (scanInput) {
+    scanInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    scanInput.focus({ preventScroll: true });
+  }
+}, 150);
 
 
   scanInput.removeEventListener("input", handleScanAuto);
