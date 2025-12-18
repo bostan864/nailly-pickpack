@@ -1750,7 +1750,7 @@ async function fetchLocationByCode(code) {
   const resultBox = document.getElementById("scanResultReception");
   resultBox.innerHTML = "🔍 Caut locația...";
 
-  const cleanCode = code.replace(/^0+/, "");
+const cleanCode = code; // nu mai eliminăm zerourile
 
   const url =
     `${PRODUCT_LOCATION_URL}?or=` +
