@@ -848,26 +848,36 @@ body.wms-mobile #pendingTotal{
 
 <!-- RECEPTION PANEL -->
 <div id="receptionPanel" style="display:none;">
-  <!-- Butonul de întoarcere -->
-  <div style="padding-left: 12px; padding-top: 10px;">
+
+  <!-- ✅ Butonul de întoarcere mutat mai sus -->
+  <div style="padding: 10px 12px;">
     <button class="back-btn" onclick="goBackFromReception()">← Înapoi la comenzi</button>
   </div>
 
   <!-- Conținutul centrat -->
   <div class="reception-inner">
 
-    <!-- ✅ Câmpul de scanare -->
+    <!-- ✅ Câmpul de scanare (mai mare + stil direct) -->
     <input
       id="scanInputReception"
       placeholder="Scanează EAN / SKU..."
       inputmode="numeric"
       autocomplete="off"
+      style="
+        width: 100%;
+        font-size: 28px;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        margin-top: 20px;
+        margin-bottom: 20px;
+      "
     />
+
+    <!-- Afișare rezultat scanare -->
     <div id="scanResultReception"></div>
 
-    <!-- Titlu + text -->
-    <h3>📊 Recepție</h3>
-    <p>Aici poți implementa logica de recepție produse.</p>
   </div>
 </div>
 
@@ -1752,9 +1762,7 @@ async function fetchLocationByCode(code) {
 
 const cleanCode = code; // nu mai eliminăm zerourile
 
-  const url =
-    `${PRODUCT_LOCATION_URL}?or=` +
-    `(sku.eq.${cleanCode},sku.eq.${code})&limit=1`;
+  const url = `${PRODUCT_LOCATION_URL}${cleanCode}`;
 
   try {
     const res = await fetch(url, {
