@@ -711,26 +711,6 @@ body.wms-mobile #pendingTotal{
   margin: 0;               /* scoate centrul artificial */
 }
 
-#receptionPanel {
-  padding: 20px 16px;
-  width: 100%;
-  margin: 0;
-  max-width: 100%;
-}
-
-.back-btn {
-  background-color: #c42c5c;
-  color: white;
-  font-weight: bold;
-  border: none;
-  border-radius: 12px;
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-
-  margin: 0;
-  display: inline-block;
-}
 .reception-inner {
   max-width: 700px;
   margin: 0 auto;
@@ -849,10 +829,6 @@ body.wms-mobile #pendingTotal{
 <!-- RECEPTION PANEL -->
 <div id="receptionPanel" style="display:none;">
 
-  <!-- ✅ Butonul de întoarcere mutat mai sus -->
-  <div style="padding: 10px 12px;">
-    <button class="back-btn" onclick="goBackFromReception()">← Înapoi la comenzi</button>
-  </div>
 
   <!-- Conținutul centrat -->
   <div class="reception-inner">
@@ -1207,8 +1183,21 @@ function renderTable() {
     `Progres: ${totalScanned}/${totalQty} (${pct}%)`;
 
   updateFinishButtonState();
-}
 
+  /* 🔥 SCROLL AUTOMAT LA URMĂTORUL PRODUS */
+  setTimeout(() => {
+    const nextRow = document.querySelector("#productsTable .next-row");
+    if (!nextRow) return;
+
+    const rowRect = nextRow.getBoundingClientRect();
+    const absoluteTop = rowRect.top + window.pageYOffset;
+
+    window.scrollTo({
+      top: absoluteTop - 120, // offset ca să fie vizibil clar
+      behavior: "smooth"
+    });
+  }, 120); // delay pentru a permite DOM-ul să se randeze complet
+}
 function updateFinishButtonState() {
   const allScanned = currentProducts.length > 0 &&
     currentProducts.every(p => p.scanned >= p.qty);
@@ -1628,25 +1617,29 @@ document.getElementById("btnReception").addEventListener("click", () => {
 });
 
 function showReceptionPanel() {
-  document.getElementById("receptionPanel").style.display = "block";
-  document.getElementById("ordersPanel").style.display = "none";
-  document.getElementById("orderMeta").style.display = "none";
-  document.getElementById("productsTable").style.display = "none";
-  document.getElementById("scanInput").style.display = "none";
-  document.getElementById("cameraBtn").style.display = "none";
-  document.getElementById("finishBtn").style.display = "none";
-  document.getElementById("orderTitle").textContent = "Modul Recepție";
-}
+  const receptionPanel = document.getElementById("receptionPanel");
+  const isVisible = receptionPanel.style.display === "block";
 
-function goBackFromReception() {
-  document.getElementById("receptionPanel").style.display = "none";
-  document.getElementById("ordersPanel").style.display = "block";
-  document.getElementById("productsTable").style.display = "table";
-  document.getElementById("scanInput").style.display = "block";
-  document.getElementById("cameraBtn").style.display = "block";
-  document.getElementById("orderTitle").textContent = "";
-  document.getElementById("orderMeta").style.display = "none";
-  setActiveNav("btnOrders");
+  if (isVisible) {
+    // 🔁 Dacă este deja activă Recepția, facem refresh la pagină
+    location.reload();
+  } else {
+    // ✅ Intrare în Recepție
+    receptionPanel.style.display = "block";
+
+    // 🔒 Ascunde tot ce ține de comenzi
+    document.getElementById("ordersPanel").style.display = "none";
+    document.getElementById("productsTable").style.display = "none";
+    document.getElementById("scanInput").style.display = "none";
+    document.getElementById("cameraBtn").style.display = "none";
+    document.getElementById("finishBtn").style.display = "none";
+    document.getElementById("orderMeta").style.display = "none";
+
+    // 🔖 Titlu
+    document.getElementById("orderTitle").textContent = "Modul Recepție";
+
+    setActiveNav("btnReception");
+  }
 }
 
 
