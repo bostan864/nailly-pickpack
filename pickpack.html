@@ -1621,25 +1621,32 @@ function showReceptionPanel() {
   const isVisible = receptionPanel.style.display === "block";
 
   if (isVisible) {
-    // 🔁 Dacă este deja activă Recepția, facem refresh la pagină
     location.reload();
-  } else {
-    // ✅ Intrare în Recepție
-    receptionPanel.style.display = "block";
-
-    // 🔒 Ascunde tot ce ține de comenzi
-    document.getElementById("ordersPanel").style.display = "none";
-    document.getElementById("productsTable").style.display = "none";
-    document.getElementById("scanInput").style.display = "none";
-    document.getElementById("cameraBtn").style.display = "none";
-    document.getElementById("finishBtn").style.display = "none";
-    document.getElementById("orderMeta").style.display = "none";
-
-    // 🔖 Titlu
-    document.getElementById("orderTitle").textContent = "Modul Recepție";
-
-    setActiveNav("btnReception");
+    return;
   }
+
+  // 🔓 Arată Recepția
+  receptionPanel.style.display = "block";
+
+  // 🔒 Ascunde restul
+  document.getElementById("ordersPanel").style.display = "none";
+  document.getElementById("productsTable").style.display = "none";
+  document.getElementById("scanInput").style.display = "none";
+  document.getElementById("cameraBtn").style.display = "none";
+  document.getElementById("finishBtn").style.display = "none";
+  document.getElementById("orderMeta").style.display = "none";
+
+  document.getElementById("orderTitle").textContent = "Modul Recepție";
+  setActiveNav("btnReception");
+
+  // 🔥 FOCUS GARANTAT (după user click)
+  setTimeout(() => {
+    const input = document.getElementById("scanInputReception");
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 80);
 }
 
 
@@ -1729,72 +1736,151 @@ window.addEventListener("load", () => {
 });
 </script>
 <script>
-/* ===================== RECEPTIE – SCANARE PRODUSE ===================== */
+/* ===================== RECEPTIE – SCANARE PRODUSE (ROBUST) ===================== */
 
 const SUPABASE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFmc2lneGVjbXJ5Z21ib2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwNDQ0MzgsImV4cCI6MjA3NTYyMDQzOH0.b9MXrgxADVZGvdFaKFQggD-vMd0ayZ9hX4_PmYOzrfE";
 
 let receptionScanTimer = null;
 
-document.getElementById("scanInputReception")
-  .addEventListener("input", (e) => {
-    clearTimeout(receptionScanTimer);
+const scanInput = document.getElementById("scanInputReception");
+const resultBox = document.getElementById("scanResultReception");
 
-    receptionScanTimer = setTimeout(() => {
-      const code = e.target.value.trim();
-      if (!code) return;
+/* ===================== INPUT ===================== */
+scanInput.addEventListener("input", (e) => {
+  clearTimeout(receptionScanTimer);
 
-      e.target.value = "";
-      fetchLocationByCode(code);
-    }, 200); // delay scanner hardware
-  });
+  receptionScanTimer = setTimeout(() => {
+    let raw = e.target.value;
 
-async function fetchLocationByCode(code) {
-  const resultBox = document.getElementById("scanResultReception");
+    raw = raw.trim();
+    raw = raw.replace(/^\]C1/, ""); // GS1 prefix
+    raw = raw.replace(/\D/g, "");   // doar cifre
+
+    if (!raw) return;
+
+    e.target.value = "";
+    fetchLocationByCode(raw);
+  }, 200);
+});
+
+/* ===================== GENERARE VARIANTE COD ===================== */
+function generateCodeVariants(code) {
+  const variants = new Set();
+
+  variants.add(code); // exact ce a venit
+
+  if (code.length === 12) {
+    variants.add("0" + code);        // lipsă 0 în față
+    variants.add(code + "0");        // lipsă ultimă cifră (fallback)
+  }
+
+  if (code.length === 11) {
+    variants.add("0" + code);        // lipsă 0
+    variants.add("0" + code + "0");  // lipsă 0 + ultimă cifră
+  }
+
+  return Array.from(variants);
+}
+
+/* ===================== FETCH ===================== */
+async function fetchLocationByCode(codeRaw) {
   resultBox.innerHTML = "🔍 Caut locația...";
 
-const cleanCode = code; // nu mai eliminăm zerourile
-
-  const url = `${PRODUCT_LOCATION_URL}${cleanCode}`;
+  const headers = {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`,
+  };
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
-      }
-    });
+    let data = [];
 
-    const data = await res.json();
-console.log("Date primite de la Supabase:", data);
+    /* 1️⃣ CĂUTARE DUPĂ SKU */
+    let res = await fetch(
+      `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(codeRaw)}`,
+      { headers }
+    );
+    data = await res.json();
 
+    /* 2️⃣ CĂUTARE DUPĂ EAN EXACT */
+    if (!data.length) {
+      res = await fetch(
+        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(codeRaw)}`,
+        { headers }
+      );
+      data = await res.json();
+    }
+
+    /* 3️⃣ CĂUTARE DUPĂ EAN CU 0 ÎN FAȚĂ (12 → 13) */
+    if (!data.length && codeRaw.length === 12) {
+      res = await fetch(
+        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent("0" + codeRaw)}`,
+        { headers }
+      );
+      data = await res.json();
+    }
+
+    /* 4️⃣ FALLBACK PENTRU 11 CIFRE (MATCH PARȚIAL) */
+    if (!data.length && codeRaw.length <= 11) {
+      res = await fetch(
+        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${encodeURIComponent(codeRaw)}*`,
+        { headers }
+      );
+      data = await res.json();
+    }
+
+    /* 5️⃣ VALIDARE */
     if (!data.length || !data[0].location || data[0].location === "EMPTY") {
       resultBox.innerHTML = `
-        <div style="color:#b00020;font-weight:800;font-size:20px">
+        <div style="color:#b00020;font-weight:900;font-size:22px">
           ❌ Fără locație
         </div>`;
       return;
     }
 
+    /* 6️⃣ AFIȘARE */
     resultBox.innerHTML = `
       <div style="
         background:#e8f7e9;
-        padding:18px;
-        border-radius:14px;
-        font-size:28px;
+        padding:22px;
+        border-radius:16px;
+        font-size:32px;
         font-weight:900;
         color:#1e7e34;
-        margin-top:10px;
+        margin-top:14px;
       ">
         📍 ${data[0].location}
       </div>
     `;
   } catch (err) {
     console.error(err);
-    resultBox.innerHTML = "⚠️ Eroare la server";
+    resultBox.innerHTML = `
+      <div style="color:#b00020;font-weight:900">
+        ⚠️ Eroare la server
+      </div>`;
   }
 }
+/* ===================== AUTO-FOCUS RECEPȚIE (ROBUST) ===================== */
+
+function forceFocusScanInput() {
+  const input = document.getElementById("scanInputReception");
+
+  if (!input) return false;
+
+  // verificăm să fie vizibil
+  const style = window.getComputedStyle(input);
+  if (style.display === "none" || style.visibility === "hidden") {
+    return false;
+  }
+
+  input.focus();
+  input.select?.(); // selectează textul dacă există
+  return true;
+}
+
+
 </script>
+
 
 
 </body>
