@@ -957,33 +957,37 @@ function normalizeScanInput(raw) {
 function generateScanVariants(code) {
   if (!code) return [];
 
-  const s = String(code);
   const variants = new Set();
+  const s = String(code).trim();
 
-  // exact cum vine
+  // 👉 dacă NU e numeric => SKU
+  if (!/^\d+$/.test(s)) {
+    variants.add(s);                // exact
+    variants.add(s.toUpperCase());  // siguranță
+    return [...variants];
+  }
+
+  // 👉 dacă e numeric => EAN
   variants.add(s);
 
-  // fără 0 în față
   const noLeadingZero = s.replace(/^0+/, "");
   variants.add(noLeadingZero);
 
-  // 👉 completare la 13 cifre (CORECT)
   if (noLeadingZero.length === 12) {
-    variants.add("0" + noLeadingZero); // EAN-13 corect
+    variants.add("0" + noLeadingZero);
   }
 
   if (noLeadingZero.length === 11) {
-    variants.add("0" + noLeadingZero);      // 12
-    variants.add("0" + noLeadingZero + "0"); // 13 (fallback)
+    variants.add("0" + noLeadingZero);
+    variants.add("0" + noLeadingZero + "0");
   }
 
-  // fallback: dacă a venit cu ultima cifră în plus/lipsă
   if (s.length > 1) {
     variants.add(s.slice(0, -1));
     variants.add(("0" + s).slice(0, 13));
   }
 
-  return [...variants].filter(v => v.length >= 11 && v.length <= 13);
+  return [...variants];
 }
 
 /* ===================== AUDIO + VIBRAȚIE ====================== */
@@ -1804,34 +1808,6 @@ if (scanInputReception && resultBox) {
     s = s.replace(/^\]C1/, ""); // GS1 prefix
     s = s.replace(/\D/g, "");   // doar cifre
     return s;
-  }
-
-  /* generează variante tolerate (identic ca logică business) */
-  function generateScanVariants(code) {
-    if (!code) return [];
-
-    const variants = new Set();
-    const s = String(code).trim();
-
-    // exact + fără 0 în față
-    variants.add(s);
-    variants.add(s.replace(/^0+/, ""));
-
-    // fără ultima cifră (scanner care adaugă check-digit / 0)
-    if (s.length > 1) {
-      variants.add(s.slice(0, -1));
-      variants.add(s.replace(/^0+/, "").slice(0, -1));
-    }
-
-    // completări pentru 11/12 -> 13 (0 în față) / (0 la final)
-    if (s.length === 11 || s.length === 12) {
-      variants.add("0" + s);
-      variants.add(s + "0");
-      variants.add("0" + s + "0");
-      variants.add(("0" + s).replace(/^0+/, "")); // siguranță
-    }
-
-    return [...variants].filter(v => v && v.length >= 8);
   }
 
   /* ===================== UI: AFIȘARE LOCAȚIE ===================== */
