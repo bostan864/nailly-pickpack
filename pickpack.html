@@ -835,21 +835,23 @@ body.wms-mobile #pendingTotal{
 
     <!-- ✅ Câmpul de scanare (mai mare + stil direct) -->
     <input
-      id="scanInputReception"
-      placeholder="Scanează EAN / SKU..."
-      inputmode="numeric"
-      autocomplete="off"
-      style="
-        width: 100%;
-        font-size: 28px;
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid #ccc;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        margin-top: 20px;
-        margin-bottom: 20px;
-      "
-    />
+  id="scanInputReception"
+  placeholder="Scanează EAN / SKU..."
+  inputmode="none"
+  autocomplete="off"
+  readonly
+  style="
+    width: 100%;
+    font-size: 28px;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    margin-top: 20px;
+    margin-bottom: 20px;
+  "
+/>
+
 
     <!-- Afișare rezultat scanare -->
     <div id="scanResultReception"></div>
@@ -937,6 +939,51 @@ function getTodayKey() {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `nailly_pnp_done_${y}${m}${day}`;
+}
+
+/* ===================== SCAN HELPERS (SHARED) ===================== */
+
+/* normalizează inputul brut de la scanner */
+function normalizeScanInput(raw) {
+  if (!raw) return "";
+
+  let s = String(raw).trim();
+  s = s.replace(/^\]C1/, ""); // GS1 prefix
+  s = s.replace(/\D/g, "");   // doar cifre
+  return s;
+}
+
+/* generează variante tolerate (11 / 12 / 13 cifre) */
+function generateScanVariants(code) {
+  if (!code) return [];
+
+  const s = String(code);
+  const variants = new Set();
+
+  // exact cum vine
+  variants.add(s);
+
+  // fără 0 în față
+  const noLeadingZero = s.replace(/^0+/, "");
+  variants.add(noLeadingZero);
+
+  // 👉 completare la 13 cifre (CORECT)
+  if (noLeadingZero.length === 12) {
+    variants.add("0" + noLeadingZero); // EAN-13 corect
+  }
+
+  if (noLeadingZero.length === 11) {
+    variants.add("0" + noLeadingZero);      // 12
+    variants.add("0" + noLeadingZero + "0"); // 13 (fallback)
+  }
+
+  // fallback: dacă a venit cu ultima cifră în plus/lipsă
+  if (s.length > 1) {
+    variants.add(s.slice(0, -1));
+    variants.add(("0" + s).slice(0, 13));
+  }
+
+  return [...variants].filter(v => v.length >= 11 && v.length <= 13);
 }
 
 /* ===================== AUDIO + VIBRAȚIE ====================== */
@@ -1248,14 +1295,15 @@ function normalizeVariants(v) {
 function handleScan(event) {
   if (event.key !== "Enter") return;
 
-  const raw = (event.target.value || "").trim();
+  const raw = normalizeScanInput(event.target.value);
   event.target.value = "";
 
-  const scannedVariants = normalizeVariants(raw);
+  const scannedVariants = generateScanVariants(raw);
 
   let found = currentProducts.find(p => {
-    const skuVariants = normalizeVariants(p.sku);
-    const eanVariants = normalizeVariants(p.ean);
+    const skuVariants = generateScanVariants(p.sku);
+    const eanVariants = generateScanVariants(p.ean);
+
 
     return scannedVariants.some(v =>
       skuVariants.includes(v) || eanVariants.includes(v)
@@ -1665,7 +1713,7 @@ const LOGIN_USER = "nailly";
 const LOGIN_PASS = "0604";
 
 /* helper: data de azi (format stabil) */
-function getTodayKey() {
+function getLoginDayKey() {
   const d = new Date();
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -1700,7 +1748,7 @@ function doLogin() {
 
   if (u === LOGIN_USER && p === LOGIN_PASS) {
     localStorage.setItem("nailly_logged", "1");
-    localStorage.setItem("nailly_login_day", getTodayKey());
+    localStorage.setItem("nailly_login_day", getLoginDayKey());
 
     if (err) err.style.display = "none";
     hideOverlay(overlay);
@@ -1723,7 +1771,7 @@ window.addEventListener("load", () => {
 
   const logged = localStorage.getItem("nailly_logged") === "1";
   const loginDay = localStorage.getItem("nailly_login_day");
-  const today = getTodayKey();
+  const today = getLoginDayKey();
 
   if (logged && loginDay === today) {
     hideOverlay(overlay);
@@ -1736,109 +1784,58 @@ window.addEventListener("load", () => {
 });
 </script>
 <script>
-/* ===================== RECEPTIE – SCANARE PRODUSE (ROBUST) ===================== */
+/* ===================== RECEPTIE – SCANARE PRODUSE (STABIL) ===================== */
 
 const SUPABASE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFmc2lneGVjbXJ5Z21ib2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwNDQ0MzgsImV4cCI6MjA3NTYyMDQzOH0.b9MXrgxADVZGvdFaKFQggD-vMd0ayZ9hX4_PmYOzrfE";
 
 let receptionScanTimer = null;
 
-const scanInput = document.getElementById("scanInputReception");
+const scanInputReception = document.getElementById("scanInputReception");
 const resultBox = document.getElementById("scanResultReception");
 
-/* ===================== INPUT ===================== */
-scanInput.addEventListener("input", (e) => {
-  clearTimeout(receptionScanTimer);
+/* ===== guard: dacă elementele nu există, ieșim (evită erori) ===== */
+if (scanInputReception && resultBox) {
 
-  receptionScanTimer = setTimeout(() => {
-    let raw = e.target.value;
-
-    raw = raw.trim();
-    raw = raw.replace(/^\]C1/, ""); // GS1 prefix
-    raw = raw.replace(/\D/g, "");   // doar cifre
-
-    if (!raw) return;
-
-    e.target.value = "";
-    fetchLocationByCode(raw);
-  }, 200);
-});
-
-/* ===================== GENERARE VARIANTE COD ===================== */
-function generateCodeVariants(code) {
-  const variants = new Set();
-
-  variants.add(code); // exact ce a venit
-
-  if (code.length === 12) {
-    variants.add("0" + code);        // lipsă 0 în față
-    variants.add(code + "0");        // lipsă ultimă cifră (fallback)
+  /* normalizează inputul brut */
+  function normalizeScanInput(raw) {
+    if (!raw) return "";
+    let s = String(raw).trim();
+    s = s.replace(/^\]C1/, ""); // GS1 prefix
+    s = s.replace(/\D/g, "");   // doar cifre
+    return s;
   }
 
-  if (code.length === 11) {
-    variants.add("0" + code);        // lipsă 0
-    variants.add("0" + code + "0");  // lipsă 0 + ultimă cifră
+  /* generează variante tolerate (identic ca logică business) */
+  function generateScanVariants(code) {
+    if (!code) return [];
+
+    const variants = new Set();
+    const s = String(code).trim();
+
+    // exact + fără 0 în față
+    variants.add(s);
+    variants.add(s.replace(/^0+/, ""));
+
+    // fără ultima cifră (scanner care adaugă check-digit / 0)
+    if (s.length > 1) {
+      variants.add(s.slice(0, -1));
+      variants.add(s.replace(/^0+/, "").slice(0, -1));
+    }
+
+    // completări pentru 11/12 -> 13 (0 în față) / (0 la final)
+    if (s.length === 11 || s.length === 12) {
+      variants.add("0" + s);
+      variants.add(s + "0");
+      variants.add("0" + s + "0");
+      variants.add(("0" + s).replace(/^0+/, "")); // siguranță
+    }
+
+    return [...variants].filter(v => v && v.length >= 8);
   }
 
-  return Array.from(variants);
-}
-
-/* ===================== FETCH ===================== */
-async function fetchLocationByCode(codeRaw) {
-  resultBox.innerHTML = "🔍 Caut locația...";
-
-  const headers = {
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`,
-  };
-
-  try {
-    let data = [];
-
-    /* 1️⃣ CĂUTARE DUPĂ SKU */
-    let res = await fetch(
-      `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(codeRaw)}`,
-      { headers }
-    );
-    data = await res.json();
-
-    /* 2️⃣ CĂUTARE DUPĂ EAN EXACT */
-    if (!data.length) {
-      res = await fetch(
-        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(codeRaw)}`,
-        { headers }
-      );
-      data = await res.json();
-    }
-
-    /* 3️⃣ CĂUTARE DUPĂ EAN CU 0 ÎN FAȚĂ (12 → 13) */
-    if (!data.length && codeRaw.length === 12) {
-      res = await fetch(
-        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent("0" + codeRaw)}`,
-        { headers }
-      );
-      data = await res.json();
-    }
-
-    /* 4️⃣ FALLBACK PENTRU 11 CIFRE (MATCH PARȚIAL) */
-    if (!data.length && codeRaw.length <= 11) {
-      res = await fetch(
-        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${encodeURIComponent(codeRaw)}*`,
-        { headers }
-      );
-      data = await res.json();
-    }
-
-    /* 5️⃣ VALIDARE */
-    if (!data.length || !data[0].location || data[0].location === "EMPTY") {
-      resultBox.innerHTML = `
-        <div style="color:#b00020;font-weight:900;font-size:22px">
-          ❌ Fără locație
-        </div>`;
-      return;
-    }
-
-    /* 6️⃣ AFIȘARE */
+  /* ===================== UI: AFIȘARE LOCAȚIE ===================== */
+  function showReceptionLocation(location) {
     resultBox.innerHTML = `
       <div style="
         background:#e8f7e9;
@@ -1849,36 +1846,99 @@ async function fetchLocationByCode(codeRaw) {
         color:#1e7e34;
         margin-top:14px;
       ">
-        📍 ${data[0].location}
+        📍 ${location}
       </div>
     `;
-  } catch (err) {
-    console.error(err);
-    resultBox.innerHTML = `
-      <div style="color:#b00020;font-weight:900">
-        ⚠️ Eroare la server
-      </div>`;
-  }
-}
-/* ===================== AUTO-FOCUS RECEPȚIE (ROBUST) ===================== */
-
-function forceFocusScanInput() {
-  const input = document.getElementById("scanInputReception");
-
-  if (!input) return false;
-
-  // verificăm să fie vizibil
-  const style = window.getComputedStyle(input);
-  if (style.display === "none" || style.visibility === "hidden") {
-    return false;
   }
 
-  input.focus();
-  input.select?.(); // selectează textul dacă există
-  return true;
+  /* ===================== FETCH ===================== */
+  async function fetchLocationByCode(codeRaw) {
+    resultBox.innerHTML = "🔍 Caut locația...";
+
+    const headers = {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+    };
+
+    try {
+      const variants = generateScanVariants(codeRaw);
+
+      for (const v of variants) {
+        /* 1) SKU exact */
+        let res = await fetch(
+          `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(v)}&select=location`,
+          { headers }
+        );
+
+        if (res.ok) {
+          const data = await res.json().catch(() => []);
+          if (data?.length && data[0]?.location && data[0].location !== "EMPTY") {
+            showReceptionLocation(data[0].location);
+            return;
+          }
+        }
+
+        /* 2) EAN exact */
+        res = await fetch(
+          `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(v)}&select=location`,
+          { headers }
+        );
+
+        if (res.ok) {
+          const data = await res.json().catch(() => []);
+          if (data?.length && data[0]?.location && data[0].location !== "EMPTY") {
+            showReceptionLocation(data[0].location);
+            return;
+          }
+        }
+
+        /* 3) fallback LIKE pentru coduri scurte (în special 11) – PostgREST folosește * */
+        if (v.length <= 11) {
+          res = await fetch(
+            `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${v}*&select=location`,
+            { headers }
+          );
+
+          if (res.ok) {
+            const data = await res.json().catch(() => []);
+            if (data?.length && data[0]?.location && data[0].location !== "EMPTY") {
+              showReceptionLocation(data[0].location);
+              return;
+            }
+          }
+        }
+      }
+
+      /* ❌ nimic găsit */
+      resultBox.innerHTML = `
+        <div style="color:#b00020;font-weight:900;font-size:22px">
+          ❌ Fără locație
+        </div>
+      `;
+    } catch (err) {
+      console.error("FETCH ERROR:", err);
+      resultBox.innerHTML = `
+        <div style="color:#b00020;font-weight:900">
+          ⚠️ Eroare la server
+        </div>
+      `;
+    }
+  }
+
+  /* ===================== INPUT HANDLER ===================== */
+  scanInputReception.addEventListener("input", (e) => {
+    clearTimeout(receptionScanTimer);
+
+    receptionScanTimer = setTimeout(() => {
+      const raw = normalizeScanInput(e.target.value);
+      if (!raw) return;
+
+      e.target.value = "";
+      fetchLocationByCode(raw);
+    }, 180);
+  });
+
 }
-
-
 </script>
 
 
