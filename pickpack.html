@@ -1779,59 +1779,71 @@ window.addEventListener("load", () => {
 });
 </script>
 <script>
-/* ===================== RECEPTIE – SCANARE (STABIL FINAL) ===================== */
+/* ===================== RECEPTIE – SCANARE (CA LA COMENZI) ===================== */
 
 const scanInputReception = document.getElementById("scanInputReception");
 const scanResultReception = document.getElementById("scanResultReception");
 
 let receptionScanTimer = null;
 
-if (!scanInputReception || !scanResultReception) {
-  console.warn("Recepție indisponibilă – input lipsă");
-} else {
+/* reuse helper global */
+function normalizeReceptionInput(raw) {
+  return normalizeScanInput(raw); // folosim helperul comun
+}
 
-  /* 🔒 MODE IMPLICIT: scanner only */
-  scanInputReception.setAttribute("inputmode", "none");
+function showReceptionLocation(location) {
+  scanResultReception.innerHTML = `
+    <div style="
+      background:#e8f7e9;
+      padding:22px;
+      border-radius:16px;
+      font-size:32px;
+      font-weight:900;
+      color:#1e7e34;
+      margin-top:14px;
+    ">
+      📍 ${location}
+    </div>
+  `;
+}
 
-  function showReceptionLocation(location) {
-    scanResultReception.innerHTML = `
-      <div style="
-        background:#e8f7e9;
-        padding:22px;
-        border-radius:16px;
-        font-size:32px;
-        font-weight:900;
-        color:#1e7e34;
-        margin-top:14px;
-      ">
-        📍 ${location}
-      </div>
-    `;
-  }
+async function fetchReceptionLocation(codeRaw) {
+  scanResultReception.innerHTML = "🔍 Caut locația...";
 
-  async function fetchReceptionLocation(codeRaw) {
-    scanResultReception.innerHTML = "🔍 Caut locația...";
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  };
 
-    const headers = {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    };
+  const variants = generateScanVariants(codeRaw);
 
-    const variants = generateScanVariants(codeRaw);
+  for (const v of variants) {
+    // SKU
+    let res = await fetch(
+      `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(v)}&select=location`,
+      { headers }
+    );
+    let data = await res.json().catch(() => []);
+    if (data[0]?.location && data[0].location !== "EMPTY") {
+      showReceptionLocation(data[0].location);
+      return;
+    }
 
-    for (const v of variants) {
-      let res = await fetch(
-        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(v)}&select=location`,
-        { headers }
-      );
-      let data = await res.json().catch(() => []);
-      if (data[0]?.location && data[0].location !== "EMPTY") {
-        showReceptionLocation(data[0].location);
-        return;
-      }
+    // EAN
+    res = await fetch(
+      `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(v)}&select=location`,
+      { headers }
+    );
+    data = await res.json().catch(() => []);
+    if (data[0]?.location && data[0].location !== "EMPTY") {
+      showReceptionLocation(data[0].location);
+      return;
+    }
 
+    // fallback LIKE
+    if (v.length <= 11) {
       res = await fetch(
-        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(v)}&select=location`,
+        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${v}*&select=location`,
         { headers }
       );
       data = await res.json().catch(() => []);
@@ -1839,53 +1851,30 @@ if (!scanInputReception || !scanResultReception) {
         showReceptionLocation(data[0].location);
         return;
       }
-
-      if (v.length <= 11) {
-        res = await fetch(
-          `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${v}*&select=location`,
-          { headers }
-        );
-        data = await res.json().catch(() => []);
-        if (data[0]?.location && data[0].location !== "EMPTY") {
-          showReceptionLocation(data[0].location);
-          return;
-        }
-      }
     }
-
-    scanResultReception.innerHTML = `
-      <div style="color:#b00020;font-weight:900;font-size:22px">
-        ❌ Fără locație
-      </div>
-    `;
   }
 
-  /* 🔥 AUTO SCAN – IDENTIC CU COMENZI */
-  scanInputReception.addEventListener("input", (e) => {
-    clearTimeout(receptionScanTimer);
-
-    receptionScanTimer = setTimeout(() => {
-      const code = normalizeScanInput(e.target.value);
-      if (!code) return;
-
-      e.target.value = "";
-      fetchReceptionLocation(code);
-    }, 180);
-  });
-
-  /* 🖐️ MANUAL MODE – DOAR LA CLICK */
-  scanInputReception.addEventListener("click", () => {
-    scanInputReception.removeAttribute("inputmode"); // permite tastatura
-    scanInputReception.focus();
-  });
-
-  /* 🔥 RELOCK DUPĂ BLUR */
-  scanInputReception.addEventListener("blur", () => {
-    scanInputReception.setAttribute("inputmode", "none");
-  });
+  scanResultReception.innerHTML = `
+    <div style="color:#b00020;font-weight:900;font-size:22px">
+      ❌ Fără locație
+    </div>
+  `;
 }
 
+/* 🔥 IDENTIC CU handleScanAuto */
+scanInputReception.addEventListener("input", (e) => {
+  clearTimeout(receptionScanTimer);
+
+  receptionScanTimer = setTimeout(() => {
+    const code = normalizeReceptionInput(e.target.value);
+    if (!code) return;
+
+    e.target.value = "";
+    fetchReceptionLocation(code);
+  }, 200);
+});
 </script>
+
 
 </body>
 </html>
