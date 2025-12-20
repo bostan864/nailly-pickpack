@@ -837,9 +837,19 @@ body.wms-mobile #pendingTotal{
     <input
   id="scanInputReception"
   placeholder="Scanează EAN / SKU..."
-  readonly
   autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  style="
+    width:100%;
+    font-size:28px;
+    padding:20px;
+    border-radius:12px;
+    border:1px solid #ccc;
+  "
 />
+
 
 
     <!-- Afișare rezultat scanare -->
@@ -1822,7 +1832,6 @@ input.addEventListener("keydown", (e) => {
   fetchTest(raw);
 });
 </script>
-
 
 
 </body>
