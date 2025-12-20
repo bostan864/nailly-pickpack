@@ -1915,6 +1915,19 @@ if (scanInputReception && resultBox) {
   });
 
 }
+// 🔥 SUPORT SCANNER HARDWARE (ENTER)
+scanInputReception.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+
+  e.preventDefault();
+
+  const raw = normalizeScanInput(e.target.value);
+  if (!raw) return;
+
+  e.target.value = "";
+  fetchLocationByCode(raw);
+});
+
 </script>
 
 
