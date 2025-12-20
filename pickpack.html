@@ -834,16 +834,14 @@ body.wms-mobile #pendingTotal{
   <div class="reception-inner">
 
     <!-- ✅ Câmpul de scanare (mai mare + stil direct) -->
-    <input
+<input
   id="scanInputReception"
   placeholder="Scanează EAN / SKU..."
-  readonly
   autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
 />
-
-
-
-
     <!-- Afișare rezultat scanare -->
     <div id="scanResultReception"></div>
 
@@ -1779,30 +1777,20 @@ window.addEventListener("load", () => {
 });
 </script>
 <script>
-/* ===================== RECEPTIE – SCANARE PRODUSE (FINAL PRO) ===================== */
+/* ===================== RECEPTIE – SCANARE (CA LA COMENZI) ===================== */
 
-const SUPABASE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFmc2lneGVjbXJ5Z21ib2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwNDQ0MzgsImV4cCI6MjA3NTYyMDQzOH0.b9MXrgxADVZGvdFaKFQggD-vMd0ayZ9hX4_PmYOzrfE";
+const scanInputReception = document.getElementById("scanInputReception");
+const scanResultReception = document.getElementById("scanResultReception");
 
-const scanInput = document.getElementById("scanInputReception");
-const resultBox = document.getElementById("scanResultReception");
+let receptionScanTimer = null;
 
-let scanTimer = null;
-
-if (!scanInput || !resultBox) return;
-
-/* ===================== NORMALIZARE ===================== */
-function normalizeScanInput(raw) {
-  if (!raw) return "";
-  let s = String(raw).trim();
-  s = s.replace(/^\]C1/, "");
-  s = s.replace(/\D/g, "");
-  return s;
+/* reuse helper global */
+function normalizeReceptionInput(raw) {
+  return normalizeScanInput(raw); // folosim helperul comun
 }
 
-/* ===================== UI ===================== */
 function showReceptionLocation(location) {
-  resultBox.innerHTML = `
+  scanResultReception.innerHTML = `
     <div style="
       background:#e8f7e9;
       padding:22px;
@@ -1817,94 +1805,73 @@ function showReceptionLocation(location) {
   `;
 }
 
-/* ===================== FETCH ===================== */
-async function fetchLocationByCode(codeRaw) {
-  resultBox.innerHTML = "🔍 Caut locația...";
+async function fetchReceptionLocation(codeRaw) {
+  scanResultReception.innerHTML = "🔍 Caut locația...";
 
   const headers = {
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`,
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
   };
 
   const variants = generateScanVariants(codeRaw);
 
   for (const v of variants) {
-
+    // SKU
     let res = await fetch(
       `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(v)}&select=location`,
       { headers }
     );
-    if (res.ok) {
-      const d = await res.json();
-      if (d?.length && d[0].location && d[0].location !== "EMPTY") {
-        showReceptionLocation(d[0].location);
-        return;
-      }
+    let data = await res.json().catch(() => []);
+    if (data[0]?.location && data[0].location !== "EMPTY") {
+      showReceptionLocation(data[0].location);
+      return;
     }
 
+    // EAN
     res = await fetch(
       `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(v)}&select=location`,
       { headers }
     );
-    if (res.ok) {
-      const d = await res.json();
-      if (d?.length && d[0].location && d[0].location !== "EMPTY") {
-        showReceptionLocation(d[0].location);
-        return;
-      }
+    data = await res.json().catch(() => []);
+    if (data[0]?.location && data[0].location !== "EMPTY") {
+      showReceptionLocation(data[0].location);
+      return;
     }
 
+    // fallback LIKE
     if (v.length <= 11) {
       res = await fetch(
         `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${v}*&select=location`,
         { headers }
       );
-      if (res.ok) {
-        const d = await res.json();
-        if (d?.length && d[0].location && d[0].location !== "EMPTY") {
-          showReceptionLocation(d[0].location);
-          return;
-        }
+      data = await res.json().catch(() => []);
+      if (data[0]?.location && data[0].location !== "EMPTY") {
+        showReceptionLocation(data[0].location);
+        return;
       }
     }
   }
 
-  resultBox.innerHTML = `
+  scanResultReception.innerHTML = `
     <div style="color:#b00020;font-weight:900;font-size:22px">
       ❌ Fără locație
     </div>
   `;
 }
 
-/* ===================== AUTO ENTER (SCANNER) ===================== */
-scanInput.addEventListener("input", (e) => {
-  clearTimeout(scanTimer);
+/* 🔥 IDENTIC CU handleScanAuto */
+scanInputReception.addEventListener("input", (e) => {
+  clearTimeout(receptionScanTimer);
 
-  scanTimer = setTimeout(() => {
-    const raw = normalizeScanInput(e.target.value);
-    if (!raw) return;
+  receptionScanTimer = setTimeout(() => {
+    const code = normalizeReceptionInput(e.target.value);
+    if (!code) return;
 
     e.target.value = "";
-    fetchLocationByCode(raw);
-  }, 120);
-});
-
-/* ===================== MANUAL OVERRIDE ===================== */
-// dacă dai click -> poți scrie manual
-scanInput.addEventListener("click", () => {
-  scanInput.removeAttribute("readonly");
-  scanInput.focus();
-});
-
-// după blur -> revine în mod scanner
-scanInput.addEventListener("blur", () => {
-  setTimeout(() => {
-    scanInput.setAttribute("readonly", "readonly");
+    fetchReceptionLocation(code);
   }, 200);
 });
 </script>
-
-
 
 </body>
 </html>
