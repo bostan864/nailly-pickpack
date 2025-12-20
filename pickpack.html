@@ -1682,13 +1682,13 @@ function showReceptionPanel() {
 
   // 🔥 FOCUS GARANTAT (după user click)
   setTimeout(() => {
-    const input = document.getElementById("scanInputReception");
-    if (input) {
-      input.focus();
-      input.select();
-    }
-  }, 80);
-}
+  const input = document.getElementById("scanInputReception");
+  if (input) {
+    input.setAttribute("inputmode", "none"); // 🔒 tastatura off
+    input.focus();                           // 🔥 scanner ready
+    input.select();
+  }
+}, 80);
 
 
 /* refresh automat la 30 sec */
@@ -1871,6 +1871,18 @@ scanInputReception.addEventListener("input", (e) => {
     fetchReceptionLocation(code);
   }, 200);
 });
+// 🔒 blocăm tastatura la focus automat (scanner mode)
+scanInputReception.setAttribute("inputmode", "none");
+
+// 🔓 dacă userul dă click manual, permitem tastatura
+if (!scanInputReception.dataset.manualEnabled) {
+  scanInputReception.addEventListener("click", function () {
+    this.removeAttribute("inputmode"); // permite tastatura
+    this.focus();
+  });
+  scanInputReception.dataset.manualEnabled = "1";
+}
+
 </script>
 
 </body>
