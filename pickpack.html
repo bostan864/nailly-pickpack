@@ -834,14 +834,16 @@ body.wms-mobile #pendingTotal{
   <div class="reception-inner">
 
     <!-- ✅ Câmpul de scanare (mai mare + stil direct) -->
-<input
+  <input
   id="scanInputReception"
   placeholder="Scanează EAN / SKU..."
   autocomplete="off"
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
+  inputmode="none"
 />
+
     <!-- Afișare rezultat scanare -->
     <div id="scanResultReception"></div>
 
@@ -1682,13 +1684,13 @@ function showReceptionPanel() {
 
   // 🔥 FOCUS GARANTAT (după user click)
   setTimeout(() => {
-  const input = document.getElementById("scanInputReception");
-  if (input) {
-    input.setAttribute("inputmode", "none"); // 🔒 tastatura off
-    input.focus();                           // 🔥 scanner ready
-    input.select();
-  }
-}, 80);
+    const input = document.getElementById("scanInputReception");
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 80);
+}
 
 
 /* refresh automat la 30 sec */
@@ -1777,71 +1779,59 @@ window.addEventListener("load", () => {
 });
 </script>
 <script>
-/* ===================== RECEPTIE – SCANARE (CA LA COMENZI) ===================== */
+/* ===================== RECEPTIE – SCANARE (STABIL FINAL) ===================== */
 
 const scanInputReception = document.getElementById("scanInputReception");
 const scanResultReception = document.getElementById("scanResultReception");
 
 let receptionScanTimer = null;
 
-/* reuse helper global */
-function normalizeReceptionInput(raw) {
-  return normalizeScanInput(raw); // folosim helperul comun
-}
+if (!scanInputReception || !scanResultReception) {
+  console.warn("Recepție indisponibilă – input lipsă");
+} else {
 
-function showReceptionLocation(location) {
-  scanResultReception.innerHTML = `
-    <div style="
-      background:#e8f7e9;
-      padding:22px;
-      border-radius:16px;
-      font-size:32px;
-      font-weight:900;
-      color:#1e7e34;
-      margin-top:14px;
-    ">
-      📍 ${location}
-    </div>
-  `;
-}
+  /* 🔒 MODE IMPLICIT: scanner only */
+  scanInputReception.setAttribute("inputmode", "none");
 
-async function fetchReceptionLocation(codeRaw) {
-  scanResultReception.innerHTML = "🔍 Caut locația...";
+  function showReceptionLocation(location) {
+    scanResultReception.innerHTML = `
+      <div style="
+        background:#e8f7e9;
+        padding:22px;
+        border-radius:16px;
+        font-size:32px;
+        font-weight:900;
+        color:#1e7e34;
+        margin-top:14px;
+      ">
+        📍 ${location}
+      </div>
+    `;
+  }
 
-  const headers = {
-    apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-  };
+  async function fetchReceptionLocation(codeRaw) {
+    scanResultReception.innerHTML = "🔍 Caut locația...";
 
-  const variants = generateScanVariants(codeRaw);
+    const headers = {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    };
 
-  for (const v of variants) {
-    // SKU
-    let res = await fetch(
-      `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(v)}&select=location`,
-      { headers }
-    );
-    let data = await res.json().catch(() => []);
-    if (data[0]?.location && data[0].location !== "EMPTY") {
-      showReceptionLocation(data[0].location);
-      return;
-    }
+    const variants = generateScanVariants(codeRaw);
 
-    // EAN
-    res = await fetch(
-      `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(v)}&select=location`,
-      { headers }
-    );
-    data = await res.json().catch(() => []);
-    if (data[0]?.location && data[0].location !== "EMPTY") {
-      showReceptionLocation(data[0].location);
-      return;
-    }
+    for (const v of variants) {
+      let res = await fetch(
+        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(v)}&select=location`,
+        { headers }
+      );
+      let data = await res.json().catch(() => []);
+      if (data[0]?.location && data[0].location !== "EMPTY") {
+        showReceptionLocation(data[0].location);
+        return;
+      }
 
-    // fallback LIKE
-    if (v.length <= 11) {
       res = await fetch(
-        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${v}*&select=location`,
+        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(v)}&select=location`,
         { headers }
       );
       data = await res.json().catch(() => []);
@@ -1849,38 +1839,50 @@ async function fetchReceptionLocation(codeRaw) {
         showReceptionLocation(data[0].location);
         return;
       }
+
+      if (v.length <= 11) {
+        res = await fetch(
+          `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${v}*&select=location`,
+          { headers }
+        );
+        data = await res.json().catch(() => []);
+        if (data[0]?.location && data[0].location !== "EMPTY") {
+          showReceptionLocation(data[0].location);
+          return;
+        }
+      }
     }
+
+    scanResultReception.innerHTML = `
+      <div style="color:#b00020;font-weight:900;font-size:22px">
+        ❌ Fără locație
+      </div>
+    `;
   }
 
-  scanResultReception.innerHTML = `
-    <div style="color:#b00020;font-weight:900;font-size:22px">
-      ❌ Fără locație
-    </div>
-  `;
-}
+  /* 🔥 AUTO SCAN – IDENTIC CU COMENZI */
+  scanInputReception.addEventListener("input", (e) => {
+    clearTimeout(receptionScanTimer);
 
-/* 🔥 IDENTIC CU handleScanAuto */
-scanInputReception.addEventListener("input", (e) => {
-  clearTimeout(receptionScanTimer);
+    receptionScanTimer = setTimeout(() => {
+      const code = normalizeScanInput(e.target.value);
+      if (!code) return;
 
-  receptionScanTimer = setTimeout(() => {
-    const code = normalizeReceptionInput(e.target.value);
-    if (!code) return;
-
-    e.target.value = "";
-    fetchReceptionLocation(code);
-  }, 200);
-});
-// 🔒 blocăm tastatura la focus automat (scanner mode)
-scanInputReception.setAttribute("inputmode", "none");
-
-// 🔓 dacă userul dă click manual, permitem tastatura
-if (!scanInputReception.dataset.manualEnabled) {
-  scanInputReception.addEventListener("click", function () {
-    this.removeAttribute("inputmode"); // permite tastatura
-    this.focus();
+      e.target.value = "";
+      fetchReceptionLocation(code);
+    }, 180);
   });
-  scanInputReception.dataset.manualEnabled = "1";
+
+  /* 🖐️ MANUAL MODE – DOAR LA CLICK */
+  scanInputReception.addEventListener("click", () => {
+    scanInputReception.removeAttribute("inputmode"); // permite tastatura
+    scanInputReception.focus();
+  });
+
+  /* 🔥 RELOCK DUPĂ BLUR */
+  scanInputReception.addEventListener("blur", () => {
+    scanInputReception.setAttribute("inputmode", "none");
+  });
 }
 
 </script>
