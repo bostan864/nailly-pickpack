@@ -837,20 +837,9 @@ body.wms-mobile #pendingTotal{
     <input
   id="scanInputReception"
   placeholder="Scanează EAN / SKU..."
-  inputmode="none"
+  readonly
   autocomplete="off"
-  style="
-    width: 100%;
-    font-size: 28px;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    margin-top: 20px;
-    margin-bottom: 20px;
-  "
 />
-
 
 
     <!-- Afișare rezultat scanare -->
@@ -1788,146 +1777,143 @@ window.addEventListener("load", () => {
 });
 </script>
 <script>
-/* ===================== RECEPTIE – SCANARE PRODUSE (STABIL) ===================== */
+/* ===================== RECEPȚIE – SCANARE PRODUSE (FINAL) ===================== */
 
 const SUPABASE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFmc2lneGVjbXJ5Z21ib2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwNDQ0MzgsImV4cCI6MjA3NTYyMDQzOH0.b9MXrgxADVZGvdFaKFQggD-vMd0ayZ9hX4_PmYOzrfE";
 
-let receptionScanTimer = null;
-
 const scanInputReception = document.getElementById("scanInputReception");
 const resultBox = document.getElementById("scanResultReception");
 
-/* ===== guard: dacă elementele nu există, ieșim (evită erori) ===== */
-if (scanInputReception && resultBox) {
+if (!scanInputReception || !resultBox) {
+  console.warn("Recepție: input sau resultBox lipsă");
+  return;
+}
 
-  /* normalizează inputul brut */
-  function normalizeScanInput(raw) {
-    if (!raw) return "";
-    let s = String(raw).trim();
-    s = s.replace(/^\]C1/, ""); // GS1 prefix
-    s = s.replace(/\D/g, "");   // doar cifre
-    return s;
-  }
+/* ===================== NORMALIZARE ===================== */
+function normalizeScanInput(raw) {
+  if (!raw) return "";
+  let s = String(raw).trim();
+  s = s.replace(/^\]C1/, ""); // GS1 prefix
+  s = s.replace(/\D/g, "");   // doar cifre
+  return s;
+}
 
-  /* ===================== UI: AFIȘARE LOCAȚIE ===================== */
-  function showReceptionLocation(location) {
-    resultBox.innerHTML = `
-      <div style="
-        background:#e8f7e9;
-        padding:22px;
-        border-radius:16px;
-        font-size:32px;
-        font-weight:900;
-        color:#1e7e34;
-        margin-top:14px;
-      ">
-        📍 ${location}
-      </div>
-    `;
-  }
+/* ===================== UI ===================== */
+function showReceptionLocation(location) {
+  resultBox.innerHTML = `
+    <div style="
+      background:#e8f7e9;
+      padding:22px;
+      border-radius:16px;
+      font-size:32px;
+      font-weight:900;
+      color:#1e7e34;
+      margin-top:14px;
+    ">
+      📍 ${location}
+    </div>
+  `;
+}
 
-  /* ===================== FETCH ===================== */
-  async function fetchLocationByCode(codeRaw) {
-    resultBox.innerHTML = "🔍 Caut locația...";
+/* ===================== FETCH LOCAȚIE ===================== */
+async function fetchLocationByCode(codeRaw) {
+  resultBox.innerHTML = "🔍 Caut locația...";
 
-    const headers = {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-    };
+  const headers = {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`,
+  };
 
-    try {
-      const variants = generateScanVariants(codeRaw);
+  try {
+    const variants = generateScanVariants(codeRaw);
 
-      for (const v of variants) {
-        /* 1) SKU exact */
-        let res = await fetch(
-          `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(v)}&select=location`,
-          { headers }
-        );
+    for (const v of variants) {
 
-        if (res.ok) {
-          const data = await res.json().catch(() => []);
-          if (data?.length && data[0]?.location && data[0].location !== "EMPTY") {
-            showReceptionLocation(data[0].location);
-            return;
-          }
-        }
-
-        /* 2) EAN exact */
-        res = await fetch(
-          `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(v)}&select=location`,
-          { headers }
-        );
-
-        if (res.ok) {
-          const data = await res.json().catch(() => []);
-          if (data?.length && data[0]?.location && data[0].location !== "EMPTY") {
-            showReceptionLocation(data[0].location);
-            return;
-          }
-        }
-
-        /* 3) fallback LIKE pentru coduri scurte (în special 11) – PostgREST folosește * */
-        if (v.length <= 11) {
-          res = await fetch(
-            `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${v}*&select=location`,
-            { headers }
-          );
-
-          if (res.ok) {
-            const data = await res.json().catch(() => []);
-            if (data?.length && data[0]?.location && data[0].location !== "EMPTY") {
-              showReceptionLocation(data[0].location);
-              return;
-            }
-          }
+      // 1️⃣ SKU exact
+      let res = await fetch(
+        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(v)}&select=location`,
+        { headers }
+      );
+      if (res.ok) {
+        const data = await res.json().catch(() => []);
+        if (data.length && data[0].location && data[0].location !== "EMPTY") {
+          showReceptionLocation(data[0].location);
+          return;
         }
       }
 
-      /* ❌ nimic găsit */
-      resultBox.innerHTML = `
-        <div style="color:#b00020;font-weight:900;font-size:22px">
-          ❌ Fără locație
-        </div>
-      `;
-    } catch (err) {
-      console.error("FETCH ERROR:", err);
-      resultBox.innerHTML = `
-        <div style="color:#b00020;font-weight:900">
-          ⚠️ Eroare la server
-        </div>
-      `;
+      // 2️⃣ EAN exact
+      res = await fetch(
+        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(v)}&select=location`,
+        { headers }
+      );
+      if (res.ok) {
+        const data = await res.json().catch(() => []);
+        if (data.length && data[0].location && data[0].location !== "EMPTY") {
+          showReceptionLocation(data[0].location);
+          return;
+        }
+      }
+
+      // 3️⃣ fallback LIKE (11 cifre)
+      if (v.length <= 11) {
+        res = await fetch(
+          `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${v}*&select=location`,
+          { headers }
+        );
+        if (res.ok) {
+          const data = await res.json().catch(() => []);
+          if (data.length && data[0].location && data[0].location !== "EMPTY") {
+            showReceptionLocation(data[0].location);
+            return;
+          }
+        }
+      }
     }
+
+    resultBox.innerHTML = `
+      <div style="color:#b00020;font-weight:900;font-size:22px">
+        ❌ Fără locație
+      </div>
+    `;
+  } catch (err) {
+    console.error("FETCH ERROR:", err);
+    resultBox.innerHTML = `
+      <div style="color:#b00020;font-weight:900">
+        ⚠️ Eroare la server
+      </div>
+    `;
   }
-
-  /* ===================== INPUT HANDLER ===================== */
-  scanInputReception.addEventListener("input", (e) => {
-    clearTimeout(receptionScanTimer);
-
-    receptionScanTimer = setTimeout(() => {
-      const raw = normalizeScanInput(e.target.value);
-      if (!raw) return;
-
-      e.target.value = "";
-      fetchLocationByCode(raw);
-    }, 180);
-  });
-
 }
-// 🔥 SUPORT SCANNER HARDWARE (ENTER)
+
+/* ===================== SCANNER HARDWARE (ENTER) ===================== */
+
+// mod scan implicit: NU tastatură, DAR scanner permis
+scanInputReception.setAttribute("readonly", "readonly");
+
+// permite tastare manuală doar la click
+scanInputReception.addEventListener("click", () => {
+  scanInputReception.removeAttribute("readonly");
+  scanInputReception.focus();
+});
+
+// scanner = ENTER
 scanInputReception.addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
 
   e.preventDefault();
 
-  const raw = normalizeScanInput(e.target.value);
+  const raw = normalizeScanInput(scanInputReception.value);
+  scanInputReception.value = "";
+
   if (!raw) return;
 
-  e.target.value = "";
   fetchLocationByCode(raw);
-});
 
+  // revenim în mod scan-only
+  scanInputReception.setAttribute("readonly", "readonly");
+});
 </script>
 
 
