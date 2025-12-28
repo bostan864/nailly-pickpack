@@ -6,7 +6,7 @@
 <script>
 window.APP_CONFIG = {
   SUPABASE_URL: "https://yvmqfsigxecmrygmbolg.supabase.co",
-  SUPABASE_ANON_KEY: "ANON_KEY_UL_TĂU_COMPLET_AICI"
+  SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFmc2lneGVjbXJ5Z21ib2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwNDQ0MzgsImV4cCI6MjA3NTYyMDQzOH0.b9MXrgxADVZGvdFaKFQggD-vMd0ayZ9hX4_PmYOzrfE"
 };
 </script>
 <meta charset="UTF-8" />
@@ -930,8 +930,7 @@ const DELETE_ORDER_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/delete-order-file-orderId-";
 const PRODUCT_LOCATION_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bXFmc2lneGVjbXJ5Z21ib2xnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwNDQ0MzgsImV4cCI6MjA3NTYyMDQzOH0.b9MXrgxADVZGvdFaKFQggD-vMd0ayZ9hX4_PmYOzrfE";
+
 
 let currentProducts = [];
 let currentOrderId = null;
@@ -1134,9 +1133,9 @@ if (skuList.length) {
 
   const locRes = await fetch(url, {
     headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-    }
+  apikey: window.APP_CONFIG.SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${window.APP_CONFIG.SUPABASE_ANON_KEY}`
+}
   });
 
   const locData = await locRes.json().catch(() => []);
@@ -1790,8 +1789,8 @@ async function fetchReceptionLocation(codeRaw) {
   scanResultReception.innerHTML = "🔍 Caut locația...";
 
   const headers = {
-    apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    apikey: window.APP_CONFIG.SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${window.APP_CONFIG.SUPABASE_ANON_KEY}`,
   };
 
   const variants = generateScanVariants(codeRaw);
