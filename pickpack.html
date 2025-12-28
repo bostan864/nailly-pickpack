@@ -1806,117 +1806,166 @@ window.addEventListener("load", async () => {
 </script>
 
 <script>
-/* ===================== RECEPTIE – SCANARE (CA LA COMENZI) ===================== */
+/* =====================
+   RECEPTIE – FINAL UX
+   ===================== */
 
 const scanInputReception = document.getElementById("scanInputReception");
 const scanResultReception = document.getElementById("scanResultReception");
 
 let receptionScanTimer = null;
+let lastScannedCode = null;
+let lastFoundRow = null;
 
-/* reuse helper global */
-function normalizeReceptionInput(raw) {
-  return normalizeScanInput(raw); // folosim helperul comun
-}
-
-function showReceptionLocation(location, skuOrEan) {
+/* =====================
+   UI RENDER
+   ===================== */
+function renderReceptionForm({ sku, ean = "", location = "", exists }) {
   scanResultReception.innerHTML = `
     <div style="
-      background:#e8f7e9;
+      background:#fff3cd;
       padding:22px;
       border-radius:16px;
-      font-size:32px;
-      font-weight:900;
-      color:#1e7e34;
+      font-size:20px;
+      font-weight:800;
       margin-top:14px;
     ">
-      📍 Locație curentă: ${location}
+      ⚠️ ${exists ? "Produs fără locație" : "Produs nou"}
     </div>
 
     <input
-      id="newLocationInput"
-      placeholder="Noua locație (ex: R3-R5-P2-C4)"
-      style="
-        width:100%;
-        margin-top:16px;
-        padding:18px;
-        font-size:22px;
-        border-radius:14px;
-        border:2px solid #ccc;
-      "
+      id="eanInput"
+      placeholder="EAN"
+      value="${ean}"
+      style="margin-top:14px;padding:18px;font-size:22px;border-radius:14px;border:2px solid #ccc;"
     />
 
-    <button
-      style="margin-top:14px"
-      onclick="updateLocation('${skuOrEan}')"
-    >
-      Salvează locația
+    <input
+      id="locationInput"
+      placeholder="Locație (ex: R3-R5-P2-C4)"
+      value="${location}"
+      style="margin-top:12px;padding:18px;font-size:22px;border-radius:14px;border:2px solid #ccc;"
+    />
+
+    <button style="margin-top:16px" onclick="saveReceptionData('${sku}')">
+      Salvează
     </button>
   `;
 }
 
-async function fetchReceptionLocation(codeRaw) {
-  scanResultReception.innerHTML = "🔍 Caut locația...";
+/* =====================
+   FETCH PRODUS
+   ===================== */
+async function fetchReceptionProduct(codeRaw) {
+  scanResultReception.innerHTML = "🔍 Caut produsul...";
+
+  lastScannedCode = codeRaw;
+  lastFoundRow = null;
 
   const variants = generateScanVariants(codeRaw);
 
   const { data, error } = await window.supabaseClient
     .from("product_locations")
-.select("location")
-.eq("account_id", window.currentAccountId)
-.in("sku", variants)
-.limit(1);
+    .select("*")
+    .eq("account_id", window.currentAccountId)
+    .or(
+      variants
+        .map(v => `sku.eq.${v},ean.eq.${v}`)
+        .join(",")
+    )
+    .limit(1);
 
   if (error) {
-    console.error("Reception location error:", error);
-    scanResultReception.innerHTML = `
-      <div style="color:#b00020;font-weight:900;font-size:22px">
-        ❌ Eroare acces locații
-      </div>
-    `;
+    console.error(error);
+    scanResultReception.innerHTML = "❌ Eroare acces DB";
     return;
   }
 
-  if (data?.[0]?.location && data[0].location !== "EMPTY") {
-    showReceptionLocation(data[0].location, codeRaw);
+  if (data.length) {
+    const row = data[0];
+    lastFoundRow = row;
+
+    if (row.location) {
+      // EXISTĂ + ARE LOCAȚIE
+      scanResultReception.innerHTML = `
+        <div style="
+          background:#e8f7e9;
+          padding:22px;
+          border-radius:16px;
+          font-size:32px;
+          font-weight:900;
+          color:#1e7e34;
+          margin-top:14px;
+        ">
+          📍 Locație: ${row.location}
+        </div>
+
+        <input
+          id="locationInput"
+          placeholder="Modifică locația"
+          style="margin-top:16px;padding:18px;font-size:22px;border-radius:14px;border:2px solid #ccc;"
+        />
+
+        <button style="margin-top:14px" onclick="saveReceptionData('${row.sku}')">
+          Actualizează locația
+        </button>
+      `;
+    } else {
+      // EXISTĂ DAR FĂRĂ LOCAȚIE
+      renderReceptionForm({
+        sku: row.sku,
+        ean: row.ean || "",
+        location: "",
+        exists: true
+      });
+    }
   } else {
-    scanResultReception.innerHTML = `
-      <div style="color:#b00020;font-weight:900;font-size:22px">
-        ❌ Fără locație
-      </div>
-    `;
+    // PRODUS NOU
+    renderReceptionForm({
+      sku: codeRaw,
+      ean: "",
+      location: "",
+      exists: false
+    });
   }
 }
 
-/* 🔥 IDENTIC CU handleScanAuto */
-scanInputReception.addEventListener("input", (e) => {
-  clearTimeout(receptionScanTimer);
+/* =====================
+   SAVE (UPDATE / INSERT)
+   ===================== */
+async function saveReceptionData(sku) {
+  const ean = document.getElementById("eanInput")?.value.trim() || null;
+  const location = document.getElementById("locationInput")?.value.trim();
 
-  receptionScanTimer = setTimeout(() => {
-    const code = normalizeReceptionInput(e.target.value);
-    if (!code) return;
-
-    e.target.value = "";
-    fetchReceptionLocation(code);
-  }, 200);
-});
-async function updateLocation(code) {
-  const newLoc = document.getElementById("newLocationInput").value.trim();
-  if (!newLoc) {
+  if (!location) {
     alert("Introdu o locație");
     return;
   }
 
-  const variants = generateScanVariants(code);
+  let result;
 
-  const { error } = await window.supabaseClient
-    .from("product_locations")
-.update({ location: newLoc })
-.eq("account_id", window.currentAccountId)
-.in("sku", variants);
+  if (lastFoundRow) {
+    // UPDATE
+    result = await window.supabaseClient
+      .from("product_locations")
+      .update({ ean, location })
+      .eq("id", lastFoundRow.id)
+      .eq("account_id", window.currentAccountId);
+  } else {
+    // INSERT
+    result = await window.supabaseClient
+      .from("product_locations")
+      .insert({
+        sku,
+        ean,
+        location,
+        account_id: window.currentAccountId
+      });
+  }
 
-  if (error) {
-    console.error(error);
-    alert("Eroare la salvare locație");
+  if (result.error) {
+    console.error(result.error);
+    alert("Eroare la salvare");
     return;
   }
 
@@ -1930,11 +1979,25 @@ async function updateLocation(code) {
       color:#1e7e34;
       margin-top:14px;
     ">
-      ✅ Locație actualizată: ${newLoc}
+      ✅ Salvat cu succes
     </div>
   `;
 }
 
+/* =====================
+   SCAN INPUT
+   ===================== */
+scanInputReception.addEventListener("input", (e) => {
+  clearTimeout(receptionScanTimer);
+
+  receptionScanTimer = setTimeout(() => {
+    const code = normalizeScanInput(e.target.value);
+    if (!code) return;
+
+    e.target.value = "";
+    fetchReceptionProduct(code);
+  }, 200);
+});
 </script>
 
 
