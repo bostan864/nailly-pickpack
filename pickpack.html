@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta charset="UTF-8" />
 <title>Nailly – Pick & Pack PRO</title>
 <style>
@@ -737,6 +738,14 @@ body.wms-mobile #pendingTotal{
 </head>
 
 <body class="wms-mobile">
+
+<script>
+window.APP_CONFIG = {
+  SUPABASE_URL: "https://xxxxx.supabase.co",
+  SUPABASE_ANON_KEY: "eyJhbGciOi..."
+};
+</script>
+
 <div id="loginOverlay" style="display:none">
   <div class="login-box">
     <h2>Autentificare</h2>
@@ -1697,87 +1706,52 @@ function showReceptionPanel() {
 setInterval(() => loadOrders({silent:true}), 30000);
 </script>
 <script>
-/* =====================================
-   LOGIN WMS NAILLY – STABIL & CONTROLAT
-   - Login o dată pe zi / device
-   - Fără flicker / fără layout jump
-   - Fără reload la pull-to-refresh
-   ===================================== */
-
-const LOGIN_USER = "nailly";
-const LOGIN_PASS = "0604";
-
-/* helper: data de azi (format stabil) */
-function getLoginDayKey() {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-/* arată/ascunde overlay fără să forțeze reflow aiurea */
 function hideOverlay(overlay) {
   if (!overlay) return;
   overlay.style.display = "none";
-  overlay.style.visibility = "hidden";
-  overlay.style.opacity = "0";
 }
 
 function showOverlay(overlay) {
   if (!overlay) return;
-  overlay.style.display = "flex";   // dacă overlay-ul tău e pe flex
-  overlay.style.visibility = "visible";
-  overlay.style.opacity = "1";
+  overlay.style.display = "flex";
 }
+</script>
 
-/* LOGIN */
-function doLogin() {
-  const uEl = document.getElementById("loginUser");
-  const pEl = document.getElementById("loginPass");
-  const overlay = document.getElementById("loginOverlay");
+<script>
+async function doLogin() {
+  const email = document.getElementById("loginUser").value.trim();
+  const password = document.getElementById("loginPass").value.trim();
   const err = document.getElementById("loginError");
 
-  const u = (uEl?.value || "").trim();
-  const p = (pEl?.value || "").trim();
+  const { error } = await window.supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
 
-  if (u === LOGIN_USER && p === LOGIN_PASS) {
-    localStorage.setItem("nailly_logged", "1");
-    localStorage.setItem("nailly_login_day", getLoginDayKey());
-
-    if (err) err.style.display = "none";
-    hideOverlay(overlay);
-  } else {
-    if (err) err.style.display = "block";
+  if (error) {
+    err.style.display = "block";
+    err.textContent = "Email sau parolă greșită";
+    return;
   }
-}
 
-/* LOGOUT (opțional) */
-function doLogout() {
-  localStorage.removeItem("nailly_logged");
-  localStorage.removeItem("nailly_login_day");
-  location.reload();
+  err.style.display = "none";
+  hideOverlay(document.getElementById("loginOverlay"));
 }
+</script>
 
-/* VERIFICARE LOGIN – rulează DUPĂ ce UI e încărcat (fără să-ți taie logo-ul) */
-window.addEventListener("load", () => {
+<script>
+window.addEventListener("load", async () => {
   const overlay = document.getElementById("loginOverlay");
-  if (!overlay) return;
+  const { data } = await window.supabaseClient.auth.getSession();
 
-  const logged = localStorage.getItem("nailly_logged") === "1";
-  const loginDay = localStorage.getItem("nailly_login_day");
-  const today = getLoginDayKey();
-
-  if (logged && loginDay === today) {
+  if (data.session) {
     hideOverlay(overlay);
   } else {
-    // device nou / zi nouă => cere login
-    localStorage.removeItem("nailly_logged");
-    localStorage.removeItem("nailly_login_day");
     showOverlay(overlay);
   }
 });
 </script>
+
 <script>
 /* ===================== RECEPTIE – SCANARE (CA LA COMENZI) ===================== */
 
