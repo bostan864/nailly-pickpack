@@ -936,6 +936,7 @@ let currentOrderId = null;
 let allOrders = [];
 let timerInterval = null;
 let orderStartTime = null;
+let currentAccountId = null;
 
 /* ===================== HELPER: DATE KEY ====================== */
 function getTodayKey() {
@@ -1133,6 +1134,7 @@ if (skuList.length) {
   const { data, error } = await window.supabaseClient
   .from("product_locations")
   .select("sku, location")
+  .eq("account_id", window.currentAccountId)
   .in("sku", cleanSkus);
 
 if (error) {
@@ -1729,10 +1731,47 @@ function showOverlay(overlay) {
 </script>
 
 <script>
+/* =====================
+   ACCOUNT CONTEXT
+   ===================== */
+window.currentAccountId = null;
+
+/* =====================
+   LOAD CURRENT ACCOUNT
+   ===================== */
+async function loadCurrentAccount() {
+  const { data: { user }, error: userError } =
+    await window.supabaseClient.auth.getUser();
+
+  if (userError || !user) {
+    console.warn("Nu există user logat");
+    return;
+  }
+
+  const { data, error } = await window.supabaseClient
+    .from("user_accounts")
+    .select("account_id")
+    .eq("user_id", user.id)
+    .single();
+
+  if (error) {
+    console.error("Eroare user_accounts:", error);
+    return;
+  }
+
+  window.currentAccountId = data.account_id;
+  console.log("ACCOUNT ACTIV:", window.currentAccountId);
+}
+
+/* =====================
+   LOGIN
+   ===================== */
 async function doLogin() {
   const email = document.getElementById("loginUser").value.trim();
   const password = document.getElementById("loginPass").value.trim();
   const err = document.getElementById("loginError");
+
+  err.style.display = "none";
 
   const { error } = await window.supabaseClient.auth.signInWithPassword({
     email,
@@ -1740,20 +1779,25 @@ async function doLogin() {
   });
 
   if (error) {
-    err.style.display = "block";
     err.textContent = "Email sau parolă greșită";
+    err.style.display = "block";
     return;
   }
 
-  err.style.display = "none";
+  await loadCurrentAccount();
   hideOverlay(document.getElementById("loginOverlay"));
 }
 
+/* =====================
+   AUTO LOGIN ON REFRESH
+   ===================== */
 window.addEventListener("load", async () => {
   const overlay = document.getElementById("loginOverlay");
+
   const { data } = await window.supabaseClient.auth.getSession();
 
   if (data.session) {
+    await loadCurrentAccount();
     hideOverlay(overlay);
   } else {
     showOverlay(overlay);
@@ -1817,9 +1861,10 @@ async function fetchReceptionLocation(codeRaw) {
 
   const { data, error } = await window.supabaseClient
     .from("product_locations")
-    .select("location")
-    .in("sku", variants)
-    .limit(1);
+.select("location")
+.eq("account_id", window.currentAccountId)
+.in("sku", variants)
+.limit(1);
 
   if (error) {
     console.error("Reception location error:", error);
@@ -1865,8 +1910,9 @@ async function updateLocation(code) {
 
   const { error } = await window.supabaseClient
     .from("product_locations")
-    .update({ location: newLoc })
-    .in("sku", variants);
+.update({ location: newLoc })
+.eq("account_id", window.currentAccountId)
+.in("sku", variants);
 
   if (error) {
     console.error(error);
