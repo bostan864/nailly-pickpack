@@ -13,32 +13,33 @@ window.APP_CONFIG = {
 <title>Nailly – Pick & Pack PRO</title>
 <style>
   :root{
-    --brand:#d81b60;
-    --ok:#28a745;
-    --blue:#2f80ed;
-    --text:#222;
-    --muted:#666;
-    --bg:#f5f5f7;
+  --brand:#111111;
+  --ok:#2e7d32;
+  --blue:#37474f;
+  --text:#111111;
+  --muted:#555555;
+  --bg:#f4f4f4;
 
-    /* control central pentru bottom nav */
-    --bottomNavH: 140px;      /* înălțime bară */
-    --finishGap: 9px;        /* dacă vrei spațiu extra între finish și nav */
-}
-#productsTable {
-  margin-bottom: calc(var(--bottomNavH) + 100px);
+  /* control central pentru bottom nav */
+  --bottomNavH: 140px;
+  --finishGap: 10px;
 }
 
   *{ box-sizing:border-box; }
 
   body{
-    font-family: Arial, sans-serif;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 12px 10px calc(var(--bottomNavH) + 38px); /* spațiu bottom nav + rezervă */
-    font-size: 18px;
-    color: var(--text);
-    background: var(--bg);
-  }
+  font-family: Arial, sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  font-size: 18px;
+  color: var(--text);
+  background: var(--bg);
+
+  /* 🔥 DOAR AICI se rezolvă scroll-ul */
+  padding-bottom: calc(var(--bottomNavH) + 140px);
+}
+
+
   /* APP HEADER */
   .app-header{
   display:flex;
@@ -54,11 +55,11 @@ window.APP_CONFIG = {
     gap:10px;
   }
   .logo-header img{
-    max-width: 120px;
-    width: 42%;
-    height:auto;
-    border-radius: 18px;
-  }
+  max-width: 180px;   /* 🔥 mai mare */
+  width: 60%;
+  height: auto;
+  border-radius: 12px;
+}
 
   .app-header-title{
     text-align:right;
@@ -740,12 +741,10 @@ body.wms-mobile #pendingTotal{
   font-weight: bold;
 }
 
-
 </style>
 </head>
 
 <body class="wms-mobile">
-
 <script>
 window.supabaseClient = supabase.createClient(
   window.APP_CONFIG.SUPABASE_URL,
@@ -771,7 +770,7 @@ window.supabaseClient = supabase.createClient(
   <!-- APP HEADER -->
   <div class="app-header">
     <div class="logo-header">
-      <img src="https://c.cdnmp.net/957918846/content/F%C4%83r%C4%83%20titlu%20%28192%20x%20192%20px%29%20%284%29.png" alt="Nailly Logo">
+      <img src="https://c.cdnmp.net/957918846/content/WMS.png">
     </div>
     <div class="app-header-title">
       <strong>Nailly – Pick &amp; Pack PRO</strong>
@@ -1131,22 +1130,23 @@ if (skuList.length) {
 
   console.log("[DEBUG] URL locații produse:", url); // ajută la debugging
 
-  const locRes = await fetch(url, {
-    headers: {
-  apikey: window.APP_CONFIG.SUPABASE_ANON_KEY,
-  Authorization: `Bearer ${window.APP_CONFIG.SUPABASE_ANON_KEY}`
-}
-  });
+  const { data, error } = await window.supabaseClient
+  .from("product_locations")
+  .select("sku, location")
+  .in("sku", cleanSkus);
 
-  const locData = await locRes.json().catch(() => []);
-
-  locData.forEach(row => {
-    if (row.sku && row.location && row.location !== "EMPTY") {
-      locationMap.set(String(row.sku), row.location);
-    }
-  });
+if (error) {
+  console.error("Supabase error:", error);
+  return;
 }
 
+data.forEach(row => {
+  if (row.location && row.location !== "EMPTY") {
+    locationMap.set(row.sku, row.location);
+  }
+});
+
+}
 
 
   /* ===================== 🔥 3. CONSTRUIM PRODUSELE ===================== */
@@ -1217,6 +1217,7 @@ function renderTable() {
 
   currentProducts.forEach((p, index) => {
     const tr = document.createElement("tr");
+
     if (index === nextIndex) tr.classList.add("next-row");
     if (p.scanned === p.qty) tr.classList.add("ok");
 
@@ -1228,6 +1229,7 @@ function renderTable() {
       <td>${p.scanned}</td>
       <td>${p.qty - p.scanned}</td>
     `;
+
     tbody.appendChild(tr);
   });
 
@@ -1241,27 +1243,30 @@ function renderTable() {
 
   updateFinishButtonState();
 
-  /* 🔥 SCROLL AUTOMAT LA URMĂTORUL PRODUS */
+  /* 🔥 SCROLL AUTOMAT – SAFE & CONTROLAT */
   setTimeout(() => {
     const nextRow = document.querySelector("#productsTable .next-row");
     if (!nextRow) return;
 
     const rowRect = nextRow.getBoundingClientRect();
-    const absoluteTop = rowRect.top + window.pageYOffset;
+    const viewportHeight = window.innerHeight;
 
-    window.scrollTo({
-      top: absoluteTop - 120, // offset ca să fie vizibil clar
-      behavior: "smooth"
-    });
-  }, 120); // delay pentru a permite DOM-ul să se randeze complet
-}
-function updateFinishButtonState() {
-  const allScanned = currentProducts.length > 0 &&
-    currentProducts.every(p => p.scanned >= p.qty);
+    const bottomNavH =
+      parseInt(
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--bottomNavH")
+      ) || 140;
 
-  const btn = document.getElementById("finishBtn");
-  if (allScanned) btn.classList.add("active");
-  else btn.classList.remove("active");
+    const bottomSafeZone = viewportHeight - bottomNavH - 40;
+
+    // scroll DOAR dacă rândul nu e complet vizibil
+    if (rowRect.top < 80 || rowRect.bottom > bottomSafeZone) {
+      nextRow.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }
+  }, 120);
 }
 /* ===================== SCAN CONTEXT RESET ====================== */
 function resetScanContext() {
@@ -1769,7 +1774,7 @@ function normalizeReceptionInput(raw) {
   return normalizeScanInput(raw); // folosim helperul comun
 }
 
-function showReceptionLocation(location) {
+function showReceptionLocation(location, skuOrEan) {
   scanResultReception.innerHTML = `
     <div style="
       background:#e8f7e9;
@@ -1780,63 +1785,61 @@ function showReceptionLocation(location) {
       color:#1e7e34;
       margin-top:14px;
     ">
-      📍 ${location}
+      📍 Locație curentă: ${location}
     </div>
+
+    <input
+      id="newLocationInput"
+      placeholder="Noua locație (ex: R3-R5-P2-C4)"
+      style="
+        width:100%;
+        margin-top:16px;
+        padding:18px;
+        font-size:22px;
+        border-radius:14px;
+        border:2px solid #ccc;
+      "
+    />
+
+    <button
+      style="margin-top:14px"
+      onclick="updateLocation('${skuOrEan}')"
+    >
+      Salvează locația
+    </button>
   `;
 }
 
 async function fetchReceptionLocation(codeRaw) {
   scanResultReception.innerHTML = "🔍 Caut locația...";
 
-  const headers = {
-    apikey: window.APP_CONFIG.SUPABASE_ANON_KEY,
-  Authorization: `Bearer ${window.APP_CONFIG.SUPABASE_ANON_KEY}`,
-  };
-
   const variants = generateScanVariants(codeRaw);
 
-  for (const v of variants) {
-    // SKU
-    let res = await fetch(
-      `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.${encodeURIComponent(v)}&select=location`,
-      { headers }
-    );
-    let data = await res.json().catch(() => []);
-    if (data[0]?.location && data[0].location !== "EMPTY") {
-      showReceptionLocation(data[0].location);
-      return;
-    }
+  const { data, error } = await window.supabaseClient
+    .from("product_locations")
+    .select("location")
+    .in("sku", variants)
+    .limit(1);
 
-    // EAN
-    res = await fetch(
-      `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=eq.${encodeURIComponent(v)}&select=location`,
-      { headers }
-    );
-    data = await res.json().catch(() => []);
-    if (data[0]?.location && data[0].location !== "EMPTY") {
-      showReceptionLocation(data[0].location);
-      return;
-    }
-
-    // fallback LIKE
-    if (v.length <= 11) {
-      res = await fetch(
-        `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?ean=like.*${v}*&select=location`,
-        { headers }
-      );
-      data = await res.json().catch(() => []);
-      if (data[0]?.location && data[0].location !== "EMPTY") {
-        showReceptionLocation(data[0].location);
-        return;
-      }
-    }
+  if (error) {
+    console.error("Reception location error:", error);
+    scanResultReception.innerHTML = `
+      <div style="color:#b00020;font-weight:900;font-size:22px">
+        ❌ Eroare acces locații
+      </div>
+    `;
+    return;
   }
 
-  scanResultReception.innerHTML = `
-    <div style="color:#b00020;font-weight:900;font-size:22px">
-      ❌ Fără locație
-    </div>
-  `;
+  if (data?.[0]?.location && data[0].location !== "EMPTY") {
+    showReceptionLocation(data[0].location, codeRaw);
+  } else {
+    scanResultReception.innerHTML = `
+      <div style="color:#b00020;font-weight:900;font-size:22px">
+        ❌ Fără locație
+      </div>
+    `;
+  }
 }
 
 /* 🔥 IDENTIC CU handleScanAuto */
@@ -1851,6 +1854,41 @@ scanInputReception.addEventListener("input", (e) => {
     fetchReceptionLocation(code);
   }, 200);
 });
+async function updateLocation(code) {
+  const newLoc = document.getElementById("newLocationInput").value.trim();
+  if (!newLoc) {
+    alert("Introdu o locație");
+    return;
+  }
+
+  const variants = generateScanVariants(code);
+
+  const { error } = await window.supabaseClient
+    .from("product_locations")
+    .update({ location: newLoc })
+    .in("sku", variants);
+
+  if (error) {
+    console.error(error);
+    alert("Eroare la salvare locație");
+    return;
+  }
+
+  scanResultReception.innerHTML = `
+    <div style="
+      background:#e8f7e9;
+      padding:22px;
+      border-radius:16px;
+      font-size:32px;
+      font-weight:900;
+      color:#1e7e34;
+      margin-top:14px;
+    ">
+      ✅ Locație actualizată: ${newLoc}
+    </div>
+  `;
+}
+
 </script>
 
 
