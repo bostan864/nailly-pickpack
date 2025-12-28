@@ -2,6 +2,13 @@
 <html lang="ro">
 <head>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+window.APP_CONFIG = {
+  SUPABASE_URL: "https://yvmqfsigxecmrygmbolg.supabase.co",
+  SUPABASE_ANON_KEY: "ANON_KEY_UL_TĂU_COMPLET_AICI"
+};
+</script>
 <meta charset="UTF-8" />
 <title>Nailly – Pick & Pack PRO</title>
 <style>
@@ -1737,9 +1744,7 @@ async function doLogin() {
   err.style.display = "none";
   hideOverlay(document.getElementById("loginOverlay"));
 }
-</script>
 
-<script>
 window.addEventListener("load", async () => {
   const overlay = document.getElementById("loginOverlay");
   const { data } = await window.supabaseClient.auth.getSession();
