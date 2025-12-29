@@ -1075,13 +1075,29 @@ document.getElementById("pendingTotal").textContent = `Total: ${formattedTotal}`
 }
 
 /* ===================== LOAD ORDERS ====================== */
-async function loadOrders({silent=false} = {}) {
+async function loadOrders({ silent = false } = {}) {
   try {
-    const res = await fetch(ORDER_LIST_URL, { cache: "no-store" });
+    const { data: { session } } =
+      await window.supabaseClient.auth.getSession();
+
+    if (!session) {
+      console.warn("Nu există sesiune activă");
+      return;
+    }
+
+    const res = await fetch(ORDER_LIST_URL, {
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
     const orders = await res.json();
-console.log("Comenzi încărcate:", orders);
+    console.log("Comenzi încărcate:", orders);
+
     allOrders = Array.isArray(orders) ? orders : [];
     updateStats();
+
     if (document.getElementById("ordersPanel").classList.contains("open")) {
       renderOrdersPanel();
     }
@@ -1090,68 +1106,80 @@ console.log("Comenzi încărcate:", orders);
     if (!silent) alert("Eroare la încărcarea comenzilor!");
   }
 }
-
+/* ===================== LOAD SINGLE ORDER ====================== */
 async function loadOrderById(orderId) {
   if (!orderId) return;
 
   const exists = allOrders.some(o => String(o.orderId) === String(orderId));
   if (!exists) {
     feedbackError();
-    alert("Comanda nu există în lista de pregătit. Verifică numărul.");
+    alert("Comanda nu există în lista de pregătit.");
     return;
   }
 
   currentOrderId = String(orderId);
 
+  /* 🔐 sesiune */
+  const { data: { session } } =
+    await window.supabaseClient.auth.getSession();
+
+  if (!session) {
+    alert("Sesiune invalidă. Reautentifică-te.");
+    return;
+  }
+
+  /* 📦 fetch comandă */
   const res = await fetch(
     `${ORDER_GET_URL}?orderId=${encodeURIComponent(currentOrderId)}`,
-    { cache: "no-store" }
+    {
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    }
   );
+
+  if (!res.ok) {
+    alert("Eroare la încărcarea comenzii");
+    return;
+  }
+
   const data = await res.json();
 
-  const products = (data.line_items || []).filter(p => p.item_type === "product");
+  const products = (data.line_items || [])
+    .filter(p => p.item_type === "product");
 
-   /* ===================== 🔥 1. COLECTĂM TOATE SKU-URILE ===================== */
-const skuList = [
-  ...new Set(
-    products
-      .map(p => String(p.product_sku || "").replace(/^0+/, ""))
-      .filter(Boolean)
-  )
-];
+  /* ===================== 🔥 1. SKU LIST ===================== */
+  const skuList = [
+    ...new Set(
+      products
+        .map(p => String(p.product_sku || "").replace(/^0+/, ""))
+        .filter(Boolean)
+    )
+  ];
 
-/* ===================== 🔥 2. UN SINGUR FETCH LA SUPABASE ===================== */
-let locationMap = new Map();
+  /* ===================== 🔥 2. LOCAȚII DIN DB ===================== */
+  let locationMap = new Map();
 
-if (skuList.length) {
-  // Normalizare SKU (fără 0 la început)
-  const cleanSkus = skuList.map(sku => String(sku).replace(/^0+/, ""));
+  if (skuList.length) {
+    const { data: locations, error } = await window.supabaseClient
+      .from("product_locations")
+      .select("sku, location")
+      .eq("account_id", window.currentAccountId)
+      .in("sku", skuList);
 
-  const url = `https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=in.(${cleanSkus.map(sku => `"${encodeURIComponent(sku)}"`).join(",")})`;
-
-  console.log("[DEBUG] URL locații produse:", url); // ajută la debugging
-
-  const { data, error } = await window.supabaseClient
-  .from("product_locations")
-  .select("sku, location")
-  .eq("account_id", window.currentAccountId)
-  .in("sku", cleanSkus);
-
-if (error) {
-  console.error("Supabase error:", error);
-  return;
-}
-
-data.forEach(row => {
-  if (row.location && row.location !== "EMPTY") {
-    locationMap.set(row.sku, row.location);
+    if (error) {
+      console.error("Eroare locații:", error);
+    } else {
+      locations.forEach(row => {
+        if (row.location && row.location !== "EMPTY") {
+          locationMap.set(row.sku, row.location);
+        }
+      });
+    }
   }
-});
 
-}
-
-
-  /* ===================== 🔥 3. CONSTRUIM PRODUSELE ===================== */
+  /* ===================== 🔥 3. CONSTRUIRE PRODUSE ===================== */
   currentProducts = products.map(p => {
     const originalSku = p.product_sku || "";
     const lookupSku = String(originalSku).replace(/^0+/, "");
@@ -1175,8 +1203,12 @@ data.forEach(row => {
   });
 
   /* ===================== UI ===================== */
-  document.getElementById("orderTitle").textContent = "Comanda #" + currentOrderId;
-  document.getElementById("orderCode").textContent = "ID comandă: " + currentOrderId;
+  document.getElementById("orderTitle").textContent =
+    "Comanda #" + currentOrderId;
+
+  document.getElementById("orderCode").textContent =
+    "ID comandă: " + currentOrderId;
+
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
@@ -1184,30 +1216,12 @@ data.forEach(row => {
   scanInput.value = "";
   scanInput.focus();
 
-  scanInput.removeEventListener("input", handleScanAuto);
-  scanInput.addEventListener("input", handleScanAuto);
-
-  setTimeout(() => {
-    scanInput.setAttribute("inputmode", "none");
-    scanInput.removeAttribute("readonly");
-  }, 50);
-
-  if (!scanInput.dataset.manualEnabled) {
-    scanInput.addEventListener("click", function () {
-      this.removeAttribute("readonly");
-      this.removeAttribute("inputmode");
-      this.focus();
-    });
-    scanInput.dataset.manualEnabled = "1";
-  }
-
-  const finishBtn = document.getElementById("finishBtn");
-  finishBtn.style.display = "block";
-  finishBtn.classList.remove("active");
-
   startTimer();
   renderTable();
+
+  console.log("✅ Comandă încărcată:", currentOrderId);
 }
+
 
 /* ===================== TABLE ====================== */
 function renderTable() {
