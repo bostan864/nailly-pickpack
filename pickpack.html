@@ -1209,10 +1209,11 @@ data.forEach(row => {
   renderTable();
 }
 
-
 /* ===================== TABLE ====================== */
 function renderTable() {
   const tbody = document.querySelector("#productsTable tbody");
+  if (!tbody) return;
+
   tbody.innerHTML = "";
 
   const nextIndex = currentProducts.findIndex(p => p.scanned < p.qty);
@@ -1221,7 +1222,7 @@ function renderTable() {
     const tr = document.createElement("tr");
 
     if (index === nextIndex) tr.classList.add("next-row");
-    if (p.scanned === p.qty) tr.classList.add("ok");
+    if (p.scanned >= p.qty) tr.classList.add("ok");
 
     tr.innerHTML = `
       <td>${p.sku ?? ""}</td>
@@ -1235,41 +1236,33 @@ function renderTable() {
     tbody.appendChild(tr);
   });
 
-  const totalQty = currentProducts.reduce((s, p) => s + p.qty, 0);
-  const totalScanned = currentProducts.reduce((s, p) => s + p.scanned, 0);
-  const pct = totalQty > 0 ? Math.round((totalScanned / totalQty) * 100) : 0;
+  // 🔒 FINISH BUTTON
+  const finishBtn = document.getElementById("finishBtn");
+  if (finishBtn) {
+    const allDone =
+      currentProducts.length > 0 &&
+      currentProducts.every(p => Number(p.scanned) >= Number(p.qty));
 
-  document.getElementById("progressInner").style.width = pct + "%";
-  document.getElementById("progressText").textContent =
-    `Progres: ${totalScanned}/${totalQty} (${pct}%)`;
+    finishBtn.classList.toggle("active", allDone);
+  }
 
-  updateFinishButtonState();
-
-  /* 🔥 SCROLL AUTOMAT – SAFE & CONTROLAT */
+  // 🔥 AUTOSCROLL – AICI TREBUIE SĂ FIE
   setTimeout(() => {
     const nextRow = document.querySelector("#productsTable .next-row");
     if (!nextRow) return;
 
-    const rowRect = nextRow.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
+    const y =
+      nextRow.getBoundingClientRect().top +
+      window.pageYOffset -
+      180;
 
-    const bottomNavH =
-      parseInt(
-        getComputedStyle(document.documentElement)
-          .getPropertyValue("--bottomNavH")
-      ) || 140;
-
-    const bottomSafeZone = viewportHeight - bottomNavH - 40;
-
-    // scroll DOAR dacă rândul nu e complet vizibil
-    if (rowRect.top < 80 || rowRect.bottom > bottomSafeZone) {
-      nextRow.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-    }
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
   }, 120);
 }
+
 /* ===================== SCAN CONTEXT RESET ====================== */
 function resetScanContext() {
   const scanInput = document.getElementById("scanInput");
@@ -1278,12 +1271,10 @@ function resetScanContext() {
   scanInput.value = "";
   scanInput.disabled = false;
 
-  // reset complet focus + listener
   scanInput.blur();
   scanInput.removeEventListener("input", handleScanAuto);
   scanInput.addEventListener("input", handleScanAuto);
 
-  // rearmare scanner hardware
   setTimeout(() => {
     scanInput.setAttribute("inputmode", "none");
     scanInput.removeAttribute("readonly");
@@ -1298,12 +1289,12 @@ function normalizeVariants(v) {
   const s = String(v).trim();
   const variants = new Set();
 
-  variants.add(s);                     // original
-  variants.add(s.replace(/^0+/, ""));  // fără 0 în față
+  variants.add(s);
+  variants.add(s.replace(/^0+/, ""));
 
   if (s.length > 1) {
-    variants.add(s.slice(0, -1));      // fără ultima cifră
-    variants.add(s.replace(/^0+/, "").slice(0, -1)); // fără 0 + fără ultima
+    variants.add(s.slice(0, -1));
+    variants.add(s.replace(/^0+/, "").slice(0, -1));
   }
 
   return [...variants].filter(Boolean);
@@ -1321,7 +1312,6 @@ function handleScan(event) {
     const skuVariants = generateScanVariants(p.sku);
     const eanVariants = generateScanVariants(p.ean);
 
-
     return scannedVariants.some(v =>
       skuVariants.includes(v) || eanVariants.includes(v)
     );
@@ -1334,13 +1324,18 @@ function handleScan(event) {
   }
 
   if (found.scanned < found.qty) {
-    found.scanned++;
-    feedbackSuccess();
-    renderTable();
-  } else {
-    feedbackError();
-    flashError();
-  }
+  found.scanned++;
+
+  // 🔥 MEMORĂM PRODUSUL SCANAT
+  lastScannedIndex = currentProducts.indexOf(found);
+
+  feedbackSuccess();
+  renderTable();
+  updateFinishButtonState(); // 🔥 ASTA LIPSEA
+} else {
+  feedbackError();
+  flashError();
+}
 }
 
 function flashError() {
@@ -1348,6 +1343,7 @@ function flashError() {
   input.classList.add("errorInput");
   setTimeout(() => input.classList.remove("errorInput"), 280);
 }
+
 let scanTimer = null;
 
 function handleScanAuto(e) {
@@ -1359,7 +1355,7 @@ function handleScanAuto(e) {
 
     e.target.value = "";
     handleScan({ key: "Enter", target: { value: code } });
-  }, 200); // așteaptă puțin după ce ai scris
+  }, 200);
 }
 
 /* ===================== CAMERA SCAN ====================== */
@@ -1806,56 +1802,82 @@ window.addEventListener("load", async () => {
 </script>
 
 <script>
-/* ===================== RECEPȚIE – SKU + EAN (FINAL) ===================== */
+/* ===================== RECEPȚIE – SKU + EAN (LIKE FIX) ===================== */
 
 const scanInputReception = document.getElementById("scanInputReception");
 const scanResultReception = document.getElementById("scanResultReception");
 
 let receptionScanTimer = null;
-let lastScannedCode = null;
+
+/* ===================== UTIL ===================== */
+function normalize(code) {
+  if (!code) return "";
+  return String(code)
+    .replace(/^\]C1/, "")
+    .replace(/\D/g, "")
+    .replace(/^0+/, "");
+}
 
 /* ===================== FETCH LOCAȚIE ===================== */
-async function fetchReceptionLocation(codeRaw) {
-  lastScannedCode = codeRaw;
+async function fetchReceptionLocation(rawCode) {
   scanResultReception.innerHTML = "🔍 Caut produsul...";
 
-  const variants = generateScanVariants(codeRaw);
+  const code = normalizeScanInput(rawCode);
+  if (!code) return renderNewProductForm("");
 
-  const { data, error } = await window.supabaseClient
+  // normalizare scanner → 11 cifre
+  const eanNorm = code.replace(/^0+/, "").slice(-11);
+
+  /* 1️⃣ SKU */
+  let { data } = await window.supabaseClient
     .from("product_locations")
-    .select("id, sku, ean, location")
+    .select("id, sku, ean, ean_norm, location")
     .eq("account_id", window.currentAccountId)
-    .or(
-      `sku.in.(${variants.join(",")}),ean.in.(${variants.join(",")})`
-    )
+    .eq("sku", code)
     .limit(1);
 
-  if (error) {
-    console.error(error);
-    scanResultReception.innerHTML = "❌ Eroare acces locații";
-    return;
+  if (data?.length) return renderExistingProduct(data[0]);
+
+  /* 2️⃣ EAN complet */
+  ({ data } = await window.supabaseClient
+    .from("product_locations")
+    .select("id, sku, ean, ean_norm, location")
+    .eq("account_id", window.currentAccountId)
+    .eq("ean", code)
+    .limit(1));
+
+  if (data?.length) return renderExistingProduct(data[0]);
+
+  /* 3️⃣ EAN normalizat (11 cifre) */
+  if (eanNorm.length === 11) {
+    ({ data } = await window.supabaseClient
+      .from("product_locations")
+      .select("id, sku, ean, ean_norm, location")
+      .eq("account_id", window.currentAccountId)
+      .eq("ean_norm", eanNorm)
+      .limit(1));
+
+    if (data?.length) return renderExistingProduct(data[0]);
   }
 
-  // 🔴 produs inexistent sau fără locație
-  if (!data.length || !data[0].location) {
-    renderNewProductForm(codeRaw);
-    return;
-  }
-
-  // 🟢 produs existent
-  renderExistingProduct(data[0]);
+  /* ❌ produs nou */
+  renderNewProductForm(code);
 }
 
 /* ===================== UI: PRODUS EXISTENT ===================== */
 function renderExistingProduct(row) {
   scanResultReception.innerHTML = `
-    <div style="background:#e8f7e9;padding:22px;border-radius:16px;font-size:26px;font-weight:900;">
+    <div style="background:#e8f7e9;padding:22px;border-radius:16px;
+      font-size:26px;font-weight:900;">
       📍 Locație curentă: ${row.location}
     </div>
 
-    <input id="newLocationInput" placeholder="Noua locație" style="margin-top:16px;width:100%;padding:18px;font-size:22px;" />
+    <input id="newLocationInput"
+      placeholder="Noua locație"
+      style="margin-top:16px;width:100%;padding:18px;font-size:22px;" />
 
-    <button style="margin-top:14px" onclick="updateLocation(${row.id})">
+    <button style="margin-top:14px"
+      onclick="updateLocation(${row.id})">
       Actualizează locația
     </button>
   `;
@@ -1864,15 +1886,26 @@ function renderExistingProduct(row) {
 /* ===================== UI: PRODUS NOU ===================== */
 function renderNewProductForm(code) {
   scanResultReception.innerHTML = `
-    <div style="background:#fff3cd;padding:22px;border-radius:16px;font-size:22px;font-weight:800;">
+    <div style="background:#fff3cd;padding:22px;border-radius:16px;
+      font-size:22px;font-weight:800;">
       ⚠️ Produs nou / fără locație
     </div>
 
-    <input id="skuInput" placeholder="SKU" value="${code}" style="margin-top:14px;width:100%;padding:18px;font-size:22px;" />
-    <input id="eanInput" placeholder="EAN" style="margin-top:12px;width:100%;padding:18px;font-size:22px;" />
-    <input id="locationInput" placeholder="Locație (ex: R2-R4-P1)" style="margin-top:12px;width:100%;padding:18px;font-size:22px;" />
+    <input id="skuInput"
+      placeholder="SKU"
+      value="${code}"
+      style="margin-top:14px;width:100%;padding:18px;font-size:22px;" />
 
-    <button style="margin-top:16px" onclick="createProductLocation()">
+    <input id="eanInput"
+      placeholder="EAN (opțional)"
+      style="margin-top:12px;width:100%;padding:18px;font-size:22px;" />
+
+    <input id="locationInput"
+      placeholder="Locație (ex: R2-R4-P1)"
+      style="margin-top:12px;width:100%;padding:18px;font-size:22px;" />
+
+    <button style="margin-top:16px"
+      onclick="createProductLocation()">
       Salvează
     </button>
   `;
@@ -1903,7 +1936,10 @@ async function createProductLocation() {
   const ean = document.getElementById("eanInput").value.trim();
   const loc = document.getElementById("locationInput").value.trim();
 
-  if (!sku || !loc) return alert("SKU și locația sunt obligatorii");
+  if (!sku || !loc) {
+    alert("SKU și locația sunt obligatorii");
+    return;
+  }
 
   const { error } = await window.supabaseClient
     .from("product_locations")
@@ -1923,21 +1959,20 @@ async function createProductLocation() {
   scanResultReception.innerHTML = "✅ Produs salvat";
 }
 
-/* ===================== SCAN INPUT ===================== */
+/* ===================== INPUT ===================== */
 scanInputReception.addEventListener("input", (e) => {
   clearTimeout(receptionScanTimer);
 
   receptionScanTimer = setTimeout(() => {
-    const code = normalizeScanInput(e.target.value);
-    if (!code) return;
+    const raw = e.target.value;
+    if (!raw) return;
 
     e.target.value = "";
-    fetchReceptionLocation(code);
+    fetchReceptionLocation(raw);
   }, 200);
 });
+
 </script>
 
 </body>
 </html>
-
-
