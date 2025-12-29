@@ -1432,16 +1432,51 @@ async function finalizeOrder() {
     }),
   });
 
-  const result = await res.json();
-
   if (!res.ok) {
-    console.error(result);
     alert("Eroare la finalizare");
     return;
   }
 
   alert("Comanda a fost finalizată");
-  location.reload();
+
+  await resetAfterOrderAction();
+  closeOrdersPanel();
+  renderOrdersPanel();
+}
+/* ===================== CANCEL ORDER ====================== */
+async function cancelOrder(orderId, event) {
+  event.stopPropagation();
+
+  if (!confirm(`Anulezi comanda #${orderId}?`)) return;
+
+  const { data: { session } } =
+    await window.supabaseClient.auth.getSession();
+
+  if (!session) {
+    alert("Sesiune invalidă");
+    return;
+  }
+
+  const res = await fetch(DELETE_ORDER_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      orderId,
+      accountId: window.currentAccountId,
+    }),
+  });
+
+  if (!res.ok) {
+    alert("Eroare la anulare");
+    return;
+  }
+
+  await resetAfterOrderAction({ silent: true });
+  closeOrdersPanel();
+  renderOrdersPanel();
 }
 
 /* ===================== ORDERS PANEL ====================== */
@@ -1588,6 +1623,32 @@ scanInput.focus();
   loadOrders({ silent: true });
   updateStats();
   feedbackSuccess();
+}
+async function resetAfterOrderAction({ silent = false } = {}) {
+  console.log("🔄 Reset WMS after order action");
+
+  // reset context comandă
+  currentProducts = [];
+  currentOrderId = null;
+
+  stopTimer();
+
+  // reset UI comandă
+  document.getElementById("orderTitle").textContent = "";
+  document.getElementById("orderMeta").style.display = "none";
+  document.querySelector("#productsTable tbody").innerHTML = "";
+
+  const scanInput = document.getElementById("scanInput");
+  scanInput.value = "";
+  scanInput.disabled = true;
+
+  const finishBtn = document.getElementById("finishBtn");
+  finishBtn.style.display = "none";
+  finishBtn.classList.remove("active");
+
+  // 🔥 ADEVĂRUL: refetch + recalc
+  await loadOrders({ silent });
+  updateStats();
 }
 
 /* ===================== INIT ====================== */
