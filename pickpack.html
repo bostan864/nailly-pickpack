@@ -926,7 +926,7 @@ const ORDER_LIST_URL =
 const ORDER_GET_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/order-get";
 const DELETE_ORDER_URL =
-  "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/delete-order-file-orderId";
+  "https://yvmqfsigxecmrygmbolg.supabase.co/functions/v1/delete-order-file-orderId-";
 const PRODUCT_LOCATION_URL =
   "https://yvmqfsigxecmrygmbolg.supabase.co/rest/v1/product_locations?sku=eq.";
 
@@ -1405,109 +1405,43 @@ function startCameraScan() {
 
 /* ===================== FINALIZE ORDER ====================== */
 async function finalizeOrder() {
-  const btn = document.getElementById("finishBtn");
+  if (!currentOrderId || !window.currentAccountId) {
+    alert("Comandă sau cont invalid");
+    return;
+  }
 
-  if (!btn.classList.contains("active")) {
-    alert("Trebuie să scanezi toate produsele!");
-    return;
-  }
-  if (!currentOrderId) {
-    alert("Nu există comandă încărcată!");
-    return;
-  }
   if (!confirm("Finalizezi comanda?")) return;
 
-  try {
-    const res = await fetch(DELETE_ORDER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: currentOrderId }),
-    });
+  const { data: { session } } =
+    await window.supabaseClient.auth.getSession();
 
-    const result = await res.json().catch(() => ({}));
-
-    if (res.ok && result.deleted?.length > 0) {
-      alert("Comanda a fost finalizată!");
-
-      const key = getTodayKey();
-      const prev = Number(localStorage.getItem(key) || "0");
-      localStorage.setItem(key, String(prev + 1));
-
-      stopTimer();
-      currentProducts = [];
-      currentOrderId = null;
-
-      document.getElementById("orderTitle").textContent = "";
-      document.getElementById("orderMeta").style.display = "none";
-      document.querySelector("#productsTable tbody").innerHTML = "";
-
-      const scanInput = document.getElementById("scanInput");
-      scanInput.value = "";
-      scanInput.disabled = true;
-
-      btn.style.display = "none";
-      btn.classList.remove("active");
-
-      await loadOrders({silent:true});
-      setTimeout(() => location.reload(), 400);
-
-    } 
-      
-      else {
-      alert("Eroare la ștergerea fișierului!");
-      console.error(result);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Eroare la server!");
+  if (!session) {
+    alert("Sesiune invalidă");
+    return;
   }
-}
-async function cancelOrder(orderId, event){
-  event.stopPropagation(); // nu deschide comanda
 
-  if(!confirm("Sigur vrei să marchezi comanda ca ANULATĂ?")) return;
+  const res = await fetch(DELETE_ORDER_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      orderId: currentOrderId,
+      accountId: window.currentAccountId,
+    }),
+  });
 
-  try{
-    const res = await fetch(DELETE_ORDER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId })
-    });
+  const result = await res.json();
 
-    const result = await res.json().catch(() => ({}));
-
-    if(res.ok){
-      alert("Comanda a fost anulată.");
-
-      // reset stare curentă dacă era încărcată
-      if(String(currentOrderId) === String(orderId)){
-        stopTimer();
-        currentProducts = [];
-        currentOrderId = null;
-
-        document.getElementById("orderTitle").textContent = "";
-        document.getElementById("orderMeta").style.display = "none";
-        document.querySelector("#productsTable tbody").innerHTML = "";
-
-        const scanInput = document.getElementById("scanInput");
-        scanInput.value = "";
-        scanInput.disabled = true;
-
-        const btn = document.getElementById("finishBtn");
-        btn.style.display = "none";
-        btn.classList.remove("active");
-      }
-
-      await loadOrders({ silent:true });
-      updateStats();
-    } else {
-      alert("Eroare la anularea comenzii!");
-      console.error(result);
-    }
-  } catch(err){
-    console.error(err);
-    alert("Eroare server la anulare!");
+  if (!res.ok) {
+    console.error(result);
+    alert("Eroare la finalizare");
+    return;
   }
+
+  alert("Comanda a fost finalizată");
+  location.reload();
 }
 
 /* ===================== ORDERS PANEL ====================== */
