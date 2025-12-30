@@ -811,13 +811,13 @@ window.supabaseClient = supabase.createClient(
   <input
   id="scanInput"
   placeholder="Scanează EAN / SKU..."
-  readonly
   inputmode="none"
   autocomplete="off"
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
 />
+
 
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
@@ -1217,9 +1217,6 @@ async function loadOrder(order) {
   enableScanInput();
 
 // 🔥 REACTIVARE SCANARE
-scanInput.removeEventListener("input", handleScanAuto);
-scanInput.addEventListener("input", handleScanAuto);
-
 scanInput.removeEventListener("keydown", handleScan);
 scanInput.addEventListener("keydown", handleScan);
 
@@ -1372,20 +1369,6 @@ function flashError() {
   let input = document.getElementById("scanInput");
   input.classList.add("errorInput");
   setTimeout(() => input.classList.remove("errorInput"), 280);
-}
-
-let scanTimer = null;
-
-function handleScanAuto(e) {
-  clearTimeout(scanTimer);
-
-  scanTimer = setTimeout(() => {
-    const code = (e.target.value || "").trim();
-    if (!code) return;
-
-    e.target.value = "";
-    handleScan({ key: "Enter", target: { value: code } });
-  }, 200);
 }
 
 /* ===================== CAMERA SCAN ====================== */
