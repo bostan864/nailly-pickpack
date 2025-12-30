@@ -1292,21 +1292,13 @@ function enableScanInput() {
 
   scanInput.disabled = false;
   scanInput.removeAttribute("readonly");
-  scanInput.setAttribute("inputmode", "none");
   scanInput.value = "";
 
-  setTimeout(() => {
-    scanInput.focus({ preventScroll: true });
-  }, 50);
-}
-
-function disableScanInput() {
-  const scanInput = document.getElementById("scanInput");
-  if (!scanInput) return;
-
-  scanInput.value = "";
-  scanInput.disabled = true;
-  scanInput.setAttribute("readonly", "readonly");
+  // 🔒 prevenim tastatura software, DAR permitem scannerul
+  scanInput.addEventListener("focus", () => {
+    scanInput.blur();
+    setTimeout(() => scanInput.focus(), 0);
+  }, { once: true });
 }
 
 /* ===================== SCAN ====================== */
