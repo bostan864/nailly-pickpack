@@ -808,9 +808,17 @@ window.supabaseClient = supabase.createClient(
 
   <h3>Pas 2: Scanează produsele</h3>
 
-  <input id="scanInput"
-         placeholder="Scanează EAN / SKU..."
-         disabled />
+  <input
+  id="scanInput"
+  placeholder="Scanează EAN / SKU..."
+  readonly
+  inputmode="none"
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+/>
+
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
@@ -1295,8 +1303,10 @@ function resetScanContext() {
 
   setTimeout(() => {
     scanInput.setAttribute("inputmode", "none");
-    scanInput.removeAttribute("readonly");
-    scanInput.focus();
+    scanInput.value = "";
+scanInput.setAttribute("readonly", "readonly");
+scanInput.setAttribute("inputmode", "none");
+scanInput.focus({ preventScroll: true });
   }, 80);
 }
 
