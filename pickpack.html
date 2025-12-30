@@ -1062,6 +1062,7 @@ function stopTimer() {
     timerInterval = null;
   }
 }
+
 async function updateStats() {
   const pendingCountEl = document.getElementById("pendingCount");
   const pendingTotalEl = document.getElementById("pendingTotal");
@@ -1072,52 +1073,57 @@ async function updateStats() {
   const accountId = window.currentAccountId;
   if (!accountId) return;
 
-  // === COMENZI DE PREGĂTIT ===
-  const { data: pendingAgg, error: errorPending } = await window.supabaseClient
-    .from("orders")
-    .select("id, total_amount", { count: "exact", head: false })  // COUNT + DATE
-    .eq("account_id", accountId)
-    .eq("status", "pending");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayDate = today.toISOString().slice(0, 10); // format yyyy-mm-dd
+
+  // === PENDING ===
+  const { data: pendingStats, error: errorPending } = await window.supabaseClient.rpc("get_order_stats", {
+    input_account_id: accountId,
+    input_status: "pending",
+    input_date: todayDate
+  });
 
   if (errorPending) {
-    console.error("Eroare comenzi pending:", errorPending);
+    console.error("Eroare la pending:", errorPending);
     pendingCountEl.textContent = "–";
     pendingTotalEl.textContent = "Total: –";
   } else {
-    const totalPending = pendingAgg.reduce((acc, order) => acc + Number(order.total_amount || 0), 0);
-    pendingCountEl.textContent = pendingAgg.length;
-    pendingTotalEl.textContent = `Total: ${totalPending.toLocaleString("ro-RO", {
+    const count = pendingStats?.[0]?.order_count || 0;
+    const total = Number(pendingStats?.[0]?.total_sum || 0);
+
+    pendingCountEl.textContent = count;
+    pendingTotalEl.textContent = `Total: ${total.toLocaleString("ro-RO", {
       style: "currency",
       currency: "RON",
       minimumFractionDigits: 2
     })}`;
   }
 
-  // === COMENZI FINALIZATE AZI ===
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const { data: doneAgg, error: errorDone } = await window.supabaseClient
-    .from("orders")
-    .select("id, total_amount", { count: "exact", head: false })  // COUNT + DATE
-    .eq("account_id", accountId)
-    .eq("status", "done")
-    .gte("created_at", today.toISOString());
+  // === DONE ===
+  const { data: doneStats, error: errorDone } = await window.supabaseClient.rpc("get_order_stats", {
+    input_account_id: accountId,
+    input_status: "done",
+    input_date: todayDate
+  });
 
   if (errorDone) {
-    console.error("Eroare comenzi finalizate:", errorDone);
+    console.error("Eroare la done:", errorDone);
     doneCountEl.textContent = "–";
     doneTotalEl.textContent = "Total: –";
   } else {
-    const totalDone = doneAgg.reduce((acc, order) => acc + Number(order.total_amount || 0), 0);
-    doneCountEl.textContent = doneAgg.length;
-    doneTotalEl.textContent = `Total: ${totalDone.toLocaleString("ro-RO", {
+    const count = doneStats?.[0]?.order_count || 0;
+    const total = Number(doneStats?.[0]?.total_sum || 0);
+
+    doneCountEl.textContent = count;
+    doneTotalEl.textContent = `Total: ${total.toLocaleString("ro-RO", {
       style: "currency",
       currency: "RON",
       minimumFractionDigits: 2
     })}`;
   }
 }
+
 
 /* ===================== LOAD ORDERS ====================== */
 async function loadOrders({ silent = false } = {}) {
