@@ -1577,8 +1577,15 @@ function qsHandleInput(){
 function qsRunSearch(){
   const v = (qs.input.value || "").trim();
   if (!v) return;
+
+  const order = allOrders.find(o => String(o.orderId) === v);
+  if (!order) {
+    alert("Comanda nu a fost găsită");
+    return;
+  }
+
   closeQS();
-  loadOrderById(v);
+  loadOrder(order);
   setActiveNav("btnSearch");
 }
 
