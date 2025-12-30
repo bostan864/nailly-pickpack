@@ -1214,9 +1214,8 @@ async function loadOrder(order) {
   document.getElementById("orderMeta").style.display = "block";
 
   const scanInput = document.getElementById("scanInput");
-  scanInput.disabled = false;
-  scanInput.value = "";
-  safeFocusScanInput();
+  enableScanInput();
+
 // 🔥 REACTIVARE SCANARE
 scanInput.removeEventListener("input", handleScanAuto);
 scanInput.addEventListener("input", handleScanAuto);
@@ -1290,38 +1289,27 @@ if (finishBtn) {
 }
 
 /* ===================== SCAN CONTEXT RESET ====================== */
-function resetScanContext() {
+function enableScanInput() {
+  const scanInput = document.getElementById("scanInput");
+  if (!scanInput) return;
+
+  scanInput.disabled = false;
+  scanInput.removeAttribute("readonly");
+  scanInput.setAttribute("inputmode", "none");
+  scanInput.value = "";
+
+  setTimeout(() => {
+    scanInput.focus({ preventScroll: true });
+  }, 50);
+}
+
+function disableScanInput() {
   const scanInput = document.getElementById("scanInput");
   if (!scanInput) return;
 
   scanInput.value = "";
-  safeFocusScanInput();
-}
-
-  scanInput.blur();
-  scanInput.removeEventListener("input", handleScanAuto);
-  scanInput.addEventListener("input", handleScanAuto);
-
-  setTimeout(() => {
-    scanInput.setAttribute("inputmode", "none");
-    scanInput.value = "";
-scanInput.setAttribute("readonly", "readonly");
-scanInput.setAttribute("inputmode", "none");
-scanInput.focus({ preventScroll: true });
-  }, 80);
-}
-function safeFocusScanInput() {
-  const scanInput = document.getElementById("scanInput");
-  if (!scanInput) return;
-
-  scanInput.blur();
+  scanInput.disabled = true;
   scanInput.setAttribute("readonly", "readonly");
-  scanInput.setAttribute("inputmode", "none");
-
-  // ⚠️ focus pasiv – NU deschide tastatura
-  setTimeout(() => {
-    scanInput.focus({ preventScroll: true });
-  }, 0);
 }
 
 /* ===================== SCAN ====================== */
@@ -1637,8 +1625,8 @@ function refreshHome(){
   document.querySelector("#productsTable tbody").innerHTML = "";
 
   const scanInput = document.getElementById("scanInput");
-   scanInput.value = "";
-safeFocusScanInput();
+   disableScanInput();
+
 
   const btn = document.getElementById("finishBtn");
   btn.style.display = "none";
@@ -1663,8 +1651,8 @@ async function resetAfterOrderAction({ silent = false } = {}) {
   document.querySelector("#productsTable tbody").innerHTML = "";
 
   const scanInput = document.getElementById("scanInput");
-  scanInput.value = "";
-  scanInput.disabled = true;
+  disableScanInput();
+
 
   const finishBtn = document.getElementById("finishBtn");
   finishBtn.style.display = "none";
