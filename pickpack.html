@@ -815,9 +815,7 @@ window.supabaseClient = supabase.createClient(
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
-  inputmode="none"
 />
-
 
 
 
@@ -1293,30 +1291,33 @@ function enableScanInput() {
   const scanInput = document.getElementById("scanInput");
   if (!scanInput) return;
 
+  // reset stare
   scanInput.disabled = false;
   scanInput.value = "";
 
-  // 👉 suport scanner CU Enter
-  scanInput.onkeydown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      processScan(scanInput.value);
-      scanInput.value = "";
-    }
-  };
+  // focus real pentru terminal (scanner hardware)
+  scanInput.focus();
+  setTimeout(() => scanInput.focus(), 50);
+  setTimeout(() => scanInput.focus(), 150);
 
-  // 👉 suport scanner FĂRĂ Enter
+  // NU folosim Enter
+  scanInput.onkeydown = null;
+
+  // SCANNER = caractere rapide + pauză
   scanInput.oninput = () => {
     clearTimeout(scanTimer);
-    scanTimer = setTimeout(() => {
-      if (scanInput.value.length >= 6) {
-        processScan(scanInput.value);
-        scanInput.value = "";
-      }
-    }, 50);
-  };
 
-  scanInput.focus();
+    scanTimer = setTimeout(() => {
+      const val = scanInput.value.trim();
+
+      // protecție: ignoră zgomot
+      if (val.length >= 4) {
+        processScan(val);
+      }
+
+      scanInput.value = "";
+    }, 80); // pauză tipică scanner industrial
+  };
 }
 /* ===================== SCAN ====================== */
 function processScan(rawValue) {
