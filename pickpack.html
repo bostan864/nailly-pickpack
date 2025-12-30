@@ -1296,12 +1296,24 @@ function enableScanInput() {
   scanInput.disabled = false;
   scanInput.value = "";
 
+  // 👉 suport scanner CU Enter
+  scanInput.onkeydown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      processScan(scanInput.value);
+      scanInput.value = "";
+    }
+  };
+
+  // 👉 suport scanner FĂRĂ Enter
   scanInput.oninput = () => {
     clearTimeout(scanTimer);
     scanTimer = setTimeout(() => {
-      processScan(scanInput.value);
-      scanInput.value = "";
-    }, 60); // scanner hardware
+      if (scanInput.value.length >= 6) {
+        processScan(scanInput.value);
+        scanInput.value = "";
+      }
+    }, 50);
   };
 
   scanInput.focus();
