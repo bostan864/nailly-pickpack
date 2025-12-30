@@ -1049,34 +1049,49 @@ function stopTimer() {
 }
 
 /* ===================== STATS ====================== */
-function updateStats() {
+async function updateStats() {
   const pendingBox = document.getElementById("pendingBox");
   const pendingCountEl = document.getElementById("pendingCount");
   const doneCountEl = document.getElementById("doneCount");
 
   const pending = Array.isArray(allOrders) ? allOrders.length : 0;
   pendingCountEl.textContent = pending;
-let totalAmount = 0;
 
-allOrders.forEach(o => {
-  totalAmount += Number(o.total_amount || o.subtotal_amount || 0);
-});
+  // 💰 Total valoare comenzi în așteptare
+  let totalAmount = 0;
+  allOrders.forEach(o => {
+    totalAmount += Number(o.total_amount || o.subtotal_amount || 0);
+  });
 
-const formattedTotal = totalAmount.toLocaleString("ro-RO", {
-  style: "currency",
-  currency: "RON",
-  minimumFractionDigits: 2
-});
+  const formattedTotal = totalAmount.toLocaleString("ro-RO", {
+    style: "currency",
+    currency: "RON",
+    minimumFractionDigits: 2
+  });
+  document.getElementById("pendingTotal").textContent = `Total: ${formattedTotal}`;
 
-document.getElementById("pendingTotal").textContent = `Total: ${formattedTotal}`;
-
+  // 🎨 Stilizare box în funcție de comenzi restante
   pendingBox.classList.remove("stats-pending--some", "stats-pending--none");
   if (pending > 0) pendingBox.classList.add("stats-pending--some");
   else pendingBox.classList.add("stats-pending--none");
 
-  const key = getTodayKey();
-  const done = Number(localStorage.getItem(key) || "0");
-  doneCountEl.textContent = done;
+  // 📊 ✅ Comenzi FINALIZATE astăzi pentru contul curent
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const { data, error } = await window.supabaseClient
+    .from("orders")
+    .select("id")
+    .eq("account_id", window.currentAccountId)
+    .eq("status", "done")
+    .gte("created_at", today.toISOString());
+
+  if (error) {
+    console.error("Eroare stats orders:", error);
+    doneCountEl.textContent = "–";
+  } else {
+    doneCountEl.textContent = data.length;
+  }
 }
 
 /* ===================== LOAD ORDERS ====================== */
