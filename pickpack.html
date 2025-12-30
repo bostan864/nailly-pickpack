@@ -1216,7 +1216,7 @@ async function loadOrder(order) {
   const scanInput = document.getElementById("scanInput");
   scanInput.disabled = false;
   scanInput.value = "";
-  scanInput.focus();
+  safeFocusScanInput();
 // 🔥 REACTIVARE SCANARE
 scanInput.removeEventListener("input", handleScanAuto);
 scanInput.addEventListener("input", handleScanAuto);
@@ -1295,7 +1295,8 @@ function resetScanContext() {
   if (!scanInput) return;
 
   scanInput.value = "";
-  scanInput.disabled = false;
+  safeFocusScanInput();
+}
 
   scanInput.blur();
   scanInput.removeEventListener("input", handleScanAuto);
@@ -1308,6 +1309,19 @@ scanInput.setAttribute("readonly", "readonly");
 scanInput.setAttribute("inputmode", "none");
 scanInput.focus({ preventScroll: true });
   }, 80);
+}
+function safeFocusScanInput() {
+  const scanInput = document.getElementById("scanInput");
+  if (!scanInput) return;
+
+  scanInput.blur();
+  scanInput.setAttribute("readonly", "readonly");
+  scanInput.setAttribute("inputmode", "none");
+
+  // ⚠️ focus pasiv – NU deschide tastatura
+  setTimeout(() => {
+    scanInput.focus({ preventScroll: true });
+  }, 0);
 }
 
 /* ===================== SCAN ====================== */
@@ -1624,7 +1638,7 @@ function refreshHome(){
 
   const scanInput = document.getElementById("scanInput");
    scanInput.value = "";
-scanInput.focus();
+safeFocusScanInput();
 
   const btn = document.getElementById("finishBtn");
   btn.style.display = "none";
