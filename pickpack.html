@@ -1000,7 +1000,6 @@ function generateScanVariants(code) {
 
   return [...variants];
 }
-
 /* ===================== AUDIO + VIBRAȚIE ====================== */
 function playBeep(freq = 800, duration = 120, type = "sine") {
   try {
@@ -1289,29 +1288,26 @@ function enableScanInput() {
   scanInput.disabled = false;
   scanInput.value = "";
 
-  // 🔒 ASCUNDEM TASTATURA FĂRĂ SĂ RUPĂM SCANNERUL
-  scanInput.setAttribute("inputmode", "none");
-
-  // focus NORMAL – scannerul hardware scrie
+  // OBLIGATORIU pentru Honeywell
   scanInput.focus();
 
-  // reset handler
-  scanInput.oninput = null;
+  // nu readonly
+  // nu blur
+  // nu inputmode none
 
-  // 🔥 SCANNER = text rapid + pauză
   scanInput.oninput = () => {
     clearTimeout(scanTimer);
 
     scanTimer = setTimeout(() => {
       const val = scanInput.value.trim();
 
-      // curățăm mereu inputul
+      // se golește MEREU
       scanInput.value = "";
 
       if (!val) return;
 
       handleScanValue(val);
-    }, 120); // pauză scanner Honeywell
+    }, 120); // timing scanner Honeywell
   };
 }
 
