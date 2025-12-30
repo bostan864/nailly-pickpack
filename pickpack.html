@@ -808,14 +808,17 @@ window.supabaseClient = supabase.createClient(
 
   <h3>Pas 2: Scanează produsele</h3>
 
-  <input
+ <input
   id="scanInput"
   placeholder="Scanează EAN / SKU..."
   autocomplete="off"
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
+  inputmode="none"
+  readonly
 />
+
 
 
 
@@ -1218,7 +1221,6 @@ async function loadOrder(order) {
 
 // 🔥 REACTIVARE SCANARE
 scanInput.removeEventListener("keydown", handleScan);
-scanInput.addEventListener("keydown", handleScan);
 
   startTimer();
   renderTable();
@@ -1286,6 +1288,8 @@ if (finishBtn) {
 }
 
 /* ===================== SCAN CONTEXT RESET ====================== */
+let scanTimer = null;
+
 function enableScanInput() {
   const scanInput = document.getElementById("scanInput");
   if (!scanInput) return;
@@ -1293,47 +1297,24 @@ function enableScanInput() {
   scanInput.disabled = false;
   scanInput.value = "";
 
-  // NU mai forțăm blur / refocus
-  scanInput.focus({ preventScroll: true });
+  scanInput.oninput = () => {
+    clearTimeout(scanTimer);
+    scanTimer = setTimeout(() => {
+      processScan(scanInput.value);
+      scanInput.value = "";
+    }, 60); // timeout scurt = scanner fără Enter
+  };
 }
-function disableScanInput() {
-  const scanInput = document.getElementById("scanInput");
-  if (!scanInput) return;
-
-  scanInput.value = "";
-  scanInput.disabled = true;
-}
-
 /* ===================== SCAN ====================== */
-function normalizeVariants(v) {
-  if (!v) return [];
-
-  const s = String(v).trim();
-  const variants = new Set();
-
-  variants.add(s);
-  variants.add(s.replace(/^0+/, ""));
-
-  if (s.length > 1) {
-    variants.add(s.slice(0, -1));
-    variants.add(s.replace(/^0+/, "").slice(0, -1));
-  }
-
-  return [...variants].filter(Boolean);
-}
-
-function handleScan(event) {
-  if (event.key !== "Enter") return;
-
-  const raw = normalizeScanInput(event.target.value);
-  event.target.value = "";
+function processScan(rawValue) {
+  const raw = normalizeScanInput(rawValue);
+  if (!raw) return;
 
   const scannedVariants = generateScanVariants(raw);
 
-  let found = currentProducts.find(p => {
+  const found = currentProducts.find(p => {
     const skuVariants = generateScanVariants(p.sku);
     const eanVariants = generateScanVariants(p.ean);
-
     return scannedVariants.some(v =>
       skuVariants.includes(v) || eanVariants.includes(v)
     );
@@ -1346,24 +1327,13 @@ function handleScan(event) {
   }
 
   if (found.scanned < found.qty) {
-  found.scanned++;
-
-  // 🔥 MEMORĂM PRODUSUL SCANAT
-  
-
-  feedbackSuccess();
-  renderTable();
-  
-} else {
-  feedbackError();
-  flashError();
-}
-}
-
-function flashError() {
-  let input = document.getElementById("scanInput");
-  input.classList.add("errorInput");
-  setTimeout(() => input.classList.remove("errorInput"), 280);
+    found.scanned++;
+    feedbackSuccess();
+    renderTable();
+  } else {
+    feedbackError();
+    flashError();
+  }
 }
 
 /* ===================== CAMERA SCAN ====================== */
