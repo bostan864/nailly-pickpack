@@ -1073,15 +1073,16 @@ async function updateStats() {
   const accountId = window.currentAccountId;
   if (!accountId) return;
 
+  // === FORMATAT DATA DE AZI (00:00:00) ===
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayDate = today.toISOString().slice(0, 10); // format yyyy-mm-dd
+  const todayIso = today.toISOString();
 
-  // === PENDING ===
+  // === COMENZI DE PREGĂTIT (PENDING) ===
   const { data: pendingStats, error: errorPending } = await window.supabaseClient.rpc("get_order_stats", {
     input_account_id: accountId,
     input_status: "pending",
-    input_date: todayDate
+    input_date: todayIso
   });
 
   if (errorPending) {
@@ -1100,11 +1101,11 @@ async function updateStats() {
     })}`;
   }
 
-  // === DONE ===
+  // === COMENZI FINALIZATE AZI (DONE) ===
   const { data: doneStats, error: errorDone } = await window.supabaseClient.rpc("get_order_stats", {
     input_account_id: accountId,
     input_status: "done",
-    input_date: todayDate
+    input_date: todayIso
   });
 
   if (errorDone) {
