@@ -1289,32 +1289,26 @@ function enableScanInput() {
   scanInput.readOnly = false;
   scanInput.value = "";
 
-  // ⚠️ FOCUS OBLIGATORIU pentru scanner hardware
-  scanInput.focus();
+  // 🔥 focus real pentru scanner, fără scroll
+  scanInput.focus({ preventScroll: true });
 
-  // NU folosim Enter
-  scanInput.onkeydown = null;
-
-  // ✅ SCANNER = caractere rapide + pauză
   scanInput.oninput = () => {
     clearTimeout(scanTimer);
 
     scanTimer = setTimeout(() => {
       const val = scanInput.value.trim();
 
-      // protecție anti zgomot
-      if (val.length >= 4) {
-        handleScanValue(val);
-      }
-
-      // reset automat, indiferent dacă e bun sau nu
+      // curățăm ORICE (bun sau greșit)
       scanInput.value = "";
-    }, 80); // 60–120ms = standard industrial
+
+      if (!val) return;
+
+      processScan(val);
+    }, 120);
   };
 }
-
 /* ===================== SCAN LOGIC ====================== */
-function handleScanValue(rawValue) {
+function processScan(rawValue) {
   const raw = normalizeScanInput(rawValue);
   if (!raw) {
     feedbackError();
