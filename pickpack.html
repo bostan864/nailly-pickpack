@@ -815,8 +815,6 @@ window.supabaseClient = supabase.createClient(
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
-  inputmode="none"
-  tabindex="-1"
 />
 
 
@@ -1291,26 +1289,42 @@ function enableScanInput() {
   scanInput.disabled = false;
   scanInput.value = "";
 
-  // 🔒 prevenim tastatura
-  scanInput.readOnly = true;
+  // 🔑 OBLIGATORIU: focus pentru scanner hardware
+  scanInput.focus();
 
-  // 🔥 focus permis pentru scanner hardware
-  scanInput.focus({ preventScroll: true });
+  // 🔕 prevenim tastatura virtuală (NU readonly!)
+  setTimeout(() => {
+    scanInput.setAttribute("inputmode", "none");
+  }, 50);
 
-  scanInput.oninput = () => {
-    clearTimeout(scanTimer);
+  // reset listeners (siguranță)
+  scanInput.removeEventListener("input", handleScanAuto);
+  scanInput.addEventListener("input", handleScanAuto);
 
-    scanTimer = setTimeout(() => {
-      const val = scanInput.value.trim();
+  // ✋ tastare manuală DOAR la click intenționat
+  if (!scanInput.dataset.manualEnabled) {
+    scanInput.addEventListener("click", function () {
+      this.removeAttribute("inputmode");
+      this.focus();
+    });
+    scanInput.dataset.manualEnabled = "1";
+  }
+}
 
-      // curățăm MEREU
-      scanInput.value = "";
+/* ===================== SCAN AUTO (HONEYWELL) ====================== */
+function handleScanAuto(e) {
+  clearTimeout(scanTimer);
 
-      if (!val) return;
+  scanTimer = setTimeout(() => {
+    const rawValue = (e.target.value || "").trim();
 
-      handleScanValue(val);
-    }, 120);
-  };
+    // se golește MEREU
+    e.target.value = "";
+
+    if (!rawValue) return;
+
+    handleScanValue(rawValue);
+  }, 180); // timing stabil Honeywell
 }
 
 /* ===================== SCAN LOGIC ====================== */
@@ -1318,6 +1332,7 @@ function handleScanValue(rawValue) {
   const raw = normalizeScanInput(rawValue);
   if (!raw) {
     feedbackError();
+    flashError();
     return;
   }
 
