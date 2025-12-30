@@ -808,7 +808,7 @@ window.supabaseClient = supabase.createClient(
 
   <h3>Pas 2: Scanează produsele</h3>
 
-<input
+  <input
   id="scanInput"
   placeholder="Scanează EAN / SKU..."
   autocomplete="off"
@@ -816,6 +816,7 @@ window.supabaseClient = supabase.createClient(
   autocapitalize="off"
   spellcheck="false"
 />
+
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
   <div id="cameraScanner"></div>
@@ -1286,29 +1287,36 @@ function enableScanInput() {
   if (!scanInput) return;
 
   scanInput.disabled = false;
-  scanInput.readOnly = false;
   scanInput.value = "";
 
-  // 🔥 focus real pentru scanner, fără scroll
-  scanInput.focus({ preventScroll: true });
+  // 🔒 ASCUNDEM TASTATURA FĂRĂ SĂ RUPĂM SCANNERUL
+  scanInput.setAttribute("inputmode", "none");
 
+  // focus NORMAL – scannerul hardware scrie
+  scanInput.focus();
+
+  // reset handler
+  scanInput.oninput = null;
+
+  // 🔥 SCANNER = text rapid + pauză
   scanInput.oninput = () => {
     clearTimeout(scanTimer);
 
     scanTimer = setTimeout(() => {
       const val = scanInput.value.trim();
 
-      // curățăm ORICE (bun sau greșit)
+      // curățăm mereu inputul
       scanInput.value = "";
 
       if (!val) return;
 
-      processScan(val);
-    }, 120);
+      handleScanValue(val);
+    }, 120); // pauză scanner Honeywell
   };
 }
+
 /* ===================== SCAN LOGIC ====================== */
-function processScan(rawValue) {
+function handleScanValue(rawValue) {
   const raw = normalizeScanInput(rawValue);
   if (!raw) {
     feedbackError();
@@ -1320,6 +1328,7 @@ function processScan(rawValue) {
   const found = currentProducts.find(p => {
     const skuVariants = generateScanVariants(p.sku);
     const eanVariants = generateScanVariants(p.ean);
+
     return scannedVariants.some(v =>
       skuVariants.includes(v) || eanVariants.includes(v)
     );
