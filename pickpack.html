@@ -808,16 +808,14 @@ window.supabaseClient = supabase.createClient(
 
   <h3>Pas 2: Scanează produsele</h3>
 
- <input
+<input
   id="scanInput"
   placeholder="Scanează EAN / SKU..."
   autocomplete="off"
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
-  inputmode="none"
 />
-
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
   <div id="cameraScanner"></div>
@@ -1280,21 +1278,6 @@ if (finishBtn) {
     });
   }, 120);
 }
-/* ============================================================
-   SCAN CONTEXT RESET – OBLIGATORIU
-   Este apelată din loadOrder()
-============================================================ */
-function enableScanInput() {
-  const scanInput = document.getElementById("scanInput");
-  if (!scanInput) return;
-
-  scanInput.disabled = false;
-  scanInput.value = "";
-
-  // focus minim (NU forțăm)
-  scanInput.focus();
-}
-
 /* ===================== SCAN CONTEXT RESET ====================== */
 let scanTimer = null;
 
@@ -1303,31 +1286,40 @@ function enableScanInput() {
   if (!scanInput) return;
 
   scanInput.disabled = false;
+  scanInput.readOnly = false;
   scanInput.value = "";
 
-  // focus simplu – scannerul are unde scrie
+  // ⚠️ FOCUS OBLIGATORIU pentru scanner hardware
   scanInput.focus();
 
+  // NU folosim Enter
+  scanInput.onkeydown = null;
+
+  // ✅ SCANNER = caractere rapide + pauză
   scanInput.oninput = () => {
     clearTimeout(scanTimer);
 
     scanTimer = setTimeout(() => {
       const val = scanInput.value.trim();
 
+      // protecție anti zgomot
       if (val.length >= 4) {
-        processScan(val);
+        handleScanValue(val);
       }
 
-      // curățăm mereu după scan
+      // reset automat, indiferent dacă e bun sau nu
       scanInput.value = "";
-    }, 80); // pauză tipică scanner industrial
+    }, 80); // 60–120ms = standard industrial
   };
 }
 
-/* ===================== SCAN ====================== */
-function processScan(rawValue) {
+/* ===================== SCAN LOGIC ====================== */
+function handleScanValue(rawValue) {
   const raw = normalizeScanInput(rawValue);
-  if (!raw) return;
+  if (!raw) {
+    feedbackError();
+    return;
+  }
 
   const scannedVariants = generateScanVariants(raw);
 
