@@ -808,14 +808,17 @@ window.supabaseClient = supabase.createClient(
 
   <h3>Pas 2: Scanează produsele</h3>
 
-  <input
+<input
   id="scanInput"
   placeholder="Scanează EAN / SKU..."
   autocomplete="off"
   autocorrect="off"
   autocapitalize="off"
   spellcheck="false"
+  inputmode="none"
+  tabindex="-1"
 />
+
 
   <button id="cameraBtn" onclick="startCameraScan()">Scanează cu camera telefonului</button>
 
@@ -1288,12 +1291,11 @@ function enableScanInput() {
   scanInput.disabled = false;
   scanInput.value = "";
 
-  // OBLIGATORIU pentru Honeywell
-  scanInput.focus();
+  // 🔒 prevenim tastatura
+  scanInput.readOnly = true;
 
-  // nu readonly
-  // nu blur
-  // nu inputmode none
+  // 🔥 focus permis pentru scanner hardware
+  scanInput.focus({ preventScroll: true });
 
   scanInput.oninput = () => {
     clearTimeout(scanTimer);
@@ -1301,13 +1303,13 @@ function enableScanInput() {
     scanTimer = setTimeout(() => {
       const val = scanInput.value.trim();
 
-      // se golește MEREU
+      // curățăm MEREU
       scanInput.value = "";
 
       if (!val) return;
 
       handleScanValue(val);
-    }, 120); // timing scanner Honeywell
+    }, 120);
   };
 }
 
