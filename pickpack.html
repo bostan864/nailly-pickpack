@@ -1049,35 +1049,56 @@ function stopTimer() {
   }
 }
 
+/* ===================== DAILY STATS (ACCOUNT LEVEL) ====================== */
+async function loadDailyStats() {
+  if (!window.currentAccountId) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data, error } = await window.supabaseClient
+    .from("account_daily_stats")
+    .select("done_orders, done_amount")
+    .eq("stat_date", today)
+    .single();
+
+  // nu există rând azi → 0 (comportament normal)
+  if (error && error.code !== "PGRST116") {
+    console.error("Daily stats error:", error);
+    return;
+  }
+
+  document.getElementById("doneCount").textContent =
+    data?.done_orders ?? 0;
+}
+
 /* ===================== STATS ====================== */
 function updateStats() {
   const pendingBox = document.getElementById("pendingBox");
   const pendingCountEl = document.getElementById("pendingCount");
-  const doneCountEl = document.getElementById("doneCount");
 
+  /* 🔴 COMENZI ÎN AȘTEPTARE */
   const pending = Array.isArray(allOrders) ? allOrders.length : 0;
   pendingCountEl.textContent = pending;
-let totalAmount = 0;
 
-allOrders.forEach(o => {
-  totalAmount += Number(o.total_amount || o.subtotal_amount || 0);
-});
+  let totalAmount = 0;
+  allOrders.forEach(o => {
+    totalAmount += Number(o.total_amount || o.subtotal_amount || 0);
+  });
 
-const formattedTotal = totalAmount.toLocaleString("ro-RO", {
-  style: "currency",
-  currency: "RON",
-  minimumFractionDigits: 2
-});
-
-document.getElementById("pendingTotal").textContent = `Total: ${formattedTotal}`;
+  document.getElementById("pendingTotal").textContent =
+    `Total: ${totalAmount.toLocaleString("ro-RO", {
+      style: "currency",
+      currency: "RON",
+      minimumFractionDigits: 2
+    })}`;
 
   pendingBox.classList.remove("stats-pending--some", "stats-pending--none");
-  if (pending > 0) pendingBox.classList.add("stats-pending--some");
-  else pendingBox.classList.add("stats-pending--none");
+  pendingBox.classList.add(
+    pending > 0 ? "stats-pending--some" : "stats-pending--none"
+  );
 
-  const key = getTodayKey();
-  const done = Number(localStorage.getItem(key) || "0");
-  doneCountEl.textContent = done;
+  /* 🔵 ACTIVITATE ZILNICĂ – DIN DB */
+  loadDailyStats();
 }
 
 /* ===================== LOAD ORDERS ====================== */
