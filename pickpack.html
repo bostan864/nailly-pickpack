@@ -779,21 +779,34 @@ window.supabaseClient = supabase.createClient(
   </div>
 
   <!-- STATS -->
-  <div id="statsBar">
-    <div id="pendingBox" class="stats-card stats-pending--none">
-<span class="stats-title">⚠️ Status comenzi</span>
-      <span class="stats-number" id="pendingCount">0</span>
-      <span>comenzi de pregătit</span><span id="pendingTotal" style="display:block; font-size:15px; font-weight:500; color:#333;">
-  Total: 0 RON
-</span>
-
-    </div>
-    <div id="doneBox" class="stats-card stats-done">
-<span class="stats-title">✔️ Activitatea de astăzi</span>
-      <span class="stats-number" id="doneCount">0</span>
-      <span>comenzi finalizate</span>
-    </div>
+<div id="statsBar">
+  <div id="pendingBox" class="stats-card stats-pending--none">
+    <span class="stats-title">⚠️ Status comenzi</span>
+    <span class="stats-number" id="pendingCount">0</span>
+    <span>comenzi de pregătit</span>
+    <span
+      id="pendingTotal"
+      style="display:block;font-size:15px;font-weight:500;color:#333;"
+    >
+      Total: 0 RON
+    </span>
   </div>
+
+  <div id="doneBox" class="stats-card stats-done">
+    <span class="stats-title">✔️ Activitatea de astăzi</span>
+    <span class="stats-number" id="doneCount">0</span>
+    <span>comenzi finalizate</span>
+
+    <!-- 🔵 TIMP TOTAL PICKING -->
+    <span
+      id="doneTime"
+      style="display:block;font-size:15px;font-weight:600;margin-top:4px;"
+    >
+      Timp: 0 min
+    </span>
+  </div>
+</div>
+
 
   <h3 id="orderTitle"></h3>
 
@@ -1056,25 +1069,37 @@ async function loadDailyStats() {
   const today = new Date().toISOString().slice(0, 10);
 
   try {
-    const controller = new AbortController();
-    setTimeout(() => controller.abort(), 3000); // protecție WMS
-
     const { data, error } = await window.supabaseClient
       .from("account_daily_stats")
-      .select("done_orders")
+      .select("done_orders, total_seconds")
       .eq("stat_date", today)
-      .single({ signal: controller.signal });
+      .single();
 
     if (error && error.code !== "PGRST116") {
       console.error("Daily stats error:", error);
       return;
     }
 
-    document.getElementById("doneCount").textContent =
-      data?.done_orders ?? 0;
+    const doneOrders = data?.done_orders ?? 0;
+    const totalSeconds = data?.total_seconds ?? 0;
+
+    // comenzi
+    document.getElementById("doneCount").textContent = doneOrders;
+
+    // timp formatat
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    const timeLabel =
+      hours > 0 ? `${hours}h ${minutes}m` : `${minutes} min`;
+
+    const timeEl = document.getElementById("doneTime");
+    if (timeEl) {
+      timeEl.textContent = `Timp: ${timeLabel}`;
+    }
 
   } catch (err) {
-    console.warn("Daily stats aborted (timeout / offline)");
+    console.warn("Daily stats load failed");
   }
 }
 
@@ -1498,6 +1523,11 @@ async function finalizeOrder() {
       return;
     }
 
+    /* ⏱️ 0️⃣ CALCUL TIMP COMANDĂ (SECUNDE) */
+    const durationSeconds = Math.floor(
+      (Date.now() - orderStartTime) / 1000
+    );
+
     /* 1️⃣ ȘTERGERE COMANDĂ (flow existent) */
     const res = await fetch(DELETE_ORDER_URL, {
       method: "POST",
@@ -1525,11 +1555,12 @@ async function finalizeOrder() {
       order?.total_amount || order?.subtotal_amount || 0
     );
 
-    /* 3️⃣ 🔥 DAILY STATS – ATOMIC, SERVER SIDE */
+    /* 3️⃣ 🔥 DAILY STATS – ATOMIC (BANI + TIMP) */
     const { error: statsError } = await window.supabaseClient
       .rpc("increment_daily_stats", {
         p_account_id: window.currentAccountId,
-        p_amount: orderAmount
+        p_amount: orderAmount,
+        p_seconds: durationSeconds
       });
 
     if (statsError) {
@@ -1565,7 +1596,7 @@ async function finalizeOrder() {
 
     /* 5️⃣ REFRESH DATE */
     await loadOrders({ silent: true });
-    await loadDailyStats();   // 🔑 IMPORTANT
+    await loadDailyStats();   // 🔑 aici se actualizează timpul + comenzile
     updateStats();
 
     setActiveNav("btnHome");
