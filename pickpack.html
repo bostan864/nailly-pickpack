@@ -943,6 +943,7 @@ let allOrders = [];
 let timerInterval = null;
 let orderStartTime = null;
 let currentAccountId = null;
+let productRowMap = new Map(); // produs -> <tr>
 
 /* ===================== HELPER: DATE KEY ====================== */
 function getTodayKey() {
@@ -1216,7 +1217,7 @@ async function loadOrder(order) {
 // 🔥 REACTIVARE SCANARE
 
   startTimer();
-  renderTable();
+  buildProductsTableOnce();
 
   console.log("✅ Comandă încărcată:", currentOrderId);
 }
@@ -1262,22 +1263,6 @@ if (finishBtn) {
   finishBtn.classList.toggle("active", allDone);
 }
 
-
-  // 🔥 AUTOSCROLL – AICI TREBUIE SĂ FIE
-  setTimeout(() => {
-    const nextRow = document.querySelector("#productsTable .next-row");
-    if (!nextRow) return;
-
-    const y =
-      nextRow.getBoundingClientRect().top +
-      window.pageYOffset -
-      180;
-
-    window.scrollTo({
-      top: y,
-      behavior: "smooth"
-    });
-  }, 120);
 }
 /* ===================== SCAN CONTEXT RESET ====================== */
 let scanTimer = null;
@@ -1356,12 +1341,84 @@ function handleScanValue(rawValue) {
   if (found.scanned < found.qty) {
     found.scanned++;
     feedbackSuccess();
-    renderTable();
+    updateProductRow(found);
+    highlightNextRow();
+
   } else {
     feedbackError();
     flashError();
   }
 }
+/* ===================== BUILD TABLE (ONCE) ====================== */
+function buildProductsTableOnce() {
+  const tbody = document.querySelector("#productsTable tbody");
+  if (!tbody) return;
+
+  // 🔥 curățăm o singură dată
+  tbody.innerHTML = "";
+  productRowMap.clear();
+
+  currentProducts.forEach(p => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${p.sku ?? ""}</td>
+      <td>${p.name ?? ""}</td>
+      <td>${p.shelf ?? ""}</td>
+      <td>${p.qty}</td>
+      <td class="scanned">0</td>
+      <td class="remaining">${p.qty}</td>
+    `;
+
+    tbody.appendChild(tr);
+    productRowMap.set(p, tr);
+  });
+
+  highlightNextRow();
+}
+function updateProductRow(product) {
+  const tr = productRowMap.get(product);
+  if (!tr) return;
+
+  const scannedTd = tr.querySelector(".scanned");
+  const remainingTd = tr.querySelector(".remaining");
+
+  scannedTd.textContent = product.scanned;
+  remainingTd.textContent = product.qty - product.scanned;
+
+  if (product.scanned >= product.qty) {
+    tr.classList.add("ok");
+  }
+}
+function highlightNextRow() {
+  // scoatem highlight vechi
+  document
+    .querySelectorAll("#productsTable tr")
+    .forEach(tr => tr.classList.remove("next-row"));
+
+  const next = currentProducts.find(p => p.scanned < p.qty);
+  if (!next) return;
+
+  const tr = productRowMap.get(next);
+  if (!tr) return;
+
+  tr.classList.add("next-row");
+
+  // 🔥 scroll REAL, centrat vizual
+  setTimeout(() => {
+    const y =
+      tr.getBoundingClientRect().top +
+      window.pageYOffset -
+      window.innerHeight / 2 +
+      tr.offsetHeight / 2;
+
+    window.scrollTo({
+      top: y,
+      behavior: "auto"
+    });
+  }, 40);
+}
+
 /* ===================== CAMERA SCAN ====================== */
 function startCameraScan() {
   const div = document.getElementById("cameraScanner");
