@@ -707,12 +707,6 @@ body.wms-mobile .stats-number{
   font-weight: 900;
 }
 
-body.wms-mobile #pendingTotal{
-  font-size: 18px !important;
-  font-weight: 700 !important;
-  margin-top: 6px;
-}
-
 #receptionPanel {
   padding: 20px 16px;      /* adaugă padding stânga/dreapta */
   max-width: 100%;         /* elimină limitarea artificială */
@@ -739,6 +733,34 @@ body.wms-mobile #pendingTotal{
 #scanResultReception {
   margin-top: 10px;
   font-weight: bold;
+}
+/* ===== STATS STRUCTURA UNIFICATĂ ===== */
+
+.stats-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.stats-label {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* linia de jos (Total / Timp) */
+.stats-sub {
+  margin-top: 6px;
+  font-size: 18px;        /* 🔥 la fel pentru ambele */
+  font-weight: 700;
+}
+
+/* diferență DOAR de culoare */
+.stats-green {
+  color: #1e7e34;
+}
+
+.stats-blue {
+  color: #1a3d8f;
 }
 
 </style>
@@ -778,34 +800,36 @@ window.supabaseClient = supabase.createClient(
     </div>
   </div>
 
-  <!-- STATS -->
-<div id="statsBar">
-  <div id="pendingBox" class="stats-card stats-pending--none">
+  <div id="statsBar">
+  <!-- VERDE -->
+  <div id="pendingBox" class="stats-card stats-pending--some">
     <span class="stats-title">⚠️ Status comenzi</span>
-    <span class="stats-number" id="pendingCount">0</span>
-    <span>comenzi de pregătit</span>
-    <span
-      id="pendingTotal"
-      style="display:block;font-size:15px;font-weight:500;color:#333;"
-    >
+
+    <div class="stats-main">
+      <span class="stats-number" id="pendingCount">0</span>
+      <span class="stats-label">comenzi de pregătit</span>
+    </div>
+
+    <div class="stats-sub stats-green" id="pendingTotal">
       Total: 0 RON
-    </span>
+    </div>
   </div>
 
+  <!-- ALBASTRU -->
   <div id="doneBox" class="stats-card stats-done">
     <span class="stats-title">✔️ Activitatea de astăzi</span>
-    <span class="stats-number" id="doneCount">0</span>
-    <span>comenzi finalizate</span>
 
-    <!-- 🔵 TIMP TOTAL PICKING -->
-    <span
-      id="doneTime"
-      style="display:block;font-size:15px;font-weight:600;margin-top:4px;"
-    >
+    <div class="stats-main">
+      <span class="stats-number" id="doneCount">0</span>
+      <span class="stats-label">comenzi finalizate</span>
+    </div>
+
+    <div class="stats-sub stats-blue" id="doneTime">
       Timp: 0 min
-    </span>
+    </div>
   </div>
 </div>
+
 
 
   <h3 id="orderTitle"></h3>
