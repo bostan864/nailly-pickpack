@@ -1096,34 +1096,33 @@ async function loadDailyStats() {
     const { data, error } = await window.supabaseClient
       .from("account_daily_stats")
       .select("done_orders, total_seconds")
+      .eq("account_id", window.currentAccountId) // 🔴 OBLIGATORIU
       .eq("stat_date", today)
-      .single();
+      .maybeSingle(); // 🔴 CRITIC – NU single()
 
-    if (error && error.code !== "PGRST116") {
-      console.error("Daily stats error:", error);
+    if (error) {
+      console.warn("Daily stats indisponibile (normal dacă nu există rând)");
       return;
     }
 
     const doneOrders = data?.done_orders ?? 0;
     const totalSeconds = data?.total_seconds ?? 0;
 
-    // comenzi
-    document.getElementById("doneCount").textContent = doneOrders;
+    /* comenzi */
+    const doneCountEl = document.getElementById("doneCount");
+    if (doneCountEl) {
+      doneCountEl.textContent = doneOrders;
+    }
 
-    // timp formatat
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-    const timeLabel =
-      hours > 0 ? `${hours}h ${minutes}m` : `${minutes} min`;
-
-    const timeEl = document.getElementById("doneTime");
-    if (timeEl) {
-      timeEl.textContent = `Timp: ${timeLabel}`;
+    /* timp */
+    const minutes = Math.floor(totalSeconds / 60);
+    const doneTimeEl = document.getElementById("doneTime");
+    if (doneTimeEl) {
+      doneTimeEl.textContent = `Timp: ${minutes} min`;
     }
 
   } catch (err) {
-    console.warn("Daily stats load failed");
+    console.warn("Daily stats load failed:", err);
   }
 }
 
