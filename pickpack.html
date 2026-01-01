@@ -1055,50 +1055,63 @@ async function loadDailyStats() {
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data, error } = await window.supabaseClient
-    .from("account_daily_stats")
-    .select("done_orders, done_amount")
-    .eq("stat_date", today)
-    .single();
+  try {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 3000); // protecție WMS
 
-  // nu există rând azi → 0 (comportament normal)
-  if (error && error.code !== "PGRST116") {
-    console.error("Daily stats error:", error);
-    return;
+    const { data, error } = await window.supabaseClient
+      .from("account_daily_stats")
+      .select("done_orders")
+      .eq("stat_date", today)
+      .single({ signal: controller.signal });
+
+    if (error && error.code !== "PGRST116") {
+      console.error("Daily stats error:", error);
+      return;
+    }
+
+    document.getElementById("doneCount").textContent =
+      data?.done_orders ?? 0;
+
+  } catch (err) {
+    console.warn("Daily stats aborted (timeout / offline)");
   }
-
-  document.getElementById("doneCount").textContent =
-    data?.done_orders ?? 0;
 }
 
 /* ===================== STATS ====================== */
 function updateStats() {
   const pendingBox = document.getElementById("pendingBox");
   const pendingCountEl = document.getElementById("pendingCount");
+  const doneCountEl = document.getElementById("doneCount");
 
-  /* 🔴 COMENZI ÎN AȘTEPTARE */
+  // Pending = câte comenzi sunt în listă
   const pending = Array.isArray(allOrders) ? allOrders.length : 0;
   pendingCountEl.textContent = pending;
 
+  // Total RON pentru pending
   let totalAmount = 0;
-  allOrders.forEach(o => {
+  (allOrders || []).forEach(o => {
     totalAmount += Number(o.total_amount || o.subtotal_amount || 0);
   });
 
-  document.getElementById("pendingTotal").textContent =
-    `Total: ${totalAmount.toLocaleString("ro-RO", {
-      style: "currency",
-      currency: "RON",
-      minimumFractionDigits: 2
-    })}`;
+  const formattedTotal = totalAmount.toLocaleString("ro-RO", {
+    style: "currency",
+    currency: "RON",
+    minimumFractionDigits: 2
+  });
 
-  pendingBox.classList.remove("stats-pending--some", "stats-pending--none");
-  pendingBox.classList.add(
-    pending > 0 ? "stats-pending--some" : "stats-pending--none"
-  );
+  const pendingTotalEl = document.getElementById("pendingTotal");
+  if (pendingTotalEl) pendingTotalEl.textContent = `Total: ${formattedTotal}`;
 
-  /* 🔵 ACTIVITATE ZILNICĂ – DIN DB */
-  loadDailyStats();
+  // Culori pending card
+  if (pendingBox) {
+    pendingBox.classList.remove("stats-pending--some", "stats-pending--none");
+    if (pending > 0) pendingBox.classList.add("stats-pending--some");
+    else pendingBox.classList.add("stats-pending--none");
+  }
+
+  // Done rămâne neschimbat aici (îl actualizăm în Pasul 2 din DB)
+  // doneCountEl.textContent NU îl atingem aici ca să nu-l rescriem aiurea
 }
 
 /* ===================== LOAD ORDERS ====================== */
@@ -1485,6 +1498,7 @@ async function finalizeOrder() {
       return;
     }
 
+    /* 1️⃣ ȘTERGERE COMANDĂ (flow existent) */
     const res = await fetch(DELETE_ORDER_URL, {
       method: "POST",
       headers: {
@@ -1502,23 +1516,38 @@ async function finalizeOrder() {
       return;
     }
 
+    /* 2️⃣ CALCUL SUMĂ COMANDĂ */
+    const order = allOrders.find(
+      o => String(o.orderId) === String(currentOrderId)
+    );
+
+    const orderAmount = Number(
+      order?.total_amount || order?.subtotal_amount || 0
+    );
+
+    /* 3️⃣ 🔥 DAILY STATS – ATOMIC, SERVER SIDE */
+    const { error: statsError } = await window.supabaseClient
+      .rpc("increment_daily_stats", {
+        p_account_id: window.currentAccountId,
+        p_amount: orderAmount
+      });
+
+    if (statsError) {
+      console.error("Daily stats RPC error:", statsError);
+    }
+
     alert("Comanda a fost finalizată");
 
-    /* 🔥 RESET COMPLET UI + CONTEXT */
-
-    // context comandă
+    /* 4️⃣ RESET UI */
     currentProducts = [];
     currentOrderId = null;
 
-    // timer
     stopTimer();
 
-    // UI comandă
     document.getElementById("orderTitle").textContent = "";
     document.getElementById("orderMeta").style.display = "none";
     document.querySelector("#productsTable tbody").innerHTML = "";
 
-    // scan OFF
     const scanInput = document.getElementById("scanInput");
     if (scanInput) {
       scanInput.value = "";
@@ -1526,25 +1555,20 @@ async function finalizeOrder() {
       scanInput.disabled = true;
     }
 
-    // 🔥 BUTON FINALIZARE – DISPARIȚIE GARANTATĂ
     const finishBtn = document.getElementById("finishBtn");
-    if (finishBtn) {
-      finishBtn.style.display = "none";
-      finishBtn.classList.remove("active");
-      finishBtn.disabled = true;
-    }
+    finishBtn.style.display = "none";
+    finishBtn.classList.remove("active");
+    finishBtn.disabled = true;
 
-    // panouri
     closeOrdersPanel();
     closeQS();
 
-    // refresh date
+    /* 5️⃣ REFRESH DATE */
     await loadOrders({ silent: true });
+    await loadDailyStats();   // 🔑 IMPORTANT
     updateStats();
 
-    // HOME
     setActiveNav("btnHome");
-
     feedbackSuccess();
 
   } catch (err) {
@@ -1886,6 +1910,8 @@ async function loadCurrentAccount() {
 
   window.currentAccountId = data.account_id;
   console.log("ACCOUNT ACTIV:", window.currentAccountId);
+// ⬇️⬇️⬇️ ADAUGĂ DOAR LINIA ASTA ⬇️⬇️⬇️
+  loadDailyStats();
 }
 
 /* =====================
