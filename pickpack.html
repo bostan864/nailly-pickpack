@@ -1398,36 +1398,81 @@ async function finalizeOrder() {
 
   if (!confirm("Finalizezi comanda?")) return;
 
-  const { data: { session } } =
-    await window.supabaseClient.auth.getSession();
+  try {
+    const { data: { session } } =
+      await window.supabaseClient.auth.getSession();
 
-  if (!session) {
-    alert("Sesiune invalidă");
-    return;
+    if (!session) {
+      alert("Sesiune invalidă. Reautentifică-te.");
+      return;
+    }
+
+    const res = await fetch(DELETE_ORDER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        orderId: currentOrderId,
+        accountId: window.currentAccountId,
+      }),
+    });
+
+    if (!res.ok) {
+      alert("Eroare la finalizarea comenzii");
+      return;
+    }
+
+    alert("Comanda a fost finalizată");
+
+    /* 🔥 RESET COMPLET UI + CONTEXT */
+
+    // context comandă
+    currentProducts = [];
+    currentOrderId = null;
+
+    // timer
+    stopTimer();
+
+    // UI comandă
+    document.getElementById("orderTitle").textContent = "";
+    document.getElementById("orderMeta").style.display = "none";
+    document.querySelector("#productsTable tbody").innerHTML = "";
+
+    // scan OFF
+    const scanInput = document.getElementById("scanInput");
+    if (scanInput) {
+      scanInput.value = "";
+      scanInput.blur();
+      scanInput.disabled = true;
+    }
+
+    // 🔥 BUTON FINALIZARE – DISPARIȚIE GARANTATĂ
+    const finishBtn = document.getElementById("finishBtn");
+    if (finishBtn) {
+      finishBtn.style.display = "none";
+      finishBtn.classList.remove("active");
+      finishBtn.disabled = true;
+    }
+
+    // panouri
+    closeOrdersPanel();
+    closeQS();
+
+    // refresh date
+    await loadOrders({ silent: true });
+    updateStats();
+
+    // HOME
+    setActiveNav("btnHome");
+
+    feedbackSuccess();
+
+  } catch (err) {
+    console.error("Finalize order error:", err);
+    alert("Eroare neașteptată la finalizare");
   }
-
-  const res = await fetch(DELETE_ORDER_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({
-      orderId: currentOrderId,
-      accountId: window.currentAccountId,
-    }),
-  });
-
-  if (!res.ok) {
-    alert("Eroare la finalizare");
-    return;
-  }
-
-  alert("Comanda a fost finalizată");
-
-  await resetAfterOrderAction();
-  closeOrdersPanel();
-  renderOrdersPanel();
 }
 /* ===================== CANCEL ORDER ====================== */
 async function cancelOrder(orderId, event) {
